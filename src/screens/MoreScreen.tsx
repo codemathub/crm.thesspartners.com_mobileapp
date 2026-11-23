@@ -67,6 +67,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
   const [newEmail, setNewEmail] = useState('');
   const [newMobile, setNewMobile] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [newRole, setNewRole] = useState<'executive' | 'admin'>('executive');
   const [creatingUser, setCreatingUser] = useState(false);
   const [userMsg, setUserMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
@@ -206,18 +207,23 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
     }
     setCreatingUser(true);
     try {
+      const assignedRole = userRole === 'super_admin' ? newRole : 'executive';
       await mobileApi.createUser({
         full_name: newFullName.trim(),
         email: newEmail.trim(),
         mobile: newMobile.trim(),
-        role: 'executive',
+        role: assignedRole,
         password: newPassword.trim(),
       });
-      setUserMsg({ type: 'ok', text: `Field Executive account for ${newFullName.trim()} successfully provisioned!` });
+      setUserMsg({
+        type: 'ok',
+        text: `${assignedRole === 'admin' ? 'Branch Admin' : 'Field Executive'} account for ${newFullName.trim()} successfully provisioned!`,
+      });
       setNewFullName('');
       setNewEmail('');
       setNewMobile('');
       setNewPassword('');
+      setNewRole('executive');
       setShowAddUserForm(false);
       fetchUsers();
     } catch (err: any) {
@@ -679,11 +685,45 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
                               placeholderTextColor="#9CA3AF"
                             />
 
-                            <View style={[styles.roleOption, styles.roleOptionActive, { marginVertical: 4, width: '100%' }]}>
-                              <Text style={styles.roleOptionTextActive}>
-                                Role: Field Executive (Branch Admin provisions Field Executives only)
-                              </Text>
-                            </View>
+                            {userRole === 'super_admin' ? (
+                              <View style={{ marginVertical: 6 }}>
+                                <Text style={{ fontSize: 11, fontWeight: '700', color: '#4B5563', marginBottom: 4 }}>
+                                  Select Role to Provision:
+                                </Text>
+                                <View style={{ flexDirection: 'row', gap: 8 }}>
+                                  <TouchableOpacity
+                                    style={[
+                                      styles.roleOption,
+                                      newRole === 'executive' && styles.roleOptionActive,
+                                      { flex: 1, paddingVertical: 8, alignItems: 'center' },
+                                    ]}
+                                    onPress={() => setNewRole('executive')}
+                                  >
+                                    <Text style={newRole === 'executive' ? styles.roleOptionTextActive : styles.roleOptionText}>
+                                      Field Executive
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={[
+                                      styles.roleOption,
+                                      newRole === 'admin' && styles.roleOptionActive,
+                                      { flex: 1, paddingVertical: 8, alignItems: 'center' },
+                                    ]}
+                                    onPress={() => setNewRole('admin')}
+                                  >
+                                    <Text style={newRole === 'admin' ? styles.roleOptionTextActive : styles.roleOptionText}>
+                                      Branch Admin
+                                    </Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                            ) : (
+                              <View style={[styles.roleOption, styles.roleOptionActive, { marginVertical: 4, width: '100%' }]}>
+                                <Text style={styles.roleOptionTextActive}>
+                                  Role: Field Executive (Branch Admin can only create Executive accounts)
+                                </Text>
+                              </View>
+                            )}
 
                             <TouchableOpacity
                               style={[styles.primaryActionBtn, creatingUser && { opacity: 0.7 }]}
@@ -693,7 +733,11 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
                               {creatingUser ? (
                                 <ActivityIndicator size="small" color="#FFFFFF" />
                               ) : (
-                                <Text style={styles.primaryActionBtnText}>Create Field Executive</Text>
+                                <Text style={styles.primaryActionBtnText}>
+                                  {userRole === 'super_admin' && newRole === 'admin'
+                                    ? 'Create Branch Admin'
+                                    : 'Create Field Executive'}
+                                </Text>
                               )}
                             </TouchableOpacity>
                           </View>
@@ -762,7 +806,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
                                   </View>
                                 </View>
 
-                                {u.role !== 'super_admin' && (
+                                {userRole === 'super_admin' && u.role !== 'super_admin' ? (
                                   <View style={[styles.userActionRow, { gap: 6 }]}>
                                     {u.account_status === 'active' ? (
                                       <TouchableOpacity
@@ -789,7 +833,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
                                       <Text style={[styles.userMiniBtnText, { color: '#DC2626' }]}>Delete</Text>
                                     </TouchableOpacity>
                                   </View>
-                                )}
+                                ) : null}
                               </View>
                             );
                           })
