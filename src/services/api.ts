@@ -630,7 +630,7 @@ export const mobileApi = {
       }>;
     }>(`/search/property-matches/${propertyId}`),
 
-  // Visits & Operational Hub
+  // Visits & Schedule
   getVisits: (params: {
     status?: string;
     claim_status?: string;

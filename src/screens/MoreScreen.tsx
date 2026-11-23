@@ -484,7 +484,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
                 <Text style={styles.adminOnlyBadgeText}>Admin Only</Text>
               </View>
             </View>
-            <Text style={styles.sectionSubtitle}>Operational Hub</Text>
+            <Text style={styles.sectionSubtitle}>Control Center</Text>
           </View>
 
           <View style={styles.menuGroupCard}>

@@ -110,7 +110,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <Text style={[styles.adminRoleText, { color: roleColor }]}>{roleLabel}</Text>
             </View>
           </View>
-          <Text style={styles.branchSubtext}>Enterprise Real Estate Operational Hub</Text>
+          <Text style={styles.branchSubtext}>Enterprise Real Estate CRM</Text>
         </View>
       </View>
 

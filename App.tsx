@@ -186,7 +186,7 @@ export default function App() {
           </View>
           <View>
             <Text style={styles.brandName}>EstateFlow</Text>
-            <Text style={styles.brandEnv}>OPERATIONAL HUB</Text>
+            <Text style={styles.brandEnv}>REAL ESTATE CRM</Text>
           </View>
         </View>
 
