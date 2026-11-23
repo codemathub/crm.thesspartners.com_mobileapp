@@ -12,6 +12,7 @@ import Constants from 'expo-constants';
 // ---------------------------------------------------------------------------
 
 export const KNOWN_PC_LAN_IP = '192.168.1.5';
+export const PROD_API_URL = 'https://api.crm.thesspartners.com/api/v1';
 export const API_PORT = 8000;
 
 let userConfiguredHost: string | null = null;
@@ -62,7 +63,12 @@ export function resolveApiBaseUrl(): string {
     return envUrl.endsWith('/api/v1') ? envUrl : `${envUrl}/api/v1`;
   }
 
-  // 1. User manual override (if configured in app)
+  // 1. In release / standalone APK build, always use production API
+  if (typeof __DEV__ !== 'undefined' && !__DEV__) {
+    return PROD_API_URL;
+  }
+
+  // 2. User manual override (if configured in app)
   if (userConfiguredHost) {
     let clean = userConfiguredHost.replace(/\/+$/, '');
     if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
