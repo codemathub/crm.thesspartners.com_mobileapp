@@ -375,7 +375,10 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             color={activeTab === 'today' ? '#4F5278' : '#94A3B8'}
             style={{ marginRight: 4 }}
           />
-          <Text style={[styles.segmentBtnText, activeTab === 'today' && styles.segmentBtnTextActive]}>
+          <Text
+            style={[styles.segmentBtnText, activeTab === 'today' && styles.segmentBtnTextActive]}
+            numberOfLines={1}
+          >
             Visits ({todayCount})
           </Text>
         </TouchableOpacity>
@@ -386,6 +389,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             setFilterDate(null);
             setActiveTab('followups');
           }}
+          activeOpacity={0.8}
         >
           <Ionicons
             name="call"
@@ -393,7 +397,10 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             color={activeTab === 'followups' ? '#4F5278' : '#94A3B8'}
             style={{ marginRight: 4 }}
           />
-          <Text style={[styles.segmentBtnText, activeTab === 'followups' && styles.segmentBtnTextActive]}>
+          <Text
+            style={[styles.segmentBtnText, activeTab === 'followups' && styles.segmentBtnTextActive]}
+            numberOfLines={1}
+          >
             Callbacks ({followupCount})
           </Text>
         </TouchableOpacity>
@@ -404,6 +411,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             setFilterDate(null);
             setActiveTab('claim');
           }}
+          activeOpacity={0.8}
         >
           <Ionicons
             name="flash"
@@ -411,7 +419,10 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             color={activeTab === 'claim' ? '#4F5278' : '#94A3B8'}
             style={{ marginRight: 4 }}
           />
-          <Text style={[styles.segmentBtnText, activeTab === 'claim' && styles.segmentBtnTextActive]}>
+          <Text
+            style={[styles.segmentBtnText, activeTab === 'claim' && styles.segmentBtnTextActive]}
+            numberOfLines={1}
+          >
             Claim Pool ({openClaimsCount})
           </Text>
         </TouchableOpacity>
