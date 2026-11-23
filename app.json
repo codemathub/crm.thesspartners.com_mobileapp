@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "estateflow",
+    "slug": "estateflow-crm",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7F6F8"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Allow EstateCRM to securely authenticate field executives using Face ID"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F7F6F8"
+      },
+      "permissions": [
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#4F5278"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow EstateCRM to securely authenticate field executives using Face ID"
+        }
+      ]
+    ]
+  }
+}
