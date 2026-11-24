@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "EstateCRM",
-    "slug": "estatecrm",
+    "name": "G² Brothers CRM",
+    "slug": "g2-brothers-crm",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,21 +9,21 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F7F6F8"
+      "backgroundColor": "#020912"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.thesspartners.crm",
+      "bundleIdentifier": "com.g2brothers.crm",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Allow EstateCRM to securely authenticate field executives using Face ID"
+        "NSFaceIDUsageDescription": "Allow G² Brothers CRM to securely authenticate field executives using Face ID"
       }
     },
     "android": {
-      "package": "com.thesspartners.crm",
+      "package": "com.g2brothers.crm",
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#F7F6F8"
+        "backgroundColor": "#020912"
       },
       "permissions": [
         "INTERNET",
@@ -42,7 +42,7 @@
     },
     "notification": {
       "icon": "./assets/icon.png",
-      "color": "#4F5278",
+      "color": "#020912",
       "androidMode": "default"
     },
     "web": {

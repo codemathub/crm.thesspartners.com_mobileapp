@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   Platform,
+  Image,
   StatusBar as RNStatusBar,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -269,14 +270,16 @@ export default function App() {
         </TouchableOpacity>
       )}
 
-      {/* Top Header matching Stitch Theme */}
+      {/* Top Header matching G² Brothers Luxury Theme */}
       <View style={styles.header}>
         <View style={styles.brandRow}>
-          <View style={styles.brandLogoBox}>
-            <Ionicons name="business" size={16} color="#FFFFFF" />
-          </View>
-          <View>
-            <Text style={styles.brandName}>EstateFlow</Text>
+          <Image
+            source={require('./assets/logo.png')}
+            style={styles.brandLogoImg}
+            resizeMode="contain"
+          />
+          <View style={{ marginLeft: 8 }}>
+            <Text style={styles.brandName}>G² BROTHERS</Text>
             <Text style={styles.brandEnv}>REAL ESTATE CRM</Text>
           </View>
         </View>
@@ -470,16 +473,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  brandLogoImg: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: '#020912',
+  },
   brandName: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: themeTokens.colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: 0.3,
   },
   brandEnv: {
-    fontSize: 9,
-    fontWeight: '700',
+    fontSize: 8.5,
+    fontWeight: '800',
     letterSpacing: 0.8,
-    color: themeTokens.colors.textSecondary,
+    color: '#B45309',
   },
   headerActions: {
     flexDirection: 'row',
