@@ -127,6 +127,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
   // Custom Date Filter (Enterprise Calendar Picker)
   const [filterDate, setFilterDate] = useState<string | null>(null);
   const [filterDateModalVisible, setFilterDateModalVisible] = useState(false);
+  const [calendarScheduledDates, setCalendarScheduledDates] = useState<Set<string>>(new Set());
 
   const formatLocalDate = (d: Date): string => {
     const year = d.getFullYear();
@@ -147,16 +148,6 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
     return days;
   };
 
-  const visitDatesWithVisits = React.useMemo(() => {
-    const dateSet = new Set<string>();
-    visits.forEach((v) => {
-      if (v.scheduled_at) {
-        dateSet.add(formatLocalDate(parseUtcDate(v.scheduled_at)));
-      }
-    });
-    return dateSet;
-  }, [visits]);
-
   const fetchVisits = async () => {
     try {
       const todayStr = new Date().toISOString().split('T')[0];
@@ -172,15 +163,25 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
         params.status = 'active';
       }
 
-      const [allRes, claimRes, followupRes] = await Promise.all([
+      const [allRes, claimRes, followupRes, fullVisitsRes] = await Promise.all([
         mobileApi.getVisits(params),
         mobileApi.getVisits({ open_claims_only: true }),
         mobileApi.getFollowUps({ range: filterDate ? 'all' : (activeTab === 'today' ? 'today' : 'all') }),
+        mobileApi.getVisits({ status: 'all' }),
       ]);
       setVisits(allRes.items);
       setOpenClaims(claimRes.items);
       setTodayCount(allRes.today_visits_count);
       setOpenClaimsCount(claimRes.open_claims_count);
+
+      // Track ALL dates that have scheduled visits across the calendar
+      const scheduledSet = new Set<string>();
+      (fullVisitsRes.items || []).forEach((v) => {
+        if (v.scheduled_at && v.status !== 'cancelled') {
+          scheduledSet.add(formatLocalDate(parseUtcDate(v.scheduled_at)));
+        }
+      });
+      setCalendarScheduledDates(scheduledSet);
 
       let fuItems = followupRes.items;
       if (filterDate) {
@@ -516,7 +517,8 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             const dayStr = formatLocalDate(day);
             const isSelected = filterDate === dayStr;
             const isToday = dayStr === formatLocalDate(new Date());
-            const hasVisits = visitDatesWithVisits.has(dayStr);
+            const hasScheduledVisits = calendarScheduledDates.has(dayStr);
+            const showDot = !isToday && hasScheduledVisits;
             const dayName = day.toLocaleDateString('en-IN', { weekday: 'short' }).toUpperCase();
             const dayNumber = day.getDate();
             const monthName = day.toLocaleDateString('en-IN', { month: 'short' });
@@ -566,10 +568,8 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                   {monthName}
                 </Text>
 
-                {/* Highlight Today with Green Dot, or other days with visit under-dot; blank if no visit */}
-                {isToday ? (
-                  <View style={[styles.todayGreenDot, isSelected && { backgroundColor: '#FFFFFF' }]} />
-                ) : hasVisits ? (
+                {/* Show under-dot ONLY when visits are scheduled in data; never show on today, blank if no visit */}
+                {showDot ? (
                   <View style={[styles.visitScheduleUnderDot, isSelected && { backgroundColor: '#FFFFFF' }]} />
                 ) : (
                   <View style={styles.blankDotPlaceholder} />
