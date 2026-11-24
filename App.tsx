@@ -466,17 +466,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   brandLogoBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 7,
-    backgroundColor: '#4F5278',
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#020912',
     alignItems: 'center',
     justifyContent: 'center',
   },
   brandLogoImg: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     backgroundColor: '#020912',
   },
   brandName: {
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     fontSize: 8.5,
     fontWeight: '800',
     letterSpacing: 0.8,
-    color: '#B45309',
+    color: '#D97706',
   },
   headerActions: {
     flexDirection: 'row',
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#EEF0F8', // Soft lavender
+    backgroundColor: '#EFF6FF', // Sapphire soft tint
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#4F5278', // Stitch dark slate
+    backgroundColor: '#1D4ED8', // Sapphire blue
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -534,14 +534,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: '#E2E8F0',
     paddingTop: 6,
     paddingBottom: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowOffset: { width: 0, height: -2 },
-    shadowRadius: 4,
-    elevation: 4,
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 0,
   },
   navItem: {
     flex: 1,
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   navIconPillActive: {
-    backgroundColor: '#EEF0F8', // Soft lavender pill indicator
+    backgroundColor: '#EFF6FF', // Sapphire soft tint indicator
   },
   navLabel: {
     fontSize: 10,
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     color: themeTokens.colors.textSecondary,
   },
   navLabelActive: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '800',
   },
   toastBanner: {
@@ -570,25 +570,24 @@ const styles = StyleSheet.create({
     top: STATUSBAR_HEIGHT + 55,
     left: 12,
     right: 12,
-    backgroundColor: '#303350',
+    backgroundColor: '#0F172A',
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#1E293B',
     paddingVertical: 10,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     zIndex: 9999,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   toastIconBox: {
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     alignItems: 'center',
     justifyContent: 'center',
   },

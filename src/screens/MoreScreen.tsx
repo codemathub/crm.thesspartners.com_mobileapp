@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -372,7 +372,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
           <Switch
             value={bioEnabled}
             onValueChange={handleToggleBiometrics}
-            trackColor={{ false: '#D1D5DB', true: '#4F5278' }}
+            trackColor={{ false: '#D1D5DB', true: '#1D4ED8' }}
             thumbColor="#FFFFFF"
           />
         </TouchableOpacity>
@@ -384,7 +384,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
           activeOpacity={0.7}
         >
           <View style={[styles.menuIconBox, { backgroundColor: '#EEF2FF' }]}>
-            <Ionicons name="hardware-chip-outline" size={16} color="#4F5278" />
+            <Ionicons name="hardware-chip-outline" size={16} color="#1D4ED8" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.menuTitle}>Test {biometrics.biometricLabel} Scanner</Text>
@@ -425,8 +425,8 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
           onPress={() => onNavigateTab('Schedule', 'followups')}
           activeOpacity={0.7}
         >
-          <View style={[styles.menuIconBox, { backgroundColor: '#EEF0F8' }]}>
-            <Ionicons name="call" size={18} color="#4F5278" />
+          <View style={[styles.menuIconBox, { backgroundColor: '#EFF6FF' }]}>
+            <Ionicons name="call" size={18} color="#1D4ED8" />
           </View>
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -449,8 +449,8 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
           }}
           activeOpacity={0.7}
         >
-          <View style={[styles.menuIconBox, { backgroundColor: '#EEF0F8' }]}>
-            <Ionicons name="megaphone" size={18} color="#4F5278" />
+          <View style={[styles.menuIconBox, { backgroundColor: '#EFF6FF' }]}>
+            <Ionicons name="megaphone" size={18} color="#1D4ED8" />
           </View>
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -473,8 +473,8 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
           }}
           activeOpacity={0.7}
         >
-          <View style={[styles.menuIconBox, { backgroundColor: '#EEF0F8' }]}>
-            <Ionicons name="notifications" size={18} color="#4F5278" />
+          <View style={[styles.menuIconBox, { backgroundColor: '#EFF6FF' }]}>
+            <Ionicons name="notifications" size={18} color="#1D4ED8" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.menuTitle}>Notification Center</Text>
@@ -504,8 +504,8 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
               onPress={() => setActiveModal('USER_MGMT')}
               activeOpacity={0.7}
             >
-              <View style={[styles.menuIconBox, { backgroundColor: '#EEF0F8' }]}>
-                <Ionicons name="people" size={18} color="#4F5278" />
+              <View style={[styles.menuIconBox, { backgroundColor: '#EFF6FF' }]}>
+                <Ionicons name="people" size={18} color="#1D4ED8" />
               </View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -749,7 +749,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
 
                         {/* User List */}
                         {loadingUsers ? (
-                          <ActivityIndicator size="small" color="#4F5278" style={{ marginVertical: 20 }} />
+                          <ActivityIndicator size="small" color="#1D4ED8" style={{ marginVertical: 20 }} />
                         ) : usersList.length === 0 ? (
                           <Text style={{ textAlign: 'center', color: '#6B7280', marginVertical: 20 }}>
                             No users found for this filter.
@@ -764,13 +764,13 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
                               .slice(0, 2);
                             const roleColor =
                               u.role === 'super_admin'
-                                ? '#4F5278'
+                                ? '#1D4ED8'
                                 : u.role === 'admin'
                                 ? '#1C64F2'
                                 : '#057A55';
                             const roleBg =
                               u.role === 'super_admin'
-                                ? '#EEF0F8'
+                                ? '#EFF6FF'
                                 : u.role === 'admin'
                                 ? '#E1EFFE'
                                 : '#DEF7EC';
@@ -852,7 +852,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
                   <View style={{ gap: 10 }}>
                     {loadingDirectives ? (
                       <View style={{ padding: 24, alignItems: 'center' }}>
-                        <ActivityIndicator size="small" color="#4F5278" />
+                        <ActivityIndicator size="small" color="#1D4ED8" />
                         <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 8 }}>Fetching directives from MongoDB Atlas...</Text>
                       </View>
                     ) : liveTasks.length === 0 && liveNotices.length === 0 ? (
@@ -887,7 +887,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
                   <View style={{ gap: 8 }}>
                     {loadingDirectives ? (
                       <View style={{ padding: 24, alignItems: 'center' }}>
-                        <ActivityIndicator size="small" color="#4F5278" />
+                        <ActivityIndicator size="small" color="#1D4ED8" />
                         <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 8 }}>Loading notification center...</Text>
                       </View>
                     ) : liveNotifs.length === 0 ? (
@@ -975,7 +975,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     marginBottom: 10,
-    elevation: 1,
+    elevation: 0,
   },
   avatarContainer: {
     position: 'relative',
@@ -1018,7 +1018,7 @@ const styles = StyleSheet.create({
   adminBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   branchRow: {
     flexDirection: 'row',
@@ -1036,7 +1036,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   sessionStatusBanner: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -1079,7 +1079,7 @@ const styles = StyleSheet.create({
   adminOnlyBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   bioPolicyBadge: {
     backgroundColor: '#DEF7EC',
@@ -1109,7 +1109,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     overflow: 'hidden',
-    elevation: 1,
+    elevation: 0,
   },
   menuItemRow: {
     flexDirection: 'row',
@@ -1137,7 +1137,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   pendingPill: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 4,
@@ -1145,7 +1145,7 @@ const styles = StyleSheet.create({
   pendingPillText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   newPill: {
     backgroundColor: '#DEF7EC',
@@ -1164,7 +1164,7 @@ const styles = StyleSheet.create({
     color: '#059669',
   },
   managePill: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 4,
@@ -1172,7 +1172,7 @@ const styles = StyleSheet.create({
   managePillText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   signOutBtn: {
     flexDirection: 'row',
@@ -1200,7 +1200,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 18,
-    elevation: 5,
+    elevation: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1225,8 +1225,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   filterChipActive: {
-    backgroundColor: '#EEF0F8',
-    borderColor: '#4F5278',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#1D4ED8',
   },
   filterChipText: {
     fontSize: 11,
@@ -1234,13 +1234,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   filterChipTextActive: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '700',
   },
   actionPillBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
@@ -1284,8 +1284,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   roleOptionActive: {
-    borderColor: '#4F5278',
-    backgroundColor: '#EEF0F8',
+    borderColor: '#1D4ED8',
+    backgroundColor: '#EFF6FF',
   },
   roleOptionText: {
     fontSize: 11,
@@ -1293,11 +1293,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   roleOptionTextActive: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '700',
   },
   primaryActionBtn: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
@@ -1395,7 +1395,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   subTabBtnActive: {
-    borderBottomColor: '#4F5278',
+    borderBottomColor: '#1D4ED8',
   },
   subTabBtnText: {
     fontSize: 12,
@@ -1403,7 +1403,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   subTabBtnTextActive: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '700',
   },
   searchInputWrapper: {
@@ -1465,7 +1465,7 @@ const styles = StyleSheet.create({
   kpiValue: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   kpiLabel: {
     fontSize: 11,
@@ -1488,7 +1488,7 @@ const styles = StyleSheet.create({
   taskKicker: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
     letterSpacing: 0.6,
   },
   taskHeadline: {

@@ -12,6 +12,7 @@ import {
   Modal as RNModal,
   SafeAreaView,
   StatusBar as RNStatusBar,
+  Image,
 } from 'react-native';
 
 const STATUSBAR_HEIGHT = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0;
@@ -85,7 +86,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setErrorMessage('');
 
     try {
-      const promptReason = `Scan ${biometrics.biometricLabel} to unlock EstateCRM for ${targetSession.user.full_name || 'Executive'}`;
+      const promptReason = `Scan ${biometrics.biometricLabel} to unlock G² Brothers CRM for ${targetSession.user.full_name || 'Executive'}`;
       const authResult = await authenticateWithBiometrics(promptReason);
 
       if (!authResult.success) {
@@ -211,13 +212,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          {/* Brand Header */}
+          {/* Official G² Brothers Luxury Real Logo Header */}
           <View style={styles.topBrandContainer}>
-            <View style={styles.logoPill}>
-              <Ionicons name="business" size={28} color="#4F5278" />
+            <View style={styles.brandLogoCard}>
+              <Image
+                source={require('../../assets/logo.png')}
+                style={styles.brandLogoImg}
+                resizeMode="contain"
+              />
             </View>
-            <Text style={styles.brandTitle}>EstateCRM</Text>
-            <Text style={styles.brandSubtitle}>Real Estate Operations Platform</Text>
           </View>
 
           {/* When a valid biometric session is present and not dismissed */}
@@ -288,7 +291,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                   onPress={() => setShowPasswordFallback(true)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="key-outline" size={14} color="#4F5278" style={{ marginRight: 4 }} />
+                  <Ionicons name="key-outline" size={14} color="#1D4ED8" style={{ marginRight: 4 }} />
                   <Text style={styles.bioSubActionText}>Use Password</Text>
                 </TouchableOpacity>
 
@@ -329,7 +332,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                   <Ionicons
                     name={biometrics.biometricType === 'FaceID' ? 'scan-outline' : 'finger-print-outline'}
                     size={16}
-                    color="#4F5278"
+                    color="#1D4ED8"
                     style={{ marginRight: 6 }}
                   />
                   <Text style={styles.returnToBioPillText}>
@@ -553,16 +556,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F7F8FC',
+    backgroundColor: '#F8FAFC',
     paddingTop: STATUSBAR_HEIGHT,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F7F8FC',
+    backgroundColor: '#F8FAFC',
   },
   scrollContent: {
     padding: 20,
-    paddingTop: 40,
+    paddingTop: 36,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100%',
@@ -571,33 +574,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
-  logoPill: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+  brandLogoCard: {
+    width: 250,
+    height: 125,
+    backgroundColor: '#020912',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#1E293B',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#EEF0F8',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 8,
+    overflow: 'hidden',
   },
-  brandTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#1F2937',
-    letterSpacing: -0.5,
-  },
-  brandSubtitle: {
-    fontSize: 12.5,
-    fontWeight: '500',
-    color: '#6B7280',
-    marginTop: 4,
+  brandLogoImg: {
+    width: 235,
+    height: 115,
   },
   card: {
     width: '100%',
@@ -606,12 +596,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 12,
+    borderColor: '#E2E8F0',
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 0,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -622,22 +612,22 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1F2937',
+    color: '#0F172A',
   },
   cardSubtitle: {
     fontSize: 11.5,
     fontWeight: '500',
-    color: '#6B7280',
+    color: '#64748B',
     marginTop: 2,
   },
   bioProfileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC',
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
     marginBottom: 18,
     gap: 12,
   },
@@ -645,7 +635,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -657,10 +647,10 @@ const styles = StyleSheet.create({
   bioProfileName: {
     fontSize: 14.5,
     fontWeight: '800',
-    color: '#1F2937',
+    color: '#0F172A',
   },
   bioRoleBadge: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -668,24 +658,21 @@ const styles = StyleSheet.create({
   bioRoleBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   bioProfileEmail: {
     fontSize: 12,
-    color: '#6B7280',
+    color: '#64748B',
     marginTop: 2,
   },
   bioUnlockBtn: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     borderRadius: 12,
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 2,
-    shadowColor: '#4F5278',
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   bioUnlockBtnText: {
     color: '#FFFFFF',
@@ -700,7 +687,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: '#F1F5F9',
   },
   bioSubActionBtn: {
     flexDirection: 'row',
@@ -711,24 +698,24 @@ const styles = StyleSheet.create({
   bioSubActionText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   returnToBioPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#D8DBEB',
+    borderColor: '#BFDBFE',
   },
   returnToBioPillText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   secureBadge: {
     flexDirection: 'row',
@@ -791,7 +778,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   loginBtn: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     borderRadius: 10,
     height: 46,
     alignItems: 'center',
@@ -814,7 +801,7 @@ const styles = StyleSheet.create({
   },
   forgotBtnText: {
     fontSize: 12,
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '600',
   },
   securityFooter: {
@@ -841,7 +828,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
-    elevation: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    elevation: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -872,8 +861,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   reasonChipActive: {
-    backgroundColor: '#EEF0F8',
-    borderColor: '#4F5278',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#1D4ED8',
   },
   reasonChipText: {
     fontSize: 11,
@@ -881,7 +870,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   reasonChipTextActive: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '700',
   },
   modalFooter: {
@@ -907,7 +896,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     borderRadius: 8,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     alignItems: 'center',
     justifyContent: 'center',
   },

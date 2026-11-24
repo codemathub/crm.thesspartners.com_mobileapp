@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -471,7 +471,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
             <TouchableOpacity
               style={[
                 styles.sortBtn,
-                sortBy !== 'newest' && { backgroundColor: '#EEF0F8', borderColor: '#4F5278', borderWidth: 1 },
+                sortBy !== 'newest' && { backgroundColor: '#EFF6FF', borderColor: '#1D4ED8', borderWidth: 1 },
               ]}
               onPress={() => setSortModalVisible(true)}
               activeOpacity={0.7}
@@ -479,7 +479,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
               <Ionicons
                 name="swap-vertical"
                 size={18}
-                color={sortBy !== 'newest' ? '#4F5278' : themeTokens.colors.textPrimary}
+                color={sortBy !== 'newest' ? '#1D4ED8' : themeTokens.colors.textPrimary}
               />
             </TouchableOpacity>
           </View>
@@ -496,7 +496,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
             onSubmitEditing={fetchDirectory}
             placeholderTextColor="#9CA3AF"
           />
-          {searchLoading && <ActivityIndicator size="small" color="#4F5278" style={{ marginRight: 4 }} />}
+          {searchLoading && <ActivityIndicator size="small" color="#1D4ED8" style={{ marginRight: 4 }} />}
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => handleSearchTextChange('')}>
               <Ionicons name="close-circle" size={16} color="#9CA3AF" />
@@ -534,7 +534,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
               activeOpacity={0.7}
             >
               <View style={styles.liveSuggestionIconBox}>
-                <Ionicons name={sug.entity_type === 'customer' ? 'person' : 'search'} size={14} color="#4F5278" />
+                <Ionicons name={sug.entity_type === 'customer' ? 'person' : 'search'} size={14} color="#1D4ED8" />
               </View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -544,14 +544,14 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                   <View
                     style={[
                       styles.badgePillSmall,
-                      { backgroundColor: sug.badge.toUpperCase() === 'HOT' ? '#FDE8E8' : '#EEF0F8' },
+                      { backgroundColor: sug.badge.toUpperCase() === 'HOT' ? '#FDE8E8' : '#EFF6FF' },
                     ]}
                   >
                     <Text
                       style={{
                         fontSize: 9,
                         fontWeight: '700',
-                        color: sug.badge.toUpperCase() === 'HOT' ? '#9B1C1C' : '#4F5278',
+                        color: sug.badge.toUpperCase() === 'HOT' ? '#9B1C1C' : '#1D4ED8',
                       }}
                     >
                       {sug.badge}
@@ -773,7 +773,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
 
                     {cust.enquiriesList.length > 0 && (
                       <TouchableOpacity
-                        style={[styles.actionPillBtn, { backgroundColor: '#EEF0F8' }]}
+                        style={[styles.actionPillBtn, { backgroundColor: '#EFF6FF' }]}
                         onPress={() => openMatchesModal(cust.enquiriesList[0])}
                       >
                         <Ionicons name="business-outline" size={13} color={themeTokens.colors.primaryDark} style={{ marginRight: 4 }} />
@@ -1018,7 +1018,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                   onPress={() => setSocietyModalVisible(true)}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                    <Ionicons name="business-outline" size={16} color="#4F5278" />
+                    <Ionicons name="business-outline" size={16} color="#1D4ED8" />
                     <Text style={styles.dropdownSelectorText}>
                       {preferredSocietyName || 'Select Preferred Society'}
                     </Text>
@@ -1744,7 +1744,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                     <Ionicons
                       name={s.icon as any}
                       size={16}
-                      color={sortBy === s.id ? '#4F5278' : '#6B7280'}
+                      color={sortBy === s.id ? '#1D4ED8' : '#6B7280'}
                       style={{ marginRight: 8 }}
                     />
                     <Text style={[styles.sortOptionText, sortBy === s.id && styles.sortOptionTextActive]}>
@@ -1828,8 +1828,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   filterChipActive: {
-    backgroundColor: '#4F5278', // Stitch primary dark slate
-    borderColor: '#4F5278',
+    backgroundColor: '#1D4ED8', // Stitch primary dark slate
+    borderColor: '#1D4ED8',
   },
   filterChipText: {
     fontSize: 11,
@@ -1907,11 +1907,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     marginBottom: 12,
-    shadowColor: '#292A3A',
-    shadowOpacity: 0.04,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 0,
+    elevation: 0,
   },
   customerHeaderRow: {
     flexDirection: 'row',
@@ -1930,7 +1930,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   customerName: {
     fontSize: 15,
@@ -1996,7 +1996,7 @@ const styles = StyleSheet.create({
   enqCountText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
     letterSpacing: 0.6,
   },
   matchScoreText: {
@@ -2024,7 +2024,7 @@ const styles = StyleSheet.create({
   enquiryIdText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   visitScheduledBadge: {
     backgroundColor: '#EBEBF7',
@@ -2035,7 +2035,7 @@ const styles = StyleSheet.create({
   visitScheduledBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   enquiryReqText: {
     fontSize: 13,
@@ -2069,7 +2069,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF0F8', // Soft lavender
+    backgroundColor: '#EFF6FF', // Soft lavender
     paddingVertical: 7,
     paddingHorizontal: 4,
     borderRadius: 8,
@@ -2084,7 +2084,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2094,15 +2094,15 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 22,
-    shadowColor: '#4F5278',
-    shadowOpacity: 0.3,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6,
-    elevation: 4,
+    shadowRadius: 0,
+    elevation: 0,
   },
   fabBtnText: {
     fontSize: 13,
@@ -2119,7 +2119,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 18,
-    elevation: 5,
+    elevation: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -2161,8 +2161,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   duplicateActionBtnActive: {
-    backgroundColor: '#4F5278',
-    borderColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
+    borderColor: '#1D4ED8',
   },
   duplicateActionText: {
     fontSize: 11,
@@ -2176,7 +2176,7 @@ const styles = StyleSheet.create({
   sectionHeadingText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -2206,8 +2206,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   chipOptionActive: {
-    backgroundColor: '#4F5278',
-    borderColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
+    borderColor: '#1D4ED8',
   },
   chipOptionText: {
     fontSize: 11,
@@ -2236,8 +2236,8 @@ const styles = StyleSheet.create({
     borderColor: '#F59E0B',
   },
   priorityPillColdActive: {
-    backgroundColor: '#EEF0F8',
-    borderColor: '#4F5278',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#1D4ED8',
   },
   priorityPillText: {
     fontSize: 11,
@@ -2276,7 +2276,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   segmentBtnActive: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
   },
   segmentBtnText: {
     fontSize: 12,
@@ -2309,7 +2309,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2338,7 +2338,7 @@ const styles = StyleSheet.create({
     color: '#03543F',
   },
   matchTagPill: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -2346,7 +2346,7 @@ const styles = StyleSheet.create({
   matchTagText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   societyListItem: {
     flexDirection: 'row',
@@ -2421,17 +2421,17 @@ const styles = StyleSheet.create({
   liveSuggestionsDropdown: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#4F5278',
+    borderColor: '#1D4ED8',
     borderRadius: 10,
     marginHorizontal: 16,
     marginTop: -4,
     marginBottom: 8,
     maxHeight: 240,
-    elevation: 8,
-    shadowColor: '#000',
+    elevation: 0,
+    shadowColor: 'transparent',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowOpacity: 0,
+    shadowRadius: 0,
     zIndex: 999,
   },
   liveSuggestionsHeader: {
@@ -2496,8 +2496,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   sortOptionRowActive: {
-    borderColor: '#4F5278',
-    backgroundColor: '#EEF0F8',
+    borderColor: '#1D4ED8',
+    backgroundColor: '#EFF6FF',
   },
   sortOptionText: {
     fontSize: 13,
@@ -2505,7 +2505,7 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   sortOptionTextActive: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '800',
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -113,7 +113,7 @@ export const AutocompleteIdInput: React.FC<AutocompleteIdInputProps> = ({
     if (b === 'AVAILABLE' || b === 'HOT' || b === 'ACTIVE') return { bg: '#DEF7EC', text: '#03543F' };
     if (b === 'RENTED' || b === 'SOLD' || b === 'CLOSED') return { bg: '#FDE8E8', text: '#9B1C1C' };
     if (b === 'UNDER_NEGOTIATION' || b === 'WARM') return { bg: '#FEF08A', text: '#854D0E' };
-    return { bg: '#EEF0F8', text: '#4F5278' };
+    return { bg: '#EFF6FF', text: '#1D4ED8' };
   };
 
   return (
@@ -202,7 +202,7 @@ export const AutocompleteIdInput: React.FC<AutocompleteIdInputProps> = ({
                 activeOpacity={0.7}
               >
                 <View style={styles.suggestionIconBox}>
-                  <Ionicons name={getEntityIcon(item.entity_type)} size={14} color="#4F5278" />
+                  <Ionicons name={getEntityIcon(item.entity_type)} size={14} color="#1D4ED8" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     height: 42,
   },
   inputBoxOpen: {
-    borderColor: '#4F5278',
+    borderColor: '#1D4ED8',
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
   },
@@ -303,19 +303,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderTopWidth: 0,
-    borderColor: '#4F5278',
+    borderColor: '#1D4ED8',
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
     maxHeight: 220,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: 'transparent',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 6,
+        shadowOpacity: 0,
+        shadowRadius: 0,
       },
       android: {
-        elevation: 6,
+        elevation: 0,
       },
     }),
   },

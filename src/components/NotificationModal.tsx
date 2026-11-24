@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -195,7 +195,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
               <Ionicons
                 name="flash"
                 size={12}
-                color={activeFilter === 'SLAS' ? '#4F5278' : '#6B7280'}
+                color={activeFilter === 'SLAS' ? '#1D4ED8' : '#6B7280'}
               />
               <Text style={[styles.filterPillText, activeFilter === 'SLAS' && styles.filterPillTextActive]}>
                 Lead SLAs
@@ -209,7 +209,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
               <Ionicons
                 name="calendar"
                 size={12}
-                color={activeFilter === 'VISITS' ? '#4F5278' : '#6B7280'}
+                color={activeFilter === 'VISITS' ? '#1D4ED8' : '#6B7280'}
               />
               <Text style={[styles.filterPillText, activeFilter === 'VISITS' && styles.filterPillTextActive]}>
                 Visits
@@ -223,7 +223,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
               <Ionicons
                 name="megaphone"
                 size={12}
-                color={activeFilter === 'ANNOUNCEMENTS' ? '#4F5278' : '#6B7280'}
+                color={activeFilter === 'ANNOUNCEMENTS' ? '#1D4ED8' : '#6B7280'}
               />
               <Text style={[styles.filterPillText, activeFilter === 'ANNOUNCEMENTS' && styles.filterPillTextActive]}>
                 Announcements
@@ -240,7 +240,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           >
             {loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#4F5278" />
+                <ActivityIndicator size="small" color="#1D4ED8" />
                 <Text style={styles.loadingText}>Fetching live notifications...</Text>
               </View>
             ) : (
@@ -328,7 +328,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                           style={styles.secondaryActionBtn}
                           onPress={() => handleNavigate(`${v.property_society} ${v.property_location}`)}
                         >
-                          <Ionicons name="navigate-outline" size={14} color="#4F5278" />
+                          <Ionicons name="navigate-outline" size={14} color="#1D4ED8" />
                           <Text style={styles.secondaryActionBtnText}>Navigate</Text>
                         </TouchableOpacity>
                       </View>
@@ -374,8 +374,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                       onPress={() => handleMarkNotifRead(item.id)}
                     >
                       <View style={styles.cardHeader}>
-                        <View style={[styles.cardTypeIcon, { backgroundColor: '#EEF0F8' }]}>
-                          <Ionicons name="notifications" size={14} color="#4F5278" />
+                        <View style={[styles.cardTypeIcon, { backgroundColor: '#EFF6FF' }]}>
+                          <Ionicons name="notifications" size={14} color="#1D4ED8" />
                         </View>
                         <View style={{ flex: 1 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -407,7 +407,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
 
                 {/* SUBTLE SYSTEM FOOTER HINT */}
                 <View style={styles.systemPushNotice}>
-                  <Ionicons name="shield-checkmark" size={14} color="#4F5278" />
+                  <Ionicons name="shield-checkmark" size={14} color="#1D4ED8" />
                   <Text style={styles.systemPushText}>
                     Background push notifications active • Alerts trigger even when EstateCRM is minimized.
                   </Text>
@@ -433,11 +433,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     maxHeight: '92%',
     minHeight: '65%',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: -4 },
-    shadowRadius: 12,
-    elevation: 8,
+    shadowRadius: 0,
+    elevation: 0,
   },
   dragHandleBar: {
     width: 36,
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   countBadge: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
   countBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   clearBtn: {
     paddingHorizontal: 8,
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
   clearBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   closeBtn: {
     width: 32,
@@ -526,9 +526,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
   },
   filterPillActive: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: '#4F5278',
+    borderColor: '#1D4ED8',
   },
   filterPillText: {
     fontSize: 12,
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   filterPillTextActive: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '800',
   },
   alertsScrollView: {
@@ -561,11 +561,11 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 1,
+    shadowRadius: 0,
+    elevation: 0,
   },
   alertCardPriority: {
     borderColor: '#FECACA',
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
   },
   alertCardUnread: {
     borderLeftWidth: 4,
-    borderLeftColor: '#4F5278',
+    borderLeftColor: '#1D4ED8',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
   secondaryActionBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   callActionBtn: {
     flexDirection: 'row',

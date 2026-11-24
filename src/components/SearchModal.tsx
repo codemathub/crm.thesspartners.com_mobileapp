@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -122,7 +122,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
               style={styles.headerCircleBtn}
               onPress={() => setFilterDrawerOpen((prev) => !prev)}
             >
-              <Ionicons name="funnel-outline" size={16} color="#4F5278" />
+              <Ionicons name="funnel-outline" size={16} color="#1D4ED8" />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -130,7 +130,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
               onPress={onOpenNotifications || onClose}
             >
               <View style={styles.badgeDot} />
-              <Ionicons name="notifications-outline" size={16} color="#4F5278" />
+              <Ionicons name="notifications-outline" size={16} color="#1D4ED8" />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.avatarCircle} onPress={onClose}>
@@ -148,7 +148,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           {/* Main Search Input Bar with Filter Button */}
           <View style={styles.searchBarContainer}>
             <View style={styles.searchBox}>
-              <Ionicons name="search" size={17} color="#4F5278" style={{ marginRight: 8 }} />
+              <Ionicons name="search" size={17} color="#1D4ED8" style={{ marginRight: 8 }} />
               <TextInput
                 style={styles.searchInput}
                 value={query}
@@ -168,7 +168,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
               style={[styles.filterActionBtn, filterDrawerOpen && styles.filterActionBtnActive]}
               onPress={() => setFilterDrawerOpen((prev) => !prev)}
             >
-              <Ionicons name="options-outline" size={18} color="#4F5278" />
+              <Ionicons name="options-outline" size={18} color="#1D4ED8" />
             </TouchableOpacity>
           </View>
 
@@ -220,7 +220,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                   <View key={item} style={styles.criteriaChip}>
                     <Text style={styles.criteriaChipText}>{item}</Text>
                     <TouchableOpacity onPress={() => handleRemoveCriterion(item)} style={{ paddingLeft: 4 }}>
-                      <Ionicons name="close" size={13} color="#4F5278" />
+                      <Ionicons name="close" size={13} color="#1D4ED8" />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -259,7 +259,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           {/* Dynamic Search Results State */}
           {loading ? (
             <View style={{ padding: 40, alignItems: 'center' }}>
-              <ActivityIndicator size="small" color="#4F5278" />
+              <ActivityIndicator size="small" color="#1D4ED8" />
               <Text style={{ fontSize: 13, color: '#6B7280', marginTop: 10 }}>Searching MongoDB Atlas...</Text>
             </View>
           ) : results.length > 0 ? (
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF0F8',
+    borderBottomColor: '#EFF6FF',
   },
   brandRow: {
     flexDirection: 'row',
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 7,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -465,14 +465,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E0E3F3',
   },
   filterActionBtnActive: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
   },
   scopeRow: {
     flexDirection: 'row',
@@ -488,8 +488,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   scopePillActive: {
-    backgroundColor: '#4F5278',
-    borderColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
+    borderColor: '#1D4ED8',
   },
   scopePillText: {
     fontSize: 12,
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
   criteriaChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
   criteriaChipText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   recentQueriesBox: {
     backgroundColor: '#FFFFFF',
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   clearAllText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   recentPillsRow: {
     flexDirection: 'row',
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   matcherBanner: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     borderRadius: 12,
     padding: 12,
     marginBottom: 14,
@@ -585,11 +585,11 @@ const styles = StyleSheet.create({
   matcherTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   matcherDesc: {
     fontSize: 11,
-    color: '#4F5278',
+    color: '#1D4ED8',
     lineHeight: 16,
     fontWeight: '500',
   },
@@ -617,11 +617,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 0,
+    elevation: 0,
   },
   cardTagsRow: {
     flexDirection: 'row',
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   rentTag: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 5,
@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
   rentTagText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   availablePill: {
     backgroundColor: '#ECFDF5',
@@ -722,7 +722,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   attrBadge: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
   attrBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   actionBtnsRow: {
     flexDirection: 'row',
@@ -738,7 +738,7 @@ const styles = StyleSheet.create({
   },
   viewPropertyBtn: {
     flex: 1,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -755,7 +755,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 8,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -766,11 +766,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 0,
+    elevation: 0,
   },
   leadHeaderRow: {
     flexDirection: 'row',
@@ -782,14 +782,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   leadAvatarText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   leadName: {
     fontSize: 14,
@@ -857,7 +857,7 @@ const styles = StyleSheet.create({
   },
   mapLeadBtn: {
     flex: 1,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -866,12 +866,12 @@ const styles = StyleSheet.create({
     height: 38,
   },
   mapLeadBtnActive: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
   },
   mapLeadBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   mapLeadBtnTextActive: {
     color: '#FFFFFF',
@@ -897,7 +897,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   extraResultBadge: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -905,7 +905,7 @@ const styles = StyleSheet.create({
   extraResultBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   commercialFallbackBox: {
     backgroundColor: '#F9FAFB',
@@ -951,6 +951,6 @@ const styles = StyleSheet.create({
   resetFilterBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -391,7 +391,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
             onSubmitEditing={fetchProperties}
             placeholderTextColor="#9CA3AF"
           />
-          {searchLoading && <ActivityIndicator size="small" color="#4F5278" style={{ marginRight: 4 }} />}
+          {searchLoading && <ActivityIndicator size="small" color="#1D4ED8" style={{ marginRight: 4 }} />}
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => handleSearchTextChange('')}>
               <Ionicons name="close-circle" size={16} color="#9CA3AF" />
@@ -399,23 +399,23 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
           )}
         </View>
         <TouchableOpacity
-          style={[styles.iconBtn, (filterBhk !== 'All' || filterPriceRange !== 'All') && { backgroundColor: '#EEF0F8', borderColor: '#4F5278' }]}
+          style={[styles.iconBtn, (filterBhk !== 'All' || filterPriceRange !== 'All') && { backgroundColor: '#EFF6FF', borderColor: '#1D4ED8' }]}
           onPress={() => setFilterModalVisible(true)}
         >
           <Ionicons
             name="options-outline"
             size={18}
-            color={filterBhk !== 'All' || filterPriceRange !== 'All' ? '#4F5278' : themeTokens.colors.textPrimary}
+            color={filterBhk !== 'All' || filterPriceRange !== 'All' ? '#1D4ED8' : themeTokens.colors.textPrimary}
           />
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.iconBtn, sortBy !== 'newest' && { backgroundColor: '#EEF0F8', borderColor: '#4F5278' }]}
+          style={[styles.iconBtn, sortBy !== 'newest' && { backgroundColor: '#EFF6FF', borderColor: '#1D4ED8' }]}
           onPress={() => setSortModalVisible(true)}
         >
           <Ionicons
             name="swap-vertical"
             size={18}
-            color={sortBy !== 'newest' ? '#4F5278' : themeTokens.colors.textPrimary}
+            color={sortBy !== 'newest' ? '#1D4ED8' : themeTokens.colors.textPrimary}
           />
         </TouchableOpacity>
       </View>
@@ -448,7 +448,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
               activeOpacity={0.7}
             >
               <View style={styles.liveSuggestionIconBox}>
-                <Ionicons name="home" size={14} color="#4F5278" />
+                <Ionicons name="home" size={14} color="#1D4ED8" />
               </View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -559,7 +559,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
                         styles.statusBadgeText,
                         {
                           color:
-                            item.status === 'available' ? '#03543F' : item.status === 'rented' ? '#4F5278' : '#9B1C1C',
+                            item.status === 'available' ? '#03543F' : item.status === 'rented' ? '#1D4ED8' : '#9B1C1C',
                         },
                       ]}
                     >
@@ -759,7 +759,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
                   onPress={() => setSocietyModalVisible(true)}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                    <Ionicons name="business-outline" size={16} color="#4F5278" />
+                    <Ionicons name="business-outline" size={16} color="#1D4ED8" />
                     <Text style={styles.dropdownSelectorText}>
                       {formSocietyName || formSocietyId || 'Select Society from Master List'}
                     </Text>
@@ -855,7 +855,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
                   <Ionicons
                     name={formNegotiable ? 'checkbox' : 'square-outline'}
                     size={18}
-                    color="#4F5278"
+                    color="#1D4ED8"
                   />
                   <Text style={styles.checkboxLabel}>Price is Negotiable</Text>
                 </TouchableOpacity>
@@ -867,7 +867,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
                     style={styles.addChargeSmallBtn}
                     onPress={() => setShowAddChargeModal(true)}
                   >
-                    <Ionicons name="add" size={14} color="#4F5278" />
+                    <Ionicons name="add" size={14} color="#1D4ED8" />
                     <Text style={styles.addChargeSmallBtnText}>Add Charge</Text>
                   </TouchableOpacity>
                 </View>
@@ -1279,7 +1279,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
                       setSortModalVisible(false);
                     }}
                   >
-                    <Ionicons name={s.icon as any} size={16} color={sortBy === s.id ? '#4F5278' : '#6B7280'} style={{ marginRight: 8 }} />
+                    <Ionicons name={s.icon as any} size={16} color={sortBy === s.id ? '#1D4ED8' : '#6B7280'} style={{ marginRight: 8 }} />
                     <Text style={[styles.sortOptionText, sortBy === s.id && styles.sortOptionTextActive]}>
                       {s.label}
                     </Text>
@@ -1349,8 +1349,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   filterChipActive: {
-    backgroundColor: '#4F5278', // Stitch primary
-    borderColor: '#4F5278',
+    backgroundColor: '#1D4ED8', // Stitch primary
+    borderColor: '#1D4ED8',
   },
   filterChipText: {
     fontSize: 11,
@@ -1398,11 +1398,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     marginBottom: 12,
-    shadowColor: '#292A3A',
-    shadowOpacity: 0.04,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 0,
+    elevation: 0,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -1432,7 +1432,7 @@ const styles = StyleSheet.create({
   },
   transactionBadge: {
     marginLeft: 'auto',
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -1440,7 +1440,7 @@ const styles = StyleSheet.create({
   transactionBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   propertyTitle: {
     fontSize: 15,
@@ -1504,7 +1504,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4F5278', // Stitch primary dark slate
+    backgroundColor: '#1D4ED8', // Stitch primary dark slate
     paddingVertical: 8,
     borderRadius: 8,
   },
@@ -1517,7 +1517,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 8,
-    backgroundColor: '#EEF0F8', // Soft lavender
+    backgroundColor: '#EFF6FF', // Soft lavender
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1527,15 +1527,15 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 22,
-    shadowColor: '#4F5278',
-    shadowOpacity: 0.3,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6,
-    elevation: 4,
+    shadowRadius: 0,
+    elevation: 0,
   },
   fabBtnText: {
     fontSize: 13,
@@ -1552,7 +1552,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 18,
-    elevation: 5,
+    elevation: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1641,7 +1641,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   segmentBtnActive: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
   },
   segmentBtnText: {
     fontSize: 12,
@@ -1674,7 +1674,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     alignItems: 'center',
   },
   modalSubmitBtnText: {
@@ -1685,7 +1685,7 @@ const styles = StyleSheet.create({
   sectionHeadingText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1699,8 +1699,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   chipOptionActive: {
-    backgroundColor: '#4F5278',
-    borderColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
+    borderColor: '#1D4ED8',
   },
   chipOptionText: {
     fontSize: 11,
@@ -1753,12 +1753,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
   },
   addChargeSmallBtnText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   chargeItemCard: {
     flexDirection: 'row',
@@ -1801,23 +1801,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 18,
-    elevation: 5,
+    elevation: 0,
     alignSelf: 'center',
   },
   liveSuggestionsDropdown: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#4F5278',
+    borderColor: '#1D4ED8',
     borderRadius: 10,
     marginHorizontal: 16,
     marginTop: -4,
     marginBottom: 8,
     maxHeight: 240,
-    elevation: 8,
-    shadowColor: '#000',
+    elevation: 0,
+    shadowColor: 'transparent',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowOpacity: 0,
+    shadowRadius: 0,
     zIndex: 999,
   },
   liveSuggestionsHeader: {
@@ -1880,8 +1880,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   filterModalChipActive: {
-    backgroundColor: '#EEF0F8',
-    borderColor: '#4F5278',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#1D4ED8',
   },
   filterModalChipText: {
     fontSize: 12,
@@ -1889,7 +1889,7 @@ const styles = StyleSheet.create({
     color: '#4B5563',
   },
   filterModalChipTextActive: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '800',
   },
   sortOptionRow: {
@@ -1903,8 +1903,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   sortOptionRowActive: {
-    borderColor: '#4F5278',
-    backgroundColor: '#EEF0F8',
+    borderColor: '#1D4ED8',
+    backgroundColor: '#EFF6FF',
   },
   sortOptionText: {
     fontSize: 13,
@@ -1912,7 +1912,7 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   sortOptionTextActive: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '800',
   },
 });

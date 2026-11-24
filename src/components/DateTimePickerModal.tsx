@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -223,7 +223,7 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                 <Ionicons
                   name="calendar-outline"
                   size={16}
-                  color={activeTab === 'date' ? '#4F5278' : '#6B7280'}
+                  color={activeTab === 'date' ? '#1D4ED8' : '#6B7280'}
                   style={{ marginRight: 6 }}
                 />
                 <Text style={[styles.tabItemText, activeTab === 'date' && styles.tabItemTextActive]}>
@@ -238,7 +238,7 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                 <Ionicons
                   name="time-outline"
                   size={16}
-                  color={activeTab === 'time' ? '#4F5278' : '#6B7280'}
+                  color={activeTab === 'time' ? '#1D4ED8' : '#6B7280'}
                   style={{ marginRight: 6 }}
                 />
                 <Text style={[styles.tabItemText, activeTab === 'time' && styles.tabItemTextActive]}>
@@ -268,8 +268,8 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                       <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(-30, 11, 0)}>
                         <Text style={styles.presetText}>30d Ago</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={[styles.presetChip, { backgroundColor: '#EEF2FF', borderColor: '#4F5278' }]} onPress={() => applyPreset(-45, 11, 0)}>
-                        <Text style={[styles.presetText, { color: '#4F5278', fontWeight: '800' }]}>45d Ago</Text>
+                      <TouchableOpacity style={[styles.presetChip, { backgroundColor: '#EEF2FF', borderColor: '#1D4ED8' }]} onPress={() => applyPreset(-45, 11, 0)}>
+                        <Text style={[styles.presetText, { color: '#1D4ED8', fontWeight: '800' }]}>45d Ago</Text>
                       </TouchableOpacity>
                       <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(-60, 11, 0)}>
                         <Text style={styles.presetText}>60d Ago</Text>
@@ -401,14 +401,14 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                         style={styles.stepperBtn}
                         onPress={() => setSelectedHour((prev) => (prev <= 1 ? 12 : prev - 1))}
                       >
-                        <Ionicons name="remove" size={16} color="#4F5278" />
+                        <Ionicons name="remove" size={16} color="#1D4ED8" />
                       </TouchableOpacity>
                       <Text style={styles.stepperVal}>{selectedHour.toString().padStart(2, '0')}</Text>
                       <TouchableOpacity
                         style={styles.stepperBtn}
                         onPress={() => setSelectedHour((prev) => (prev >= 12 ? 1 : prev + 1))}
                       >
-                        <Ionicons name="add" size={16} color="#4F5278" />
+                        <Ionicons name="add" size={16} color="#1D4ED8" />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -423,14 +423,14 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
                         style={styles.stepperBtn}
                         onPress={() => setSelectedMinute((prev) => (prev <= 0 ? 45 : prev - 15))}
                       >
-                        <Ionicons name="remove" size={16} color="#4F5278" />
+                        <Ionicons name="remove" size={16} color="#1D4ED8" />
                       </TouchableOpacity>
                       <Text style={styles.stepperVal}>{selectedMinute.toString().padStart(2, '0')}</Text>
                       <TouchableOpacity
                         style={styles.stepperBtn}
                         onPress={() => setSelectedMinute((prev) => (prev >= 45 ? 0 : prev + 15))}
                       >
-                        <Ionicons name="add" size={16} color="#4F5278" />
+                        <Ionicons name="add" size={16} color="#1D4ED8" />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -552,7 +552,7 @@ export const DateTimePickerField: React.FC<DateTimePickerFieldProps> = ({
         <Ionicons
           name="calendar"
           size={18}
-          color={displayLabel ? '#4F5278' : '#9CA3AF'}
+          color={displayLabel ? '#1D4ED8' : '#9CA3AF'}
           style={{ marginRight: 8 }}
         />
         <Text style={[styles.inputText, !displayLabel && styles.placeholderText]}>
@@ -602,11 +602,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 18,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 16,
-    elevation: 8,
+    shadowRadius: 0,
+    elevation: 0,
   },
   headerRow: {
     flexDirection: 'row',
@@ -644,11 +644,11 @@ const styles = StyleSheet.create({
   },
   tabItemActive: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 2,
-    elevation: 1,
+    shadowRadius: 0,
+    elevation: 0,
   },
   tabItemText: {
     fontSize: 12,
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   tabItemTextActive: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '800',
   },
   presetsRow: {
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
   },
   presetChip: {
     flex: 1,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingVertical: 6,
     borderRadius: 6,
     alignItems: 'center',
@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
   presetText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   monthNavRow: {
     flexDirection: 'row',
@@ -730,10 +730,10 @@ const styles = StyleSheet.create({
   },
   dayCellToday: {
     borderWidth: 1.5,
-    borderColor: '#4F5278',
+    borderColor: '#1D4ED8',
   },
   dayCellSelected: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
   },
   dayCellDisabled: {
     opacity: 0.25,
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
   dayTextToday: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '800',
   },
   dayTextSelected: {
@@ -776,8 +776,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   timeSlotChipActive: {
-    backgroundColor: '#EEF0F8',
-    borderColor: '#4F5278',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#1D4ED8',
   },
   timeSlotText: {
     fontSize: 11.5,
@@ -785,7 +785,7 @@ const styles = StyleSheet.create({
     color: '#4B5563',
   },
   timeSlotTextActive: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontWeight: '800',
   },
   customTimeBox: {
@@ -835,7 +835,7 @@ const styles = StyleSheet.create({
   timeColon: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#4F5278',
+    color: '#1D4ED8',
     marginTop: 12,
   },
   ampmBox: {
@@ -852,7 +852,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   ampmBtnActive: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
   },
   ampmBtnText: {
     fontSize: 11,
@@ -899,7 +899,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 11,
     borderRadius: 8,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
   },
   confirmBtnText: {
     fontSize: 13,
@@ -927,7 +927,7 @@ const styles = StyleSheet.create({
     height: 44,
   },
   inputBoxFilled: {
-    borderColor: '#4F5278',
+    borderColor: '#1D4ED8',
     backgroundColor: '#FAF5FF',
   },
   inputText: {

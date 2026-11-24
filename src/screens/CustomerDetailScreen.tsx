@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -1337,7 +1337,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
               {/* Customer Info Row */}
               {customer && (
                 <View style={styles.scheduleCustRow}>
-                  <Ionicons name="person-circle-outline" size={18} color="#4F5278" />
+                  <Ionicons name="person-circle-outline" size={18} color="#1D4ED8" />
                   <Text style={styles.scheduleCustText}>
                     Client: <Text style={{ fontWeight: '700', color: '#1E293B' }}>{customer.name}</Text> ({customer.primary_phone})
                   </Text>
@@ -1371,10 +1371,10 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                       <Ionicons
                         name={scheduleSelectedEnquiryId === e.enquiry_id ? 'radio-button-on' : 'radio-button-off'}
                         size={16}
-                        color={scheduleSelectedEnquiryId === e.enquiry_id ? '#4F5278' : '#94A3B8'}
+                        color={scheduleSelectedEnquiryId === e.enquiry_id ? '#1D4ED8' : '#94A3B8'}
                       />
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.enqSelectId, scheduleSelectedEnquiryId === e.enquiry_id && { color: '#4F5278' }]}>
+                        <Text style={[styles.enqSelectId, scheduleSelectedEnquiryId === e.enquiry_id && { color: '#1D4ED8' }]}>
                           #{e.enquiry_id} • {e.transaction_type?.toUpperCase()}
                         </Text>
                         <Text style={styles.enqSelectDesc} numberOfLines={1}>
@@ -2078,7 +2078,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   kpiCardActive: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     borderRadius: 8,
   },
   kpiNumberActive: {
@@ -2313,7 +2313,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
@@ -2884,7 +2884,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   enqSelectPillActive: {
-    borderColor: '#4F5278',
+    borderColor: '#1D4ED8',
     backgroundColor: '#F8FAFC',
   },
   enqSelectId: {
@@ -2946,7 +2946,7 @@ const styles = StyleSheet.create({
     color: '#03543F',
   },
   matchTagPill: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -2954,7 +2954,7 @@ const styles = StyleSheet.create({
   matchTagText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   closeModalBtn: {
     backgroundColor: '#F3F4F6',

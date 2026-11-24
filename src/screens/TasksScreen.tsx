@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -184,7 +184,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
           <View style={styles.branchNoticeCard}>
             <View style={styles.noticeHeaderRow}>
               <View style={styles.noticeIconBox}>
-                <Ionicons name="megaphone" size={16} color="#4F5278" />
+                <Ionicons name="megaphone" size={16} color="#1D4ED8" />
               </View>
               <View style={{ flex: 1 }}>
                 <View style={styles.noticeKickerRow}>
@@ -197,7 +197,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
             <Text style={styles.noticeBody}>{announcements[0].body}</Text>
             <TouchableOpacity style={styles.noticeLinkRow} onPress={() => setActiveTab('ANNOUNCEMENTS')}>
               <Text style={styles.noticeLinkText}>View All Notices</Text>
-              <Ionicons name="arrow-forward" size={13} color="#4F5278" />
+              <Ionicons name="arrow-forward" size={13} color="#1D4ED8" />
             </TouchableOpacity>
           </View>
         )}
@@ -230,7 +230,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
                   <View key={task.id} style={styles.directiveCard}>
                     {/* Top Assigned info */}
                     <View style={styles.directiveTopRow}>
-                      <Ionicons name="checkbox" size={16} color="#4F5278" />
+                      <Ionicons name="checkbox" size={16} color="#1D4ED8" />
                       <Text style={styles.assignedByText}>
                         Assigned by {task.assigned_by_name || 'Admin'}
                       </Text>
@@ -312,7 +312,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
                     {/* Lockbox Custody Tag if present */}
                     {task.lockbox_tag && (
                       <View style={styles.lockboxRow}>
-                        <Ionicons name="key-outline" size={14} color="#4F5278" />
+                        <Ionicons name="key-outline" size={14} color="#1D4ED8" />
                         <Text style={styles.lockboxText}>Lockbox Tag #{task.lockbox_tag}</Text>
                       </View>
                     )}
@@ -346,7 +346,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
                         onPress={() => setViewingTask(task)}
                         activeOpacity={0.8}
                       >
-                        <Ionicons name="information-circle-outline" size={17} color="#4F5278" style={{ marginRight: 6 }} />
+                        <Ionicons name="information-circle-outline" size={17} color="#1D4ED8" style={{ marginRight: 6 }} />
                         <Text style={styles.secondaryActionText}>View Lead Details</Text>
                       </TouchableOpacity>
                     </View>
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF0F8',
+    borderBottomColor: '#EFF6FF',
   },
   backBtn: {
     padding: 6,
@@ -567,7 +567,7 @@ const styles = StyleSheet.create({
   topBarTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   tabsRow: {
     flexDirection: 'row',
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF0F8',
+    borderBottomColor: '#EFF6FF',
     gap: 8,
   },
   tabPill: {
@@ -588,7 +588,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tabPillActive: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
   },
   tabPillText: {
     fontSize: 12,
@@ -628,13 +628,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EEF0F8',
+    borderColor: '#EFF6FF',
     gap: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 0,
+    elevation: 0,
   },
   noticeHeaderRow: {
     flexDirection: 'row',
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
   noticeKicker: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
     letterSpacing: 0.5,
   },
   noticeDate: {
@@ -684,7 +684,7 @@ const styles = StyleSheet.create({
   noticeLinkText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   // Section Header matching Stitch Image 8
   sectionHeaderRow: {
@@ -696,7 +696,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
     letterSpacing: 0.5,
   },
   liveDot: {
@@ -716,13 +716,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EEF0F8',
+    borderColor: '#EFF6FF',
     gap: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
-    elevation: 2,
+    shadowRadius: 0,
+    elevation: 0,
   },
   directiveTopRow: {
     flexDirection: 'row',
@@ -732,7 +732,7 @@ const styles = StyleSheet.create({
   assignedByText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4F5278',
+    color: '#1D4ED8',
     flex: 1,
   },
   timestampText: {
@@ -753,7 +753,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 12,
@@ -762,12 +762,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
   },
   statusPillText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   slaLabelText: {
     fontSize: 11,
@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 8,
@@ -811,7 +811,7 @@ const styles = StyleSheet.create({
   lockboxText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   actionButtonsCol: {
     gap: 8,
@@ -819,17 +819,17 @@ const styles = StyleSheet.create({
   },
   // Dark slate button matching Stitch theme
   primaryActionButton: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     height: 44,
     borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#4F5278',
-    shadowOpacity: 0.25,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 0,
+    elevation: 0,
   },
   primaryActionText: {
     color: '#FFFFFF',
@@ -838,7 +838,7 @@ const styles = StyleSheet.create({
   },
   // Soft secondary button matching Stitch theme
   secondaryActionButton: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     height: 42,
     borderRadius: 10,
     flexDirection: 'row',
@@ -846,7 +846,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   secondaryActionText: {
-    color: '#4F5278',
+    color: '#1D4ED8',
     fontSize: 13,
     fontWeight: '700',
   },
@@ -858,7 +858,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#EEF0F8',
+    borderColor: '#EFF6FF',
   },
   emptyTitle: {
     fontSize: 14,
@@ -878,7 +878,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#EEF0F8',
+    borderColor: '#EFF6FF',
     gap: 4,
   },
   notificationCardUnread: {
@@ -891,7 +891,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   notifTypePill: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingVertical: 2,
     paddingHorizontal: 8,
     borderRadius: 10,
@@ -899,7 +899,7 @@ const styles = StyleSheet.create({
   notifTypeText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   notifTime: {
     fontSize: 11,
@@ -921,9 +921,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EEF0F8',
+    borderColor: '#EFF6FF',
     borderLeftWidth: 4,
-    borderLeftColor: '#4F5278',
+    borderLeftColor: '#1D4ED8',
     gap: 6,
   },
   announcementHeader: {
@@ -934,7 +934,7 @@ const styles = StyleSheet.create({
   announcementAudience: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   announcementDate: {
     fontSize: 11,
@@ -982,7 +982,7 @@ const styles = StyleSheet.create({
   modalTaskTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   inputLabel: {
     fontSize: 12,
@@ -1013,7 +1013,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   modalSubmitBtn: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: 8,

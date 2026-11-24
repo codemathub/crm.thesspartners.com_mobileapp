@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -43,9 +43,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const roleLabel =
     userRole === 'super_admin' ? 'Super Admin' : userRole === 'admin' ? 'Admin' : 'Executive';
   const roleBg =
-    userRole === 'super_admin' ? '#EEF0F8' : userRole === 'admin' ? '#E1EFFE' : '#DEF7EC';
+    userRole === 'super_admin' ? '#EFF6FF' : userRole === 'admin' ? '#E1EFFE' : '#DEF7EC';
   const roleColor =
-    userRole === 'super_admin' ? '#4F5278' : userRole === 'admin' ? '#1C64F2' : '#057A55';
+    userRole === 'super_admin' ? '#1D4ED8' : userRole === 'admin' ? '#1C64F2' : '#057A55';
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -521,11 +521,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     marginBottom: 14,
-    shadowColor: '#292A3A',
-    shadowOpacity: 0.04,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 1,
+    shadowRadius: 0,
+    elevation: 0,
   },
   avatarCircle: {
     width: 44,
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   adminRoleText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   syncDotRow: {
     flexDirection: 'row',
@@ -675,7 +675,7 @@ const styles = StyleSheet.create({
   viewScheduleLink: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   emptyCard: {
     padding: 16,
@@ -739,7 +739,7 @@ const styles = StyleSheet.create({
   timeTagText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   visitItemClient: {
     fontSize: 13,
@@ -838,7 +838,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   tapToViewPill: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,

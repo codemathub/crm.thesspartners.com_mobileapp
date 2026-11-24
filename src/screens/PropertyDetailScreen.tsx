@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -189,7 +189,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
   if (loading && !property) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4F5278" />
+        <ActivityIndicator size="large" color="#1D4ED8" />
         <Text style={styles.loadingText}>Loading Property Dossier #{propertyId}...</Text>
       </SafeAreaView>
     );
@@ -246,7 +246,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
 
         <View style={styles.topBarRight}>
           <TouchableOpacity style={styles.iconCircleBtn} onPress={handleShareBrochure}>
-            <Ionicons name="share-social-outline" size={18} color="#4F5278" />
+            <Ionicons name="share-social-outline" size={18} color="#1D4ED8" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconCircleBtn} onPress={onClose}>
             <Ionicons name="close" size={20} color="#4B5563" />
@@ -272,7 +272,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
               <Ionicons
                 name={copiedId ? 'checkmark-circle' : 'copy-outline'}
                 size={14}
-                color={copiedId ? '#16A34A' : '#4F5278'}
+                color={copiedId ? '#16A34A' : '#1D4ED8'}
                 style={{ marginLeft: 4 }}
               />
             </TouchableOpacity>
@@ -329,7 +329,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
           {/* Society & Location */}
           <View style={styles.locationContainer}>
             <View style={styles.locationIconCircle}>
-              <Ionicons name="business" size={16} color="#4F5278" />
+              <Ionicons name="business" size={16} color="#1D4ED8" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.societyName}>{property.society_name}</Text>
@@ -343,7 +343,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
           <Text style={styles.sectionHeading}>PHYSICAL SPECIFICATIONS</Text>
             <View style={styles.specsGrid}>
               <View style={styles.specItem}>
-                <Ionicons name="home-outline" size={16} color="#4F5278" />
+                <Ionicons name="home-outline" size={16} color="#1D4ED8" />
                 <View>
                   <Text style={styles.specLabel}>Configuration</Text>
                   <Text style={styles.specValue}>{property.property_type}</Text>
@@ -351,7 +351,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
               </View>
 
               <View style={styles.specItem}>
-                <Ionicons name="layers-outline" size={16} color="#4F5278" />
+                <Ionicons name="layers-outline" size={16} color="#1D4ED8" />
                 <View>
                   <Text style={styles.specLabel}>BHK Type</Text>
                   <Text style={styles.specValue}>{property.bhk || property.property_type}</Text>
@@ -360,7 +360,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
 
               {property.additional_rooms && property.additional_rooms.length > 0 && (
                 <View style={styles.specItem}>
-                  <Ionicons name="add-circle-outline" size={16} color="#4F5278" />
+                  <Ionicons name="add-circle-outline" size={16} color="#1D4ED8" />
                   <View>
                     <Text style={styles.specLabel}>Extra Rooms</Text>
                     <Text style={styles.specValue}>{property.additional_rooms.join(', ')}</Text>
@@ -369,7 +369,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
               )}
 
               <View style={styles.specItem}>
-                <Ionicons name="shield-checkmark-outline" size={16} color="#4F5278" />
+                <Ionicons name="shield-checkmark-outline" size={16} color="#1D4ED8" />
                 <View>
                   <Text style={styles.specLabel}>Listing Status</Text>
                   <Text style={[styles.specValue, { color: statusColor, textTransform: 'capitalize' }]}>
@@ -382,7 +382,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
             {/* Tenant Preferences & Notes */}
             <View style={styles.notesSection}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                <Ionicons name="information-circle-outline" size={16} color="#4F5278" />
+                <Ionicons name="information-circle-outline" size={16} color="#1D4ED8" />
                 <Text style={styles.notesSectionTitle}>Showing & Tenant Guidelines</Text>
               </View>
               <Text style={styles.notesBody}>
@@ -480,7 +480,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
               onPress={() => setOwnerNoteModalVisible(true)}
               activeOpacity={0.85}
             >
-              <Ionicons name="document-text-outline" size={15} color="#4F5278" style={{ marginRight: 6 }} />
+              <Ionicons name="document-text-outline" size={15} color="#1D4ED8" style={{ marginRight: 6 }} />
               <Text style={styles.logOwnerNoteBtnText}>Log Owner Note / Follow-up</Text>
             </TouchableOpacity>
           </View>
@@ -490,7 +490,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
             <View style={styles.ownerNotesHistoryCard}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Ionicons name="document-text" size={14} color="#4F5278" />
+                  <Ionicons name="document-text" size={14} color="#1D4ED8" />
                   <Text style={styles.ownerNotesHistoryTitle}>Owner Remarks & History</Text>
                 </View>
                 <TouchableOpacity onPress={() => setOwnerNoteModalVisible(true)}>
@@ -602,8 +602,8 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
 
               {updatingStatus && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12 }}>
-                  <ActivityIndicator size="small" color="#4F5278" />
-                  <Text style={{ fontSize: 12, color: '#4F5278' }}>Saving status change...</Text>
+                  <ActivityIndicator size="small" color="#1D4ED8" />
+                  <Text style={{ fontSize: 12, color: '#1D4ED8' }}>Saving status change...</Text>
                 </View>
               )}
             </View>
@@ -729,7 +729,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 13,
     fontWeight: '600',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   errorContainer: {
     flex: 1,
@@ -754,7 +754,7 @@ const styles = StyleSheet.create({
   backBtnError: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     borderRadius: 8,
   },
   backBtnErrorText: {
@@ -795,7 +795,7 @@ const styles = StyleSheet.create({
   topBarSubtitle: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   topBarRight: {
     flexDirection: 'row',
@@ -837,11 +837,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
     marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
+    shadowRadius: 0,
   },
   heroRowTop: {
     flexDirection: 'row',
@@ -852,7 +852,7 @@ const styles = StyleSheet.create({
   idBadgeBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 6,
@@ -862,7 +862,7 @@ const styles = StyleSheet.create({
   idBadgeText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
     letterSpacing: 0.5,
   },
   statusPillBtn: {
@@ -925,7 +925,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   transTypeBox: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 6,
@@ -945,7 +945,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 8,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -975,13 +975,13 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   tabButtonActive: {
-    backgroundColor: '#4F5278',
-    borderColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
+    borderColor: '#1D4ED8',
   },
   tabButtonText: {
     fontSize: 11.5,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   tabButtonTextActive: {
     color: '#FFFFFF',
@@ -1039,7 +1039,7 @@ const styles = StyleSheet.create({
   notesSectionTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   notesBody: {
     fontSize: 12,
@@ -1107,14 +1107,14 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   contactAvatarText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   contactName: {
     fontSize: 14,
@@ -1199,7 +1199,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   matchBudgetPill: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
@@ -1207,7 +1207,7 @@ const styles = StyleSheet.create({
   matchBudgetText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   matchLookingFor: {
     fontSize: 11.5,
@@ -1224,7 +1224,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     paddingVertical: 7,
     borderRadius: 6,
   },
@@ -1259,18 +1259,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     flexDirection: 'row',
     gap: 10,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: -2 },
-    shadowRadius: 6,
+    shadowRadius: 0,
   },
   bottomScheduleBtn: {
     flex: 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     paddingVertical: 12,
     borderRadius: 8,
   },
@@ -1305,7 +1305,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 18,
-    elevation: 5,
+    elevation: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1350,7 +1350,7 @@ const styles = StyleSheet.create({
   logOwnerNoteBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   ownerNotesHistoryCard: {
     marginTop: 12,
@@ -1368,7 +1368,7 @@ const styles = StyleSheet.create({
   addOwnerNoteLink: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   ownerNotesHistoryText: {
     fontSize: 11.5,
@@ -1440,7 +1440,7 @@ const styles = StyleSheet.create({
     flex: 2,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     alignItems: 'center',
     justifyContent: 'center',
   },

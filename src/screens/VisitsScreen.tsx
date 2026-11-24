@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -459,7 +459,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
       <View style={styles.dateRibbonContainer}>
         <View style={styles.dateRibbonHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-            <Ionicons name="calendar" size={14} color="#4F5278" />
+            <Ionicons name="calendar" size={14} color="#1D4ED8" />
             <Text style={styles.dateRibbonTitle} numberOfLines={1}>Date</Text>
             {filterDate && (
               <TouchableOpacity
@@ -501,7 +501,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
               onPress={() => setFilterDateModalVisible(true)}
               activeOpacity={0.8}
             >
-              <Ionicons name="calendar-outline" size={13} color="#4F5278" />
+              <Ionicons name="calendar-outline" size={13} color="#1D4ED8" />
               <Text style={styles.calendarPickerBtnText}>Pick Date</Text>
             </TouchableOpacity>
           </View>
@@ -598,7 +598,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             <Ionicons
               name="calendar"
               size={13}
-              color={activeTab === 'all' ? '#FFFFFF' : '#4F5278'}
+              color={activeTab === 'all' ? '#FFFFFF' : '#1D4ED8'}
               style={{ marginRight: 4 }}
             />
             <Text
@@ -620,7 +620,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             <Ionicons
               name="time"
               size={13}
-              color={activeTab === 'today' ? '#FFFFFF' : '#4F5278'}
+              color={activeTab === 'today' ? '#FFFFFF' : '#1D4ED8'}
               style={{ marginRight: 4 }}
             />
             <Text
@@ -642,7 +642,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             <Ionicons
               name="trophy"
               size={13}
-              color={activeTab === 'completed' ? '#FFFFFF' : '#4F5278'}
+              color={activeTab === 'completed' ? '#FFFFFF' : '#1D4ED8'}
               style={{ marginRight: 4 }}
             />
             <Text
@@ -664,7 +664,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             <Ionicons
               name="call"
               size={13}
-              color={activeTab === 'followups' ? '#FFFFFF' : '#4F5278'}
+              color={activeTab === 'followups' ? '#FFFFFF' : '#1D4ED8'}
               style={{ marginRight: 4 }}
             />
             <Text
@@ -686,7 +686,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             <Ionicons
               name="flash"
               size={13}
-              color={activeTab === 'claim' ? '#FFFFFF' : '#4F5278'}
+              color={activeTab === 'claim' ? '#FFFFFF' : '#1D4ED8'}
               style={{ marginRight: 4 }}
             />
             <Text
@@ -824,7 +824,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                           variant={item.status === 'completed' ? 'success' : item.status === 'rescheduled' ? 'warning' : 'primary'}
                         />
                         <View style={styles.assignedBadge}>
-                          <Ionicons name="person-outline" size={11} color="#4F5278" />
+                          <Ionicons name="person-outline" size={11} color="#1D4ED8" />
                           <Text style={styles.assignedText} numberOfLines={1}>
                             {item.assigned_name || 'Assigned to You'}
                           </Text>
@@ -887,7 +887,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                           <Ionicons
                             name={isDealClosed ? 'trophy' : 'checkmark-circle'}
                             size={14}
-                            color={isDealClosed ? '#16A34A' : '#4F5278'}
+                            color={isDealClosed ? '#16A34A' : '#1D4ED8'}
                           />
                           <View style={{ flex: 1, marginLeft: 6 }}>
                             <Text style={[styles.completedOutcomeTitle, isDealClosed ? { color: '#16A34A' } : null]}>
@@ -998,7 +998,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                       <View style={styles.callbackCardHeader}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                           <View style={styles.callbackPill}>
-                            <Ionicons name="call" size={11} color="#4F5278" />
+                            <Ionicons name="call" size={11} color="#1D4ED8" />
                             <Text style={styles.callbackPillText}>CLIENT CALLBACK</Text>
                           </View>
                           <Text style={styles.callbackIdText}>#{f.followup_id}</Text>
@@ -1018,7 +1018,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
 
                       {/* Scheduled Date/Time Row */}
                       <View style={styles.callbackScheduledRow}>
-                        <Ionicons name="time" size={13} color="#4F5278" />
+                        <Ionicons name="time" size={13} color="#1D4ED8" />
                         <Text style={styles.callbackScheduledText}>
                           Scheduled: {sched.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })} at {sched.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                         </Text>
@@ -1029,7 +1029,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
                             <View style={styles.clientAvatarPill}>
-                              <Ionicons name="person" size={15} color="#4F5278" />
+                              <Ionicons name="person" size={15} color="#1D4ED8" />
                             </View>
                             <View style={{ flex: 1 }}>
                               <Text style={styles.customerName}>{f.customer_name}</Text>
@@ -1220,7 +1220,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
               <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Property Context Card */}
                 <View style={styles.modalPropSummaryCard}>
-                  <Ionicons name="business" size={16} color="#4F5278" />
+                  <Ionicons name="business" size={16} color="#1D4ED8" />
                   <Text style={styles.modalPropSummaryText}>
                     #{completeModalItem.property_id} • {completeModalItem.property_society || 'Property'} • ₹{safeLocale(completeModalItem.property_amount)} ({completeModalItem.property_transaction_type?.toUpperCase() || 'RENT'})
                   </Text>
@@ -1583,7 +1583,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                   </Text>
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                     <TouchableOpacity
-                      style={[styles.contactPillBtn, { flex: 1, flexDirection: 'row', gap: 6, paddingVertical: 8, backgroundColor: '#EEF0F8', borderRadius: 6 }]}
+                      style={[styles.contactPillBtn, { flex: 1, flexDirection: 'row', gap: 6, paddingVertical: 8, backgroundColor: '#EFF6FF', borderRadius: 6 }]}
                       onPress={() => Linking.openURL(`tel:${selectedFollowupDetail.customer_phone}`).catch(() => {})}
                     >
                       <Ionicons name="call" size={14} color={themeTokens.colors.primaryDark} />
@@ -1683,7 +1683,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                             borderRadius: 8,
                             borderWidth: 1,
                             borderColor: isCurrent ? themeTokens.colors.primaryDark : '#E5E7EB',
-                            backgroundColor: isCurrent ? '#EEF0F8' : '#FFFFFF',
+                            backgroundColor: isCurrent ? '#EFF6FF' : '#FFFFFF',
                             marginBottom: 8,
                           }}
                         >
@@ -1926,7 +1926,7 @@ const styles = StyleSheet.create({
   pickDatePillText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   clearDatePill: {
     flexDirection: 'row',
@@ -1985,7 +1985,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
   },
   quickRibbonBtnActive: {
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
   },
   quickRibbonBtnText: {
     fontSize: 11,
@@ -2009,7 +2009,7 @@ const styles = StyleSheet.create({
   calendarPickerBtnText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F5278',
+    color: '#1D4ED8',
     marginLeft: 3,
   },
   dateRibbonScroll: {
@@ -2029,13 +2029,13 @@ const styles = StyleSheet.create({
   dateRibbonCardSelected: {
     backgroundColor: '#292A3A',
     borderColor: '#292A3A',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
+    shadowRadius: 0,
   },
   dateRibbonCardToday: {
-    borderColor: '#4F5278',
+    borderColor: '#1D4ED8',
     borderWidth: 1.5,
     backgroundColor: '#EEF2FF',
   },
@@ -2076,7 +2076,7 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#4F5278',
+    backgroundColor: '#1D4ED8',
     marginTop: 3,
   },
   todayGreenDot: {
@@ -2128,16 +2128,16 @@ const styles = StyleSheet.create({
   },
   segmentBtnActive: {
     backgroundColor: themeTokens.colors.primaryDark,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 0,
+    elevation: 0,
   },
   segmentBtnText: {
     fontSize: 11.5,
     fontWeight: '600',
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   segmentBtnTextActive: {
     color: '#FFFFFF',
@@ -2178,7 +2178,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 8,
     borderLeftWidth: 3,
-    borderLeftColor: '#4F5278',
+    borderLeftColor: '#1D4ED8',
   },
   completedOutcomeDealBox: {
     backgroundColor: '#DCFCE7',
@@ -2236,7 +2236,7 @@ const styles = StyleSheet.create({
   },
   activeDateBannerText: {
     fontSize: 12,
-    color: '#4F5278',
+    color: '#1D4ED8',
   },
   clearDateBtn: {
     flexDirection: 'row',
@@ -2270,7 +2270,7 @@ const styles = StyleSheet.create({
   callbackPillText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#4F5278',
+    color: '#1D4ED8',
     letterSpacing: 0.5,
   },
   callbackIdText: {
@@ -2288,7 +2288,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 8,
     borderLeftWidth: 3,
-    borderLeftColor: '#4F5278',
+    borderLeftColor: '#1D4ED8',
   },
   callbackScheduledText: {
     fontSize: 11,
@@ -2416,11 +2416,11 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     padding: 14,
     marginBottom: 12,
-    shadowColor: '#292A3A',
-    shadowOpacity: 0.04,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 0,
+    elevation: 0,
   },
   claimNoticeRow: {
     flexDirection: 'row',
@@ -2513,11 +2513,11 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     padding: 14,
     marginBottom: 12,
-    shadowColor: '#292A3A',
-    shadowOpacity: 0.04,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 0,
+    elevation: 0,
   },
   visitHeaderRow: {
     flexDirection: 'row',
@@ -2631,7 +2631,7 @@ const styles = StyleSheet.create({
     backgroundColor: themeTokens.colors.surface,
     borderRadius: 14,
     padding: 20,
-    elevation: 5,
+    elevation: 0,
   },
   modalHeader: {
     flexDirection: 'row',
