@@ -60,7 +60,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeChip, setActiveChip] = useState<'All' | 'New' | 'Follow-up' | 'Visit Scheduled' | 'Hot'>('All');
+  const [activeChip, setActiveChip] = useState<'All' | 'New' | 'Follow-up' | 'Visit Scheduled' | 'Hot' | 'History'>('All');
 
   // Live Autocomplete Suggestions
   const [liveSuggestions, setLiveSuggestions] = useState<AutocompleteSuggestion[]>([]);
@@ -73,6 +73,18 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
   const [duplicateModalVisible, setDuplicateModalVisible] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<(MobileCustomer & { enquiriesList: MobileEnquiry[] }) | null>(null);
   const [selectedEnquiry, setSelectedEnquiry] = useState<MobileEnquiry | null>(null);
+  const [enquiryTimeline, setEnquiryTimeline] = useState<any[]>([]);
+  const [loadingTimeline, setLoadingTimeline] = useState(false);
+  const [timelineNote, setTimelineNote] = useState('');
+  const [savingTimelineNote, setSavingTimelineNote] = useState(false);
+  const [closeDealVisible, setCloseDealVisible] = useState(false);
+  const [dealPropId, setDealPropId] = useState('');
+  const [dealPrice, setDealPrice] = useState('');
+  const [dealRemarks, setDealRemarks] = useState('');
+  const [savingDeal, setSavingDeal] = useState(false);
+  const [abortVisible, setAbortVisible] = useState(false);
+  const [abortReason, setAbortReason] = useState('');
+  const [savingAbort, setSavingAbort] = useState(false);
 
   // Sort State
   const [sortModalVisible, setSortModalVisible] = useState(false);
@@ -194,7 +206,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
     try {
       const q = queryText !== undefined ? queryText : searchQuery;
       const [enqRes, custRes, socRes] = await Promise.all([
-        mobileApi.getEnquiries(q.trim() || undefined),
+        mobileApi.getEnquiries(q.trim() || undefined, undefined, activeChip === 'History' ? false : true),
         mobileApi.getCustomers(q.trim() || undefined),
         mobileApi.getSocieties(),
       ]);
@@ -210,6 +222,88 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const handleSelectEnquiryItem = async (enq: MobileEnquiry) => {
+    setSelectedEnquiry(enq);
+    setLoadingTimeline(true);
+    try {
+      const res = await mobileApi.getEnquiryTimeline(enq.enquiry_id);
+      setEnquiryTimeline(res.events || []);
+    } catch {
+      setEnquiryTimeline([]);
+    } finally {
+      setLoadingTimeline(false);
+    }
+  };
+
+  const handleAddTimelineNote = async () => {
+    if (!selectedEnquiry || !timelineNote.trim()) return;
+    setSavingTimelineNote(true);
+    try {
+      await mobileApi.createFollowUp({
+        enquiry_id: selectedEnquiry.enquiry_id,
+        scheduled_at: new Date().toISOString(),
+        notes: timelineNote.trim(),
+      });
+      setTimelineNote('');
+      const res = await mobileApi.getEnquiryTimeline(selectedEnquiry.enquiry_id);
+      setEnquiryTimeline(res.events || []);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Could not save follow-up note.');
+    } finally {
+      setSavingTimelineNote(false);
+    }
+  };
+
+  const handleConfirmCloseDeal = async () => {
+    if (!selectedEnquiry) return;
+    if (!dealPropId.trim()) {
+      Alert.alert('Required', 'Please enter the Property ID being closed.');
+      return;
+    }
+    setSavingDeal(true);
+    try {
+      await mobileApi.closeEnquiryDeal(selectedEnquiry.enquiry_id, {
+        property_id: dealPropId.trim().toUpperCase(),
+        deal_amount: dealPrice ? Number(dealPrice) : undefined,
+        final_remarks: dealRemarks.trim() || undefined,
+      });
+      Alert.alert('Deal Closed!', `Enquiry ${selectedEnquiry.enquiry_id} closed and Property ${dealPropId.trim().toUpperCase()} marked as ${selectedEnquiry.transaction_type === 'rent' ? 'Rented' : 'Sold'}.`);
+      setCloseDealVisible(false);
+      setSelectedEnquiry(null);
+      setDealPropId('');
+      setDealPrice('');
+      setDealRemarks('');
+      fetchDirectory();
+    } catch (err: any) {
+      Alert.alert('Close Deal Failed', err.message || 'Could not close deal.');
+    } finally {
+      setSavingDeal(false);
+    }
+  };
+
+  const handleConfirmAbort = async () => {
+    if (!selectedEnquiry) return;
+    if (!abortReason.trim()) {
+      Alert.alert('Required', 'Please provide a reason for aborting this enquiry.');
+      return;
+    }
+    setSavingAbort(true);
+    try {
+      await mobileApi.abortEnquiry(selectedEnquiry.enquiry_id, {
+        reason: abortReason.trim(),
+      });
+      Alert.alert('Enquiry Aborted', `Enquiry ${selectedEnquiry.enquiry_id} has been dropped.`);
+      setAbortVisible(false);
+      setSelectedEnquiry(null);
+      setAbortReason('');
+      fetchDirectory();
+    } catch (err: any) {
+      Alert.alert('Abort Failed', err.message || 'Could not abort enquiry.');
+    } finally {
+      setSavingAbort(false);
     }
   };
 
@@ -476,11 +570,12 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
       <View style={styles.filterBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
           {[
-            { id: 'All', label: `All (${customers.length})` },
+            { id: 'All', label: `Active (${customers.length})` },
             { id: 'New', label: 'New' },
             { id: 'Follow-up', label: 'Follow-up' },
             { id: 'Visit Scheduled', label: 'Visit Scheduled' },
             { id: 'Hot', label: 'Hot Leads' },
+            { id: 'History', label: 'Closed / History' },
           ].map((chip) => (
             <TouchableOpacity
               key={chip.id}
@@ -596,9 +691,9 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                   {/* Active Enquiries Subheader */}
                   <View style={styles.enquiriesSubheader}>
                     <Text style={styles.enqCountText}>
-                      ⚡ {cust.enquiriesList.length} ACTIVE ENQUIRIE{cust.enquiriesList.length > 1 ? 'S' : ''}
+                      ⚡ {cust.enquiriesList.length} {activeChip === 'History' ? 'PAST ENQUIRIES' : 'ACTIVE ENQUIRIES'}
                     </Text>
-                    <Text style={styles.matchScoreText}>Match Score: 94%</Text>
+                    <Text style={styles.matchScoreText}>{cust.customer_type ? cust.customer_type.toUpperCase() : 'LEAD'}</Text>
                   </View>
 
                   {/* Nested Enquiries Cards */}
@@ -612,7 +707,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                         <TouchableOpacity
                           key={enq.enquiry_id}
                           style={styles.enquiryItemBox}
-                          onPress={() => setSelectedEnquiry(enq)}
+                          onPress={() => handleSelectEnquiryItem(enq)}
                           activeOpacity={0.8}
                         >
                           <View style={styles.enquiryItemTop}>
@@ -621,9 +716,13 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                               <Text style={styles.visitScheduledBadgeText}>
                                 {enq.status === 'visit_scheduled'
                                   ? '📅 Visit Scheduled'
-                                  : enq.status === 'new'
-                                    ? 'New Enquiry'
-                                    : enq.status.toUpperCase()}
+                                  : enq.status === 'deal_closed'
+                                    ? '🤝 Deal Closed'
+                                    : enq.status === 'aborted'
+                                      ? '❌ Aborted'
+                                      : enq.status === 'new'
+                                        ? 'New Enquiry'
+                                        : enq.status.toUpperCase()}
                               </Text>
                             </View>
                           </View>
@@ -634,7 +733,11 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                             <Text style={styles.enquiryBudgetText}>
                               💵 Budget: ₹{(enq.budget_min || 0) / 1000}k - ₹{(enq.budget_max || 0) / 1000}k/mo
                             </Text>
-                            <Text style={styles.enquiryUpdatedText}>Updated today</Text>
+                            <Text style={styles.enquiryUpdatedText}>
+                              {enq.created_at
+                                ? new Date(enq.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ' ' + new Date(enq.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+                                : 'Active'}
+                            </Text>
                           </View>
                         </TouchableOpacity>
                       ))
@@ -1177,66 +1280,344 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
         }}
       />
 
-      {/* Modal 5: Enquiry Detail Modal */}
+      {/* Modal 5: Overhauled Full Enquiry Detail & Timeline Modal */}
       {selectedEnquiry && (
         <Modal visible={Boolean(selectedEnquiry)} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+            <View style={[styles.modalContent, { maxHeight: '88%' }]}>
+              {/* Header */}
               <View style={styles.modalHeader}>
-                <View>
-                  <Text style={styles.modalTitle}>Enquiry #{selectedEnquiry.enquiry_id}</Text>
-                  <Text style={{ fontSize: 11, color: themeTokens.colors.textSecondary }}>
-                    Customer: {selectedEnquiry.customer_name} ({selectedEnquiry.customer_phone})
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={styles.modalTitle}>Enquiry #{selectedEnquiry.enquiry_id}</Text>
+                    <View
+                      style={[
+                        styles.badgePillSmall,
+                        {
+                          backgroundColor:
+                            selectedEnquiry.status === 'deal_closed'
+                              ? '#D1FAE5'
+                              : selectedEnquiry.status === 'aborted'
+                              ? '#FEE2E2'
+                              : '#EEF2FF',
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          fontWeight: '800',
+                          color:
+                            selectedEnquiry.status === 'deal_closed'
+                              ? '#047857'
+                              : selectedEnquiry.status === 'aborted'
+                              ? '#B91C1C'
+                              : '#4338CA',
+                        }}
+                      >
+                        {selectedEnquiry.status.replace('_', ' ').toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 11, color: themeTokens.colors.textSecondary, marginTop: 2 }}>
+                    Created:{' '}
+                    {selectedEnquiry.created_at
+                      ? new Date(selectedEnquiry.created_at).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true,
+                        })
+                      : 'Earlier'}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={() => setSelectedEnquiry(null)}>
+                  <Ionicons name="close" size={22} color={themeTokens.colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 6 }}>
+                {/* Client Contact Quick Action Card */}
+                <View style={{ backgroundColor: '#F8FAFC', padding: 12, borderRadius: 8, borderColor: '#E2E8F0', borderWidth: 1 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 }}>CLIENT CONTACT</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                    <View>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#1E293B' }}>{selectedEnquiry.customer_name}</Text>
+                      <Text style={{ fontSize: 12, color: '#475569' }}>{selectedEnquiry.customer_phone}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
+                      {selectedEnquiry.customer_phone ? (
+                        <>
+                          <TouchableOpacity
+                            style={{ backgroundColor: '#EEF2FF', padding: 6, borderRadius: 6 }}
+                            onPress={() => Linking.openURL(`tel:${selectedEnquiry.customer_phone}`)}
+                          >
+                            <Ionicons name="call" size={16} color="#4338CA" />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={{ backgroundColor: '#DCFCE7', padding: 6, borderRadius: 6 }}
+                            onPress={() => {
+                              const clean = selectedEnquiry.customer_phone.replace(/[^0-9]/g, '');
+                              Linking.openURL(`https://wa.me/${clean}`);
+                            }}
+                          >
+                            <Ionicons name="logo-whatsapp" size={16} color="#16A34A" />
+                          </TouchableOpacity>
+                        </>
+                      ) : null}
+                      <TouchableOpacity
+                        style={{ backgroundColor: '#4338CA', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 6 }}
+                        onPress={() => {
+                          const target = selectedEnquiry.customer_id;
+                          setSelectedEnquiry(null);
+                          if (target) setCustomer360Id(target);
+                        }}
+                      >
+                        <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>360°</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Requirement Specifications */}
+                <View style={{ backgroundColor: '#FFFFFF', padding: 12, borderRadius: 8, borderColor: '#E2E8F0', borderWidth: 1, gap: 6 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 }}>REQUIREMENT SPECS</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text style={{ fontSize: 12, color: '#64748B' }}>Looking For:</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#0F172A' }}>{selectedEnquiry.looking_for} ({selectedEnquiry.transaction_type.toUpperCase()})</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text style={{ fontSize: 12, color: '#64748B' }}>Budget Range:</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#0F172A' }}>
+                      ₹{safeLocale(selectedEnquiry.budget_min)} - ₹{safeLocale(selectedEnquiry.budget_max)}
+                    </Text>
+                  </View>
+                  {selectedEnquiry.preferred_locations && selectedEnquiry.preferred_locations.length > 0 && (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                      <Text style={{ fontSize: 12, color: '#64748B' }}>Locations:</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: '#334155', flex: 1, textAlign: 'right' }}>
+                        {selectedEnquiry.preferred_locations.join(', ')}
+                      </Text>
+                    </View>
+                  )}
+                  {selectedEnquiry.notes ? (
+                    <View style={{ backgroundColor: '#FFFBEB', padding: 8, borderRadius: 6, marginTop: 4 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#B45309' }}>NOTES</Text>
+                      <Text style={{ fontSize: 11, color: '#78350F', marginTop: 2 }}>{selectedEnquiry.notes}</Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                {/* Executive Action Timeline */}
+                <View style={{ backgroundColor: '#FFFFFF', padding: 12, borderRadius: 8, borderColor: '#E2E8F0', borderWidth: 1 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#1E293B' }}>EXECUTIVE TIMELINE</Text>
+                    <Text style={{ fontSize: 10, color: '#64748B' }}>{enquiryTimeline.length} events</Text>
+                  </View>
+
+                  {/* Quick Note Input */}
+                  <View style={{ flexDirection: 'row', gap: 6, marginBottom: 10 }}>
+                    <TextInput
+                      style={{
+                        flex: 1,
+                        paddingHorizontal: 10,
+                        paddingVertical: 6,
+                        borderWidth: 1,
+                        borderColor: '#CBD5E1',
+                        borderRadius: 6,
+                        fontSize: 12,
+                        backgroundColor: '#F8FAFC',
+                      }}
+                      placeholder="Add follow-up note..."
+                      placeholderTextColor="#94A3B8"
+                      value={timelineNote}
+                      onChangeText={setTimelineNote}
+                    />
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: '#4338CA',
+                        paddingHorizontal: 12,
+                        justifyContent: 'center',
+                        borderRadius: 6,
+                      }}
+                      onPress={handleAddTimelineNote}
+                      disabled={savingTimelineNote || !timelineNote.trim()}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>
+                        {savingTimelineNote ? '...' : '+ Note'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Timeline Stream */}
+                  {loadingTimeline ? (
+                    <ActivityIndicator size="small" color="#4338CA" style={{ padding: 12 }} />
+                  ) : enquiryTimeline.length === 0 ? (
+                    <Text style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center', padding: 8 }}>
+                      No action timeline logged yet.
+                    </Text>
+                  ) : (
+                    enquiryTimeline.map((item, idx) => (
+                      <View
+                        key={idx}
+                        style={{
+                          padding: 8,
+                          backgroundColor: item.type === 'visit' ? '#F0FDF4' : item.type === 'followup' ? '#FFFBEB' : '#F8FAFC',
+                          borderLeftWidth: 3,
+                          borderLeftColor: item.type === 'visit' ? '#16A34A' : item.type === 'followup' ? '#D97706' : '#4338CA',
+                          borderRadius: 4,
+                          marginBottom: 6,
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#1E293B' }}>
+                            {item.type === 'visit' ? 'Site Showing' : item.type === 'followup' ? 'Follow-up' : item.event_type || 'Activity'}
+                          </Text>
+                          <Text style={{ fontSize: 9, color: '#64748B' }}>
+                            {item.created_at || item.scheduled_at
+                              ? new Date(item.created_at || item.scheduled_at).toLocaleDateString('en-IN', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: true,
+                                })
+                              : ''}
+                          </Text>
+                        </View>
+                        <Text style={{ fontSize: 11, color: '#334155', marginTop: 2 }}>
+                          {item.notes || item.remarks || item.outcome || (item.details ? JSON.stringify(item.details) : '')}
+                        </Text>
+                        <Text style={{ fontSize: 9, color: '#64748B', marginTop: 2 }}>
+                          By: <Text style={{ fontWeight: '700', color: '#0F172A' }}>{item.actor_name || item.executive_name || item.created_by_name || 'System'}</Text>
+                        </Text>
+                      </View>
+                    ))
+                  )}
+                </View>
+
+                {/* Action Suite Buttons */}
+                <View style={{ gap: 6, marginTop: 4 }}>
+                  <TouchableOpacity
+                    style={[styles.modalSubmitBtn, { backgroundColor: '#4338CA' }]}
+                    onPress={() => {
+                      const enq = selectedEnquiry;
+                      setSelectedEnquiry(null);
+                      openMatchesModal(enq);
+                    }}
+                  >
+                    <Text style={styles.modalSubmitBtnText}>✨ View Smart Property Matches</Text>
+                  </TouchableOpacity>
+
+                  <View style={{ flexDirection: 'row', gap: 6 }}>
+                    <TouchableOpacity
+                      style={[styles.modalSubmitBtn, { flex: 1, backgroundColor: '#059669' }]}
+                      onPress={() => setCloseDealVisible(true)}
+                    >
+                      <Text style={styles.modalSubmitBtnText}>🤝 Close Deal</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.modalSubmitBtn, { flex: 1, backgroundColor: '#DC2626' }]}
+                      onPress={() => setAbortVisible(true)}
+                    >
+                      <Text style={styles.modalSubmitBtnText}>❌ Drop / Abort</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollView>
+
+              <TouchableOpacity style={[styles.modalCancelBtn, { marginTop: 6 }]} onPress={() => setSelectedEnquiry(null)}>
+                <Text style={styles.modalCancelBtnText}>Dismiss</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Modal: Close Deal Prompt */}
+      {closeDealVisible && (
+        <Modal visible={closeDealVisible} animationType="fade" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxHeight: 380 }]}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Close Deal for Enquiry</Text>
+                <TouchableOpacity onPress={() => setCloseDealVisible(false)}>
                   <Ionicons name="close" size={20} color={themeTokens.colors.textPrimary} />
                 </TouchableOpacity>
               </View>
-
-              <View style={{ gap: 8, paddingVertical: 8 }}>
-                <View style={styles.detailSpecBox}>
-                  <Text style={styles.detailSpecLabel}>Looking For</Text>
-                  <Text style={styles.detailSpecVal}>{selectedEnquiry.looking_for}</Text>
-                </View>
-                <View style={styles.detailSpecBox}>
-                  <Text style={styles.detailSpecLabel}>Transaction</Text>
-                  <Text style={styles.detailSpecVal}>{selectedEnquiry.transaction_type.toUpperCase()}</Text>
-                </View>
-                <View style={styles.detailSpecBox}>
-                  <Text style={styles.detailSpecLabel}>Budget Range</Text>
-                  <Text style={styles.detailSpecVal}>
-                    ₹{safeLocale(selectedEnquiry.budget_min)} - ₹{safeLocale(selectedEnquiry.budget_max)}
-                  </Text>
-                </View>
-                <View style={styles.detailSpecBox}>
-                  <Text style={styles.detailSpecLabel}>Status</Text>
-                  <Text style={[styles.detailSpecVal, { color: '#4F5278' }]}>{selectedEnquiry.status.toUpperCase()}</Text>
-                </View>
-                {selectedEnquiry.notes ? (
-                  <View style={{ backgroundColor: '#F9FAFB', padding: 10, borderRadius: 6, marginTop: 4 }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: themeTokens.colors.textSecondary }}>NOTES</Text>
-                    <Text style={{ fontSize: 12, color: themeTokens.colors.textPrimary, marginTop: 2 }}>{selectedEnquiry.notes}</Text>
-                  </View>
-                ) : null}
+              <View style={{ gap: 8, paddingVertical: 10 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#334155' }}>Property ID *</Text>
+                <TextInput
+                  style={[styles.formInput, { textTransform: 'uppercase' }]}
+                  placeholder="e.g. PROP0001"
+                  value={dealPropId}
+                  onChangeText={setDealPropId}
+                />
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#334155' }}>Final Closed Amount (₹)</Text>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="e.g. 25000"
+                  keyboardType="numeric"
+                  value={dealPrice}
+                  onChangeText={setDealPrice}
+                />
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#334155' }}>Final Remarks</Text>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="Agreement signed, token received..."
+                  value={dealRemarks}
+                  onChangeText={setDealRemarks}
+                />
               </View>
-
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                 <TouchableOpacity
-                  style={[styles.modalSubmitBtn, { backgroundColor: '#4F5278' }]}
-                  onPress={() => {
-                    const enq = selectedEnquiry;
-                    setSelectedEnquiry(null);
-                    openMatchesModal(enq);
-                  }}
+                  style={[styles.modalSubmitBtn, { backgroundColor: '#059669', flex: 1 }]}
+                  onPress={handleConfirmCloseDeal}
+                  disabled={savingDeal}
                 >
-                  <Text style={styles.modalSubmitBtnText}>View Property Matches</Text>
+                  <Text style={styles.modalSubmitBtnText}>{savingDeal ? 'Saving...' : 'Confirm Deal Closed'}</Text>
                 </TouchableOpacity>
+                <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setCloseDealVisible(false)}>
+                  <Text style={styles.modalCancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Modal: Abort Enquiry Prompt */}
+      {abortVisible && (
+        <Modal visible={abortVisible} animationType="fade" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxHeight: 300 }]}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Drop / Abort Enquiry</Text>
+                <TouchableOpacity onPress={() => setAbortVisible(false)}>
+                  <Ionicons name="close" size={20} color={themeTokens.colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+              <View style={{ gap: 8, paddingVertical: 10 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#334155' }}>Mandatory Abort Reason *</Text>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="Client found elsewhere / Budget mismatch / Not reachable"
+                  value={abortReason}
+                  onChangeText={setAbortReason}
+                />
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                 <TouchableOpacity
-                  style={styles.modalCancelBtn}
-                  onPress={() => setSelectedEnquiry(null)}
+                  style={[styles.modalSubmitBtn, { backgroundColor: '#DC2626', flex: 1 }]}
+                  onPress={handleConfirmAbort}
+                  disabled={savingAbort}
                 >
-                  <Text style={styles.modalCancelBtnText}>Close</Text>
+                  <Text style={styles.modalSubmitBtnText}>{savingAbort ? 'Dropping...' : 'Confirm Abort'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setAbortVisible(false)}>
+                  <Text style={styles.modalCancelBtnText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
             </View>

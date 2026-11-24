@@ -30,8 +30,6 @@ interface PropertyDetailScreenProps {
   onPropertyUpdated?: (updated: MobileProperty) => void;
 }
 
-type TabType = 'overview' | 'financials' | 'contacts' | 'matches';
-
 export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
   propertyId,
   initialProperty,
@@ -41,17 +39,12 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
 }) => {
   const [property, setProperty] = useState<MobileProperty | null>(initialProperty || null);
   const [loading, setLoading] = useState(!initialProperty);
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [copiedId, setCopiedId] = useState(false);
 
   // Status Change State
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-
-  // Matching Prospective Clients State
-  const [matches, setMatches] = useState<any[]>([]);
-  const [loadingMatches, setLoadingMatches] = useState(false);
 
   // Log Owner Note / Follow-up State
   const [ownerNoteModalVisible, setOwnerNoteModalVisible] = useState(false);
@@ -73,21 +66,8 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
     }
   };
 
-  const fetchMatchingClients = async () => {
-    try {
-      setLoadingMatches(true);
-      const res = await mobileApi.getPropertyMatches(propertyId);
-      setMatches(res.matches || []);
-    } catch {
-      setMatches([]);
-    } finally {
-      setLoadingMatches(false);
-    }
-  };
-
   useEffect(() => {
     fetchPropertyData();
-    fetchMatchingClients();
   }, [propertyId]);
 
   const handleStatusChange = async (newStatus: string) => {
@@ -346,42 +326,9 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
           </View>
         </View>
 
-        {/* Tab Navigation */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabsContainer}
-          style={{ marginBottom: 14 }}
-        >
-          {[
-            { key: 'overview', label: 'Specs & Overview', icon: 'grid-outline' },
-            { key: 'financials', label: 'Financials', icon: 'cash-outline' },
-            { key: 'contacts', label: 'Owner & Broker', icon: 'people-outline' },
-            { key: 'matches', label: `Matches (${matches.length})`, icon: 'sparkles-outline' },
-          ].map((t) => (
-            <TouchableOpacity
-              key={t.key}
-              style={[styles.tabButton, activeTab === t.key && styles.tabButtonActive]}
-              onPress={() => setActiveTab(t.key as TabType)}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name={t.icon as any}
-                size={14}
-                color={activeTab === t.key ? '#FFFFFF' : '#4F5278'}
-                style={{ marginRight: 4 }}
-              />
-              <Text style={[styles.tabButtonText, activeTab === t.key && styles.tabButtonTextActive]}>
-                {t.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* TAB 1: OVERVIEW & SPECS */}
-        {activeTab === 'overview' && (
-          <View style={styles.tabContentCard}>
-            <Text style={styles.sectionHeading}>PHYSICAL SPECIFICATIONS</Text>
+        {/* SECTION 1: PHYSICAL SPECIFICATIONS */}
+        <View style={styles.tabContentCard}>
+          <Text style={styles.sectionHeading}>PHYSICAL SPECIFICATIONS</Text>
             <View style={styles.specsGrid}>
               <View style={styles.specItem}>
                 <Ionicons name="home-outline" size={16} color="#4F5278" />
@@ -431,217 +378,145 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
               </Text>
             </View>
           </View>
-        )}
 
-        {/* TAB 2: FINANCIALS */}
-        {activeTab === 'financials' && (
-          <View style={styles.tabContentCard}>
-            <Text style={styles.sectionHeading}>FINANCIAL BREAKDOWN & OUTGO</Text>
-            <View style={styles.financialList}>
-              <View style={styles.financialRow}>
-                <Text style={styles.finLabel}>Asking Rate / Price</Text>
-                <Text style={styles.finValBold}>
-                  ₹{(property.expected_amount ?? 0).toLocaleString('en-IN')}{property.transaction_type === 'rent' ? ' / mo' : ''}
-                </Text>
-              </View>
-
-              <View style={styles.financialRow}>
-                <Text style={styles.finLabel}>Society Maintenance</Text>
-                <Text style={styles.finVal}>
-                  {property.maintenance_mode === 'included'
-                    ? 'Included in Rent'
-                    : `₹${property.maintenance_amount || 0}/mo Extra`}
-                </Text>
-              </View>
-
-              <View style={styles.financialRow}>
-                <Text style={styles.finLabel}>Security Deposit</Text>
-                <Text style={styles.finVal}>
-                  {property.security_deposit
-                    ? `₹${property.security_deposit.toLocaleString('en-IN')}`
-                    : 'Not specified'}
-                </Text>
-              </View>
-
-              <View style={styles.financialRow}>
-                <Text style={styles.finLabel}>Price Negotiation</Text>
-                <Text style={[styles.finVal, { color: property.negotiable ? '#D97706' : '#4B5563' }]}>
-                  {property.negotiable ? 'Open to Negotiation' : 'Fixed Price Policy'}
-                </Text>
-              </View>
-
-              {property.additional_charges && property.additional_charges.length > 0 && (
-                <View style={{ marginTop: 8 }}>
-                  <Text style={[styles.sectionHeading, { marginTop: 8 }]}>ADDITIONAL CHARGES</Text>
-                  {property.additional_charges.map((chg, idx) => (
-                    <View key={idx} style={styles.chargeRow}>
-                      <Text style={styles.chargeName}>{chg.name} ({chg.frequency})</Text>
-                      <Text style={styles.chargeAmount}>₹{(chg.amount ?? 0).toLocaleString('en-IN')}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* TAB 3: CONTACTS */}
-        {activeTab === 'contacts' && (
-          <View style={styles.tabContentCard}>
-            <Text style={styles.sectionHeading}>OWNER INFORMATION</Text>
-            <View style={styles.contactCard}>
-              <View style={styles.contactHeaderRow}>
-                <View style={styles.contactAvatar}>
-                  <Text style={styles.contactAvatarText}>
-                    {property.owner_name ? property.owner_name.charAt(0).toUpperCase() : 'O'}
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.contactName}>{property.owner_name}</Text>
-                  <Text style={styles.contactPhone}>{property.owner_phone}</Text>
-                </View>
-              </View>
-
-              <View style={styles.contactActionsRow}>
-                <TouchableOpacity style={styles.callContactBtn} onPress={handleCallOwner}>
-                  <Ionicons name="call" size={14} color="#059669" />
-                  <Text style={styles.callContactBtnText}>Call Owner</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.waContactBtn} onPress={handleWhatsAppShare}>
-                  <Ionicons name="logo-whatsapp" size={14} color="#FFFFFF" />
-                  <Text style={styles.waContactBtnText}>WhatsApp</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Log Owner Note / Follow-up Button */}
-              <TouchableOpacity
-                style={styles.logOwnerNoteBtn}
-                onPress={() => setOwnerNoteModalVisible(true)}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="document-text-outline" size={15} color="#4F5278" style={{ marginRight: 6 }} />
-                <Text style={styles.logOwnerNoteBtnText}>Log Owner Note / Follow-up</Text>
-              </TouchableOpacity>
+        {/* SECTION 2: FINANCIAL BREAKDOWN & EXTRA CHARGES */}
+        <View style={styles.tabContentCard}>
+          <Text style={styles.sectionHeading}>FINANCIAL BREAKDOWN & CHARGES</Text>
+          <View style={styles.financialList}>
+            <View style={styles.financialRow}>
+              <Text style={styles.finLabel}>Asking Rate / Price</Text>
+              <Text style={styles.finValBold}>
+                ₹{(property.expected_amount ?? 0).toLocaleString('en-IN')}{property.transaction_type === 'rent' ? ' / mo' : ''}
+              </Text>
             </View>
 
-            {/* Owner Conversation & Key Highlights */}
-            {property.notes ? (
-              <View style={styles.ownerNotesHistoryCard}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Ionicons name="document-text" size={14} color="#4F5278" />
-                    <Text style={styles.ownerNotesHistoryTitle}>Owner Remarks & History</Text>
-                  </View>
-                  <TouchableOpacity onPress={() => setOwnerNoteModalVisible(true)}>
-                    <Text style={styles.addOwnerNoteLink}>+ Add</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.ownerNotesHistoryText}>{property.notes}</Text>
-              </View>
-            ) : null}
+            <View style={styles.financialRow}>
+              <Text style={styles.finLabel}>Society Maintenance</Text>
+              <Text style={styles.finVal}>
+                {property.maintenance_mode === 'included'
+                  ? 'Included in Rate'
+                  : `₹${(property.maintenance_amount || 0).toLocaleString('en-IN')}/mo Extra`}
+              </Text>
+            </View>
 
-            {property.agent_name ? (
-              <View style={{ marginTop: 16 }}>
-                <Text style={styles.sectionHeading}>BROKER / AGENT INFORMATION</Text>
-                <View style={styles.contactCard}>
-                  <View style={styles.contactHeaderRow}>
-                    <View style={[styles.contactAvatar, { backgroundColor: '#F3E8FF' }]}>
-                      <Text style={[styles.contactAvatarText, { color: '#7C3AED' }]}>
-                        {property.agent_name.charAt(0).toUpperCase()}
+            <View style={styles.financialRow}>
+              <Text style={styles.finLabel}>Security Deposit</Text>
+              <Text style={styles.finVal}>
+                {property.security_deposit
+                  ? `₹${property.security_deposit.toLocaleString('en-IN')}`
+                  : 'Not specified'}
+              </Text>
+            </View>
+
+            <View style={styles.financialRow}>
+              <Text style={styles.finLabel}>Price Negotiation</Text>
+              <Text style={[styles.finVal, { color: property.negotiable ? '#D97706' : '#4B5563' }]}>
+                {property.negotiable ? 'Open to Negotiation' : 'Fixed Price Policy'}
+              </Text>
+            </View>
+
+            {property.additional_charges && property.additional_charges.length > 0 && (
+              <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F3F4F6' }}>
+                <Text style={[styles.sectionHeading, { marginBottom: 8 }]}>ADDITIONAL / AMENITY CHARGES</Text>
+                {property.additional_charges.map((chg, idx) => (
+                  <View key={idx} style={styles.chargeRow}>
+                    <Text style={styles.chargeName}>{chg.name}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 11, color: '#6B7280', textTransform: 'capitalize' }}>
+                        {chg.frequency === 'monthly' ? 'Monthly' : 'One-time'}
                       </Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.contactName}>{property.agent_name}</Text>
-                      <Text style={styles.contactPhone}>{property.agent_phone || 'No phone provided'}</Text>
-                    </View>
-                  </View>
-
-                  {property.agent_phone && (
-                    <View style={styles.contactActionsRow}>
-                      <TouchableOpacity style={styles.callContactBtn} onPress={handleCallAgent}>
-                        <Ionicons name="call" size={14} color="#059669" />
-                        <Text style={styles.callContactBtnText}>Call Agent</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
-              </View>
-            ) : null}
-          </View>
-        )}
-
-        {/* TAB 4: MATCHES */}
-        {activeTab === 'matches' && (
-          <View style={styles.tabContentCard}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={styles.sectionHeading}>MATCHING CLIENT ENQUIRIES</Text>
-              <TouchableOpacity onPress={fetchMatchingClients}>
-                <Ionicons name="refresh" size={16} color="#4F5278" />
-              </TouchableOpacity>
-            </View>
-
-            {loadingMatches ? (
-              <View style={{ padding: 24, alignItems: 'center' }}>
-                <ActivityIndicator size="small" color="#4F5278" />
-                <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 8 }}>Scanning client database...</Text>
-              </View>
-            ) : matches.length === 0 ? (
-              <View style={styles.emptyMatchesBox}>
-                <Ionicons name="search-outline" size={32} color="#9CA3AF" />
-                <Text style={styles.emptyMatchesTitle}>No Active Client Matches</Text>
-                <Text style={styles.emptyMatchesSub}>
-                  No customer enquiries currently match this exact BHK ({property.property_type}) and budget range.
-                </Text>
-              </View>
-            ) : (
-              <View style={{ gap: 10 }}>
-                {matches.map((m: any) => (
-                  <View key={m.enquiry_id} style={styles.matchItemCard}>
-                    <View style={styles.matchHeader}>
-                      <View>
-                        <Text style={styles.matchCustomerName}>{m.customer_name}</Text>
-                        <Text style={styles.matchEnquiryId}>Enquiry #{m.enquiry_id}</Text>
-                      </View>
-                      <View style={styles.matchBudgetPill}>
-                        <Text style={styles.matchBudgetText}>
-                          ₹{(m.budget_min ?? 0).toLocaleString('en-IN')} - ₹{(m.budget_max ?? 0).toLocaleString('en-IN')}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <Text style={styles.matchLookingFor}>Looking for: {m.looking_for} ({m.transaction_type})</Text>
-
-                    <View style={styles.matchActionsRow}>
-                      <TouchableOpacity
-                        style={styles.scheduleShowingBtn}
-                        onPress={() => {
-                          if (onScheduleVisit) {
-                            onClose();
-                            onScheduleVisit(property.property_id);
-                          }
-                        }}
-                      >
-                        <Ionicons name="calendar" size={13} color="#FFFFFF" />
-                        <Text style={styles.scheduleShowingBtnText}>Schedule Showing</Text>
-                      </TouchableOpacity>
-
-                      {m.customer_phone && (
-                        <TouchableOpacity
-                          style={styles.callMatchBtn}
-                          onPress={() => Linking.openURL(`tel:${m.customer_phone}`)}
-                        >
-                          <Ionicons name="call" size={13} color="#059669" />
-                          <Text style={styles.callMatchBtnText}>Call</Text>
-                        </TouchableOpacity>
-                      )}
+                      <Text style={styles.chargeAmount}>₹{(chg.amount ?? 0).toLocaleString('en-IN')}</Text>
                     </View>
                   </View>
                 ))}
               </View>
             )}
           </View>
-        )}
+        </View>
+
+        {/* SECTION 3: OWNER & BROKER INFORMATION */}
+        <View style={styles.tabContentCard}>
+          <Text style={styles.sectionHeading}>OWNER INFORMATION</Text>
+          <View style={styles.contactCard}>
+            <View style={styles.contactHeaderRow}>
+              <View style={styles.contactAvatar}>
+                <Text style={styles.contactAvatarText}>
+                  {property.owner_name ? property.owner_name.charAt(0).toUpperCase() : 'O'}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.contactName}>{property.owner_name}</Text>
+                <Text style={styles.contactPhone}>{property.owner_phone}</Text>
+              </View>
+            </View>
+
+            <View style={styles.contactActionsRow}>
+              <TouchableOpacity style={styles.callContactBtn} onPress={handleCallOwner}>
+                <Ionicons name="call" size={14} color="#059669" />
+                <Text style={styles.callContactBtnText}>Call Owner</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.waContactBtn} onPress={handleWhatsAppShare}>
+                <Ionicons name="logo-whatsapp" size={14} color="#FFFFFF" />
+                <Text style={styles.waContactBtnText}>WhatsApp</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Log Owner Note / Follow-up Button */}
+            <TouchableOpacity
+              style={styles.logOwnerNoteBtn}
+              onPress={() => setOwnerNoteModalVisible(true)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="document-text-outline" size={15} color="#4F5278" style={{ marginRight: 6 }} />
+              <Text style={styles.logOwnerNoteBtnText}>Log Owner Note / Follow-up</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Owner Conversation & Key Highlights */}
+          {property.notes ? (
+            <View style={styles.ownerNotesHistoryCard}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name="document-text" size={14} color="#4F5278" />
+                  <Text style={styles.ownerNotesHistoryTitle}>Owner Remarks & History</Text>
+                </View>
+                <TouchableOpacity onPress={() => setOwnerNoteModalVisible(true)}>
+                  <Text style={styles.addOwnerNoteLink}>+ Add</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.ownerNotesHistoryText}>{property.notes}</Text>
+            </View>
+          ) : null}
+
+          {property.agent_name ? (
+            <View style={{ marginTop: 16 }}>
+              <Text style={styles.sectionHeading}>BROKER / AGENT INFORMATION</Text>
+              <View style={styles.contactCard}>
+                <View style={styles.contactHeaderRow}>
+                  <View style={[styles.contactAvatar, { backgroundColor: '#F3E8FF' }]}>
+                    <Text style={[styles.contactAvatarText, { color: '#7C3AED' }]}>
+                      {property.agent_name.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.contactName}>{property.agent_name}</Text>
+                    <Text style={styles.contactPhone}>{property.agent_phone || 'No phone provided'}</Text>
+                  </View>
+                </View>
+
+                {property.agent_phone && (
+                  <View style={styles.contactActionsRow}>
+                    <TouchableOpacity style={styles.callContactBtn} onPress={handleCallAgent}>
+                      <Ionicons name="call" size={14} color="#059669" />
+                      <Text style={styles.callContactBtnText}>Call Agent</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+          ) : null}
+        </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>

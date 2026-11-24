@@ -517,20 +517,21 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
               ) : (
                 visits.map((item) => {
                   const visitDate = new Date(item.scheduled_at);
-                  const timeStr = visitDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                  const timeStr = visitDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+                  const dateStr = visitDate.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
                   return (
                     <View key={item.visit_id} style={styles.visitCard}>
                       {/* Top Header Pill Row */}
                       <View style={styles.visitHeaderRow}>
                         <View style={styles.timePill}>
-                          <Text style={styles.timePillText}>{timeStr}</Text>
+                          <Text style={styles.timePillText}>{dateStr} • {timeStr}</Text>
                         </View>
                         <Badge
                           label={item.status.toUpperCase()}
                           variant={item.status === 'completed' ? 'success' : item.status === 'rescheduled' ? 'warning' : 'primary'}
                         />
                         <Text style={styles.assignedText}>
-                          Assigned: {item.assigned_name || 'You'}
+                          {item.assigned_name || 'Assigned'}
                         </Text>
                       </View>
 

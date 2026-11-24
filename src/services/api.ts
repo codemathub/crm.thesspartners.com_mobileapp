@@ -585,13 +585,16 @@ export const mobileApi = {
     request<MobileCustomer>(`/customers/${customerId}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   // Enquiries
-  getEnquiries: (search?: string, status?: string) => {
+  getEnquiries: (search?: string, status?: string, activeOnly?: boolean) => {
     const params = new URLSearchParams();
     if (search) params.append('search', search);
     if (status && status !== 'All') params.append('status', status.toLowerCase().replace(' ', '_').replace('-', '_'));
+    if (activeOnly) params.append('active_only', 'true');
     const qs = params.toString() ? `?${params.toString()}` : '';
     return request<{ items: MobileEnquiry[]; total: number }>(`/enquiries${qs}`);
   },
+  getEnquiryTimeline: (enquiryId: string) =>
+    request<{ enquiry_id: string; events: Array<{ id: string; type: string; event_type: string; actor_name: string; actor_role: string; title: string; description: string; timestamp: string }> }>(`/enquiries/${enquiryId}/timeline`),
   createEnquiry: (data: any) => request<MobileEnquiry>('/enquiries', { method: 'POST', body: JSON.stringify(data) }),
   changeEnquiryStatus: (id: string, newStatus: string, reason?: string) =>
     request<MobileEnquiry>(`/enquiries/${id}/status`, {
