@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { themeTokens } from '../theme/tokens';
 import { mobileApi, MobileCustomer, MobileEnquiry } from '../services/api';
 import { DateTimePickerField } from '../components/DateTimePickerModal';
+import { parseUtcDate, formatDateTime } from '../utils/dateUtils';
 
 interface CustomerDetailScreenProps {
   customerId: string;
@@ -280,8 +281,8 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
   // Build unified chronological historical timeline
   const safeFormatDate = (val: any, fallback = 'Recently') => {
     if (!val) return fallback;
-    const d = new Date(val);
-    return isNaN(d.getTime()) ? fallback : d.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const d = parseUtcDate(val);
+    return isNaN(d.getTime()) ? fallback : d.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
   const timelineEvents: Array<{
@@ -297,7 +298,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
 
   visits.forEach((v: any) => {
     const rawDate = v.scheduled_at || v.created_at;
-    const eventDate = rawDate ? new Date(rawDate) : new Date();
+    const eventDate = rawDate ? parseUtcDate(rawDate) : new Date();
     timelineEvents.push({
       id: `v-${v.visit_id || v.id}`,
       type: 'visit',
@@ -312,7 +313,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
 
   followups.forEach((f: any) => {
     const rawDate = f.created_at || f.scheduled_at;
-    const eventDate = rawDate ? new Date(rawDate) : new Date();
+    const eventDate = rawDate ? parseUtcDate(rawDate) : new Date();
     timelineEvents.push({
       id: `f-${f.followup_id || f.id}`,
       type: 'followup',
@@ -327,7 +328,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
 
   enquiries.forEach((e: any) => {
     const rawDate = e.created_at;
-    const eventDate = rawDate ? new Date(rawDate) : new Date();
+    const eventDate = rawDate ? parseUtcDate(rawDate) : new Date();
     timelineEvents.push({
       id: `e-${e.enquiry_id || e.id}`,
       type: 'enquiry',
@@ -624,12 +625,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                       <Text style={styles.noteAuthor}>{f.responsible_name || 'Staff'}</Text>
                     </View>
                     <Text style={styles.noteDate}>
-                      {new Date(f.created_at || f.scheduled_at).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatDateTime(f.created_at || f.scheduled_at)}
                     </Text>
                   </View>
                   <Text style={styles.noteContent}>{f.notes}</Text>

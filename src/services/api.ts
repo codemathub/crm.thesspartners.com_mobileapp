@@ -259,6 +259,8 @@ export interface MobileProperty {
   tenant_type?: string;
   status: 'available' | 'rented' | 'sold' | 'reserved' | 'under_negotiation' | 'archived' | 'on_hold';
   notes?: string;
+  created_by?: string;
+  created_by_name?: string;
   created_at: string;
 }
 
@@ -307,6 +309,8 @@ export interface MobileEnquiry {
   priority: string;
   tenant_type?: string;
   notes?: string;
+  created_by?: string;
+  created_by_name?: string;
   created_at: string;
 }
 

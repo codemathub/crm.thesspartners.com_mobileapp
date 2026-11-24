@@ -20,6 +20,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { mobileApi, MobileVisit, MobileFollowUp } from '../services/api';
 import { AutocompleteIdInput } from '../components/AutocompleteIdInput';
 import { DateTimePickerField, DateTimePickerModal } from '../components/DateTimePickerModal';
+import { parseUtcDate, formatDateTime } from '../utils/dateUtils';
 
 const safeLocale = (val: any): string => {
   if (val === null || val === undefined || isNaN(Number(val))) return '0';
@@ -27,7 +28,7 @@ const safeLocale = (val: any): string => {
 };
 
 interface VisitsScreenProps {
-  initialTab?: 'today' | 'followups' | 'claim' | 'all';
+  initialTab?: 'all' | 'today' | 'completed' | 'followups' | 'claim';
   initialAction?: string;
   onActionHandled?: () => void;
   onScheduleVisit?: () => void;
@@ -38,13 +39,13 @@ interface VisitsScreenProps {
 }
 
 export const VisitsScreen: React.FC<VisitsScreenProps> = ({
-  initialTab = 'today',
+  initialTab = 'all',
   initialAction,
   onActionHandled,
   initialEnquiryId,
   initialPropertyId,
 }) => {
-  const [activeTab, setActiveTab] = useState<'today' | 'followups' | 'claim' | 'all'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'all' | 'today' | 'completed' | 'followups' | 'claim'>(initialTab);
 
   useEffect(() => {
     if (initialTab) {
@@ -112,8 +113,10 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
 
   // Complete Modal
   const [completeModalItem, setCompleteModalItem] = useState<MobileVisit | null>(null);
-  const [outcome, setOutcome] = useState('Liked Property');
+  const [outcome, setOutcome] = useState('🏆 Deal Closed / Booked');
+  const [dealAmount, setDealAmount] = useState('');
   const [remarks, setRemarks] = useState('');
+  const [submittingComplete, setSubmittingComplete] = useState(false);
 
   // Reschedule Modal
   const [rescheduleModalItem, setRescheduleModalItem] = useState<MobileVisit | null>(null);
@@ -124,12 +127,42 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
   const [filterDate, setFilterDate] = useState<string | null>(null);
   const [filterDateModalVisible, setFilterDateModalVisible] = useState(false);
 
+  const formatLocalDate = (d: Date): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getCalendarDays = () => {
+    const days: Date[] = [];
+    const now = new Date();
+    // 14 days in past to 14 days in future (total 29 dates)
+    for (let i = -14; i <= 14; i++) {
+      const d = new Date(now);
+      d.setDate(now.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  };
+
   const fetchVisits = async () => {
     try {
       const todayStr = new Date().toISOString().split('T')[0];
-      const targetDate = filterDate ? filterDate.split('T')[0] : (activeTab === 'today' ? todayStr : undefined);
+      const params: any = {};
+      if (filterDate) {
+        params.date = filterDate.split('T')[0];
+        params.status = 'all'; // return all visits on this date: completed, scheduled, rescheduled!
+      } else if (activeTab === 'today') {
+        params.date = todayStr;
+      } else if (activeTab === 'completed') {
+        params.status = 'completed';
+      } else if (activeTab === 'all') {
+        params.status = 'active';
+      }
+
       const [allRes, claimRes, followupRes] = await Promise.all([
-        mobileApi.getVisits({ date: targetDate }),
+        mobileApi.getVisits(params),
         mobileApi.getVisits({ open_claims_only: true }),
         mobileApi.getFollowUps({ range: filterDate ? 'all' : (activeTab === 'today' ? 'today' : 'all') }),
       ]);
@@ -244,7 +277,11 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
   const handleClaim = async (v: MobileVisit) => {
     try {
       await mobileApi.claimVisit(v.visit_id);
-      Alert.alert('Visit Claimed!', `You now own visit ${v.visit_id} for ${v.customer_name}.`);
+      Alert.alert(
+        'Visit Claimed!',
+        `You now own visit #${v.visit_id} for ${v.customer_name}.\nIt has been moved to your active schedule.`,
+      );
+      setActiveTab('all');
       fetchVisits();
     } catch (err: any) {
       Alert.alert('Claim Failed', err.message || 'Visit was already claimed by another executive.');
@@ -253,13 +290,39 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
 
   const handleComplete = async () => {
     if (!completeModalItem) return;
+    setSubmittingComplete(true);
     try {
-      await mobileApi.completeVisit(completeModalItem.visit_id, outcome, remarks.trim() || undefined);
-      Alert.alert('Visit Completed', `Visit ${completeModalItem.visit_id} marked as completed.`);
+      if (outcome.includes('Deal Closed') || outcome.includes('Booked')) {
+        await mobileApi.closeVisitDeal(completeModalItem.visit_id, {
+          deal_amount: dealAmount ? Number(dealAmount) : (completeModalItem.property_amount || undefined),
+          final_remarks: remarks.trim() || 'Deal closed from site visit showing.',
+        });
+        Alert.alert(
+          '🏆 Deal Closed & Property Synced!',
+          `Visit #${completeModalItem.visit_id} closed successfully!\nProperty #${completeModalItem.property_id} updated to ${completeModalItem.property_transaction_type === 'rent' ? 'RENTED' : 'SOLD'}.\nEnquiry #${completeModalItem.enquiry_id} marked as DEAL CLOSED.`,
+        );
+      } else if (outcome.includes('Not Interested') || outcome.includes('Disliked')) {
+        await mobileApi.abortVisitDeal(completeModalItem.visit_id, {
+          reason: remarks.trim() || 'Client Disliked / Not Interested after site visit.',
+          remarks: remarks.trim() || undefined,
+        });
+        Alert.alert(
+          'Visit Recorded',
+          `Visit #${completeModalItem.visit_id} recorded as Not Interested. Linked enquiry updated.`,
+        );
+      } else {
+        await mobileApi.completeVisit(completeModalItem.visit_id, outcome, remarks.trim() || undefined);
+        Alert.alert('Visit Completed', `Visit #${completeModalItem.visit_id} recorded with outcome: ${outcome}`);
+      }
       setCompleteModalItem(null);
+      setOutcome('🏆 Deal Closed / Booked');
+      setDealAmount('');
+      setRemarks('');
       fetchVisits();
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Could not complete visit.');
+    } finally {
+      setSubmittingComplete(false);
     }
   };
 
@@ -271,8 +334,10 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
     try {
       const targetDate = newDate.trim() || new Date(Date.now() + 86400000).toISOString();
       await mobileApi.rescheduleVisit(rescheduleModalItem.visit_id, targetDate, rescheduleReason.trim());
-      Alert.alert('Visit Rescheduled', `Visit ${rescheduleModalItem.visit_id} updated.`);
+      Alert.alert('Visit Rescheduled', `Visit #${rescheduleModalItem.visit_id} updated to new date/time.`);
       setRescheduleModalItem(null);
+      setNewDate('');
+      setRescheduleReason('');
       fetchVisits();
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Could not reschedule visit.');
@@ -293,12 +358,13 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
         scheduled_at: visitDate,
         notes: notes.trim() || undefined,
       });
-      Alert.alert('Visit Scheduled', 'Visit scheduled and assigned to your calendar.');
+      Alert.alert('Visit Scheduled', 'Visit scheduled and assigned to your schedule.');
       setScheduleModalVisible(false);
       setEnquiryId('');
       setPropertyId('');
       setScheduledDate('');
       setNotes('');
+      setActiveTab('all');
       fetchVisits();
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Could not schedule visit.');
@@ -318,114 +384,245 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
       {/* Top Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.title}>Daily Schedule</Text>
-            <Text style={styles.subtitle}>
+          <View style={{ flex: 1, marginRight: 10 }}>
+            <Text style={styles.title} numberOfLines={1}>Daily Schedule</Text>
+            <Text style={styles.subtitle} numberOfLines={1}>
               {filterDate
                 ? `📅 Filtered: ${new Date(filterDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}`
                 : `${formattedDate} • Visits & Callbacks`}
             </Text>
           </View>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            {filterDate ? (
-              <TouchableOpacity
-                style={styles.clearDatePill}
-                onPress={() => setFilterDate(null)}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="close-circle" size={13} color="#DC2626" />
-                <Text style={styles.clearDatePillText}>Clear</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.pickDatePill}
-                onPress={() => setFilterDateModalVisible(true)}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="calendar-outline" size={13} color="#4F5278" />
-                <Text style={styles.pickDatePillText}>Pick Date</Text>
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              style={styles.scheduleBtn}
-              onPress={() => setScheduleModalVisible(true)}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="add" size={15} color="#FFFFFF" style={{ marginRight: 2 }} />
-              <Text style={styles.scheduleBtnText}>+ Visit</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.scheduleBtn}
+            onPress={() => setScheduleModalVisible(true)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="add" size={16} color="#FFFFFF" style={{ marginRight: 3 }} />
+            <Text style={styles.scheduleBtnText}>+ Visit</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Segmented Filter Bar: 3 Clean Dedicated Tabs */}
-      <View style={styles.segmentedTabBar}>
-        <TouchableOpacity
-          style={[styles.segmentBtn, activeTab === 'today' && styles.segmentBtnActive]}
-          onPress={() => {
-            setFilterDate(null);
-            setActiveTab('today');
-          }}
-        >
-          <Ionicons
-            name="location"
-            size={13}
-            color={activeTab === 'today' ? '#4F5278' : '#94A3B8'}
-            style={{ marginRight: 4 }}
-          />
-          <Text
-            style={[styles.segmentBtnText, activeTab === 'today' && styles.segmentBtnTextActive]}
-            numberOfLines={1}
-          >
-            Visits ({todayCount})
-          </Text>
-        </TouchableOpacity>
+      {/* Calendly-Style Schedule Browser: Interactive Horizontal Date Ribbon */}
+      <View style={styles.dateRibbonContainer}>
+        <View style={styles.dateRibbonHeader}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
+            <Ionicons name="calendar" size={14} color="#4F5278" />
+            <Text style={styles.dateRibbonTitle} numberOfLines={1}>Date</Text>
+            {filterDate && (
+              <TouchableOpacity
+                style={styles.activeFilterBadge}
+                onPress={() => setFilterDate(null)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.activeFilterBadgeText} numberOfLines={1}>
+                  {new Date(filterDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                </Text>
+                <Ionicons name="close-circle" size={12} color="#DC2626" style={{ marginLeft: 3 }} />
+              </TouchableOpacity>
+            )}
+          </View>
 
-        <TouchableOpacity
-          style={[styles.segmentBtn, activeTab === 'followups' && styles.segmentBtnActive]}
-          onPress={() => {
-            setFilterDate(null);
-            setActiveTab('followups');
-          }}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name="call"
-            size={13}
-            color={activeTab === 'followups' ? '#4F5278' : '#94A3B8'}
-            style={{ marginRight: 4 }}
-          />
-          <Text
-            style={[styles.segmentBtnText, activeTab === 'followups' && styles.segmentBtnTextActive]}
-            numberOfLines={1}
-          >
-            Callbacks ({followupCount})
-          </Text>
-        </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <TouchableOpacity
+              style={[styles.quickRibbonBtn, !filterDate && styles.quickRibbonBtnActive]}
+              onPress={() => setFilterDate(null)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.quickRibbonBtnText, !filterDate && styles.quickRibbonBtnTextActive]}>
+                All
+              </Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.segmentBtn, activeTab === 'claim' && styles.segmentBtnActive]}
-          onPress={() => {
-            setFilterDate(null);
-            setActiveTab('claim');
-          }}
-          activeOpacity={0.8}
+            <TouchableOpacity
+              style={[styles.quickRibbonBtn, filterDate === formatLocalDate(new Date()) && styles.quickRibbonBtnActive]}
+              onPress={() => setFilterDate(formatLocalDate(new Date()))}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.quickRibbonBtnText, filterDate === formatLocalDate(new Date()) && styles.quickRibbonBtnTextActive]}>
+                Today
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.calendarPickerBtn}
+              onPress={() => setFilterDateModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="calendar-outline" size={13} color="#4F5278" />
+              <Text style={styles.calendarPickerBtnText}>Pick Date</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Scrollable Horizontal Date Cards Strip (Past 14 Days to Next 14 Days) */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.dateRibbonScroll}
         >
-          <Ionicons
-            name="flash"
-            size={13}
-            color={activeTab === 'claim' ? '#4F5278' : '#94A3B8'}
-            style={{ marginRight: 4 }}
-          />
-          <Text
-            style={[styles.segmentBtnText, activeTab === 'claim' && styles.segmentBtnTextActive]}
-            numberOfLines={1}
+          {getCalendarDays().map((day) => {
+            const dayStr = formatLocalDate(day);
+            const isSelected = filterDate === dayStr;
+            const isToday = dayStr === formatLocalDate(new Date());
+            const dayName = day.toLocaleDateString('en-IN', { weekday: 'short' }).toUpperCase();
+            const dayNumber = day.getDate();
+            const monthName = day.toLocaleDateString('en-IN', { month: 'short' });
+
+            return (
+              <TouchableOpacity
+                key={dayStr}
+                style={[
+                  styles.dateRibbonCard,
+                  isSelected && styles.dateRibbonCardSelected,
+                  isToday && !isSelected && styles.dateRibbonCardToday,
+                ]}
+                onPress={() => {
+                  if (isSelected) {
+                    setFilterDate(null);
+                  } else {
+                    setFilterDate(dayStr);
+                  }
+                }}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.dateRibbonDayName, isSelected && styles.dateRibbonTextSelected]}>
+                  {dayName}
+                </Text>
+                <Text style={[styles.dateRibbonDayNum, isSelected && styles.dateRibbonTextSelected]}>
+                  {dayNumber}
+                </Text>
+                <Text style={[styles.dateRibbonMonth, isSelected && styles.dateRibbonTextSelected]}>
+                  {monthName}
+                </Text>
+
+                {isToday && (
+                  <View style={[styles.todayIndicatorDot, isSelected && { backgroundColor: '#FFFFFF' }]} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Segmented Filter Bar: 5 Dedicated Horizontal Tabs */}
+      <View style={styles.tabBarWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.segmentedTabBarScroll}
+        >
+          <TouchableOpacity
+            style={[styles.segmentBtn, activeTab === 'all' && styles.segmentBtnActive]}
+            onPress={() => {
+              setFilterDate(null);
+              setActiveTab('all');
+            }}
+            activeOpacity={0.8}
           >
-            Claim Pool ({openClaimsCount})
-          </Text>
-        </TouchableOpacity>
+            <Ionicons
+              name="calendar"
+              size={13}
+              color={activeTab === 'all' ? '#FFFFFF' : '#4F5278'}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[styles.segmentBtnText, activeTab === 'all' && styles.segmentBtnTextActive]}
+              numberOfLines={1}
+            >
+              All Scheduled
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.segmentBtn, activeTab === 'today' && styles.segmentBtnActive]}
+            onPress={() => {
+              setFilterDate(null);
+              setActiveTab('today');
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="time"
+              size={13}
+              color={activeTab === 'today' ? '#FFFFFF' : '#4F5278'}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[styles.segmentBtnText, activeTab === 'today' && styles.segmentBtnTextActive]}
+              numberOfLines={1}
+            >
+              Today ({todayCount})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.segmentBtn, activeTab === 'completed' && styles.segmentBtnActive]}
+            onPress={() => {
+              setFilterDate(null);
+              setActiveTab('completed');
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="trophy"
+              size={13}
+              color={activeTab === 'completed' ? '#FFFFFF' : '#4F5278'}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[styles.segmentBtnText, activeTab === 'completed' && styles.segmentBtnTextActive]}
+              numberOfLines={1}
+            >
+              Completed & Booked
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.segmentBtn, activeTab === 'followups' && styles.segmentBtnActive]}
+            onPress={() => {
+              setFilterDate(null);
+              setActiveTab('followups');
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="call"
+              size={13}
+              color={activeTab === 'followups' ? '#FFFFFF' : '#4F5278'}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[styles.segmentBtnText, activeTab === 'followups' && styles.segmentBtnTextActive]}
+              numberOfLines={1}
+            >
+              Callbacks ({followupCount})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.segmentBtn, activeTab === 'claim' && styles.segmentBtnActive]}
+            onPress={() => {
+              setFilterDate(null);
+              setActiveTab('claim');
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="flash"
+              size={13}
+              color={activeTab === 'claim' ? '#FFFFFF' : '#4F5278'}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[styles.segmentBtnText, activeTab === 'claim' && styles.segmentBtnTextActive]}
+              numberOfLines={1}
+            >
+              Claim Pool {openClaimsCount > 0 ? `(${openClaimsCount})` : ''}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
 
       {/* Main Content Area */}
@@ -440,16 +637,16 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
           {/* Available Sector Leads (Open Claim Pool) */}
-          {(activeTab === 'claim' || activeTab === 'all') && (
+          {activeTab === 'claim' && (
             <View style={styles.sectionBlock}>
               <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionTitle}>Available Sector Leads</Text>
+                <Text style={styles.sectionTitle}>Available Sector Leads (Claim Pool)</Text>
                 <Text style={styles.sectionMeta}>Auto-refreshes live</Text>
               </View>
 
               {openClaims.length === 0 ? (
                 <View style={styles.emptyCard}>
-                  <Text style={styles.emptyCardText}>No unclaimed leads currently in sector pool.</Text>
+                  <Text style={styles.emptyCardText}>No unclaimed leads currently in sector pool. All visits are assigned directly.</Text>
                 </View>
               ) : (
                 openClaims.map((claim) => (
@@ -471,7 +668,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                         </Text>
                         <Text style={styles.claimClientName}>Client: {claim.customer_name}</Text>
                         <Text style={styles.claimReqText}>
-                          {claim.property_bhk || 'Residential'} • ₹{safeLocale(claim.property_amount)}
+                          {claim.property_bhk || 'Residential'} • ₹{safeLocale(claim.property_amount)} ({claim.property_transaction_type?.toUpperCase() || 'RENT'})
                         </Text>
                       </View>
                     </View>
@@ -479,10 +676,9 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                     <View style={styles.claimFooterRow}>
                       <View style={styles.claimRuleBox}>
                         <Ionicons name="shield-checkmark-outline" size={13} color={themeTokens.colors.textSecondary} />
-                        <Text style={styles.claimRuleText}>First eligible claimant gets ownership</Text>
+                        <Text style={styles.claimRuleText}>Claiming assigns visit directly to your schedule</Text>
                       </View>
 
-                      {/* Stitch Dark Slate Claim Button */}
                       <TouchableOpacity
                         style={styles.claimActionBtn}
                         onPress={() => handleClaim(claim)}
@@ -498,27 +694,50 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             </View>
           )}
 
-          {/* Scheduled Visits Section */}
-          {(activeTab === 'today' || activeTab === 'all') && (
+          {/* Scheduled & Completed Visits Section */}
+          {(filterDate || activeTab === 'all' || activeTab === 'today' || activeTab === 'completed') && (
             <View style={styles.sectionBlock}>
               <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionTitle}>Today's Scheduled Visits</Text>
-                <Text style={styles.sectionMeta}>{visits.length} scheduled</Text>
+                <Text style={styles.sectionTitle}>
+                  {filterDate
+                    ? `📅 Visits on ${new Date(filterDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}`
+                    : activeTab === 'all'
+                    ? 'All Upcoming Scheduled Visits'
+                    : activeTab === 'today'
+                    ? "Today's Scheduled Visits"
+                    : 'Completed Visits & Booked Deals'}
+                </Text>
+                <Text style={styles.sectionMeta}>{visits.length} showings</Text>
               </View>
 
               {visits.length === 0 ? (
                 <EmptyState
-                  title="No Visits Scheduled"
-                  description="You have no visits scheduled for today. Check the Claim pool or schedule a new showing."
+                  title={filterDate ? 'No Showings on this Date' : activeTab === 'completed' ? 'No Completed Visits' : 'No Visits Scheduled'}
+                  description={
+                    filterDate
+                      ? `No visits were recorded or scheduled for ${new Date(filterDate).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}.`
+                      : activeTab === 'completed'
+                      ? 'No visits have been marked completed yet.'
+                      : 'You have no active visits in this view. Schedule a new showing or check Claim Pool.'
+                  }
                   actionLabel="Schedule Visit"
-                  onAction={() => setScheduleModalVisible(true)}
-                  iconName="calendar-outline"
+                  onAction={() => {
+                    if (filterDate) {
+                      setScheduledDate(filterDate);
+                    }
+                    setScheduleModalVisible(true);
+                  }}
+                  iconName={filterDate ? 'calendar-outline' : activeTab === 'completed' ? 'trophy-outline' : 'calendar-outline'}
                 />
               ) : (
                 visits.map((item) => {
-                  const visitDate = new Date(item.scheduled_at);
+                  const visitDate = parseUtcDate(item.scheduled_at);
                   const timeStr = visitDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
                   const dateStr = visitDate.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+                  const isDealClosed = Boolean(
+                    item.outcome && (item.outcome.includes('Deal Closed') || item.outcome.includes('Booked'))
+                  );
+
                   return (
                     <View key={item.visit_id} style={styles.visitCard}>
                       {/* Top Header Pill Row */}
@@ -530,9 +749,12 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                           label={item.status.toUpperCase()}
                           variant={item.status === 'completed' ? 'success' : item.status === 'rescheduled' ? 'warning' : 'primary'}
                         />
-                        <Text style={styles.assignedText}>
-                          {item.assigned_name || 'Assigned'}
-                        </Text>
+                        <View style={styles.assignedBadge}>
+                          <Ionicons name="person-outline" size={11} color="#4F5278" />
+                          <Text style={styles.assignedText} numberOfLines={1}>
+                            {item.assigned_name || 'Assigned to You'}
+                          </Text>
+                        </View>
                       </View>
 
                       {/* Property & Client Info */}
@@ -544,41 +766,92 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                           <Text style={styles.propertyCodeTitle}>
                             #{item.property_id} • {item.property_society}
                           </Text>
-                          <Text style={styles.customerName}>{item.customer_name}</Text>
-                          {/* Anti-copy: non-selectable phone */}
-                          <Text style={styles.customerPhone} selectable={false}>
-                            {item.customer_phone}
+                          <Text style={styles.claimReqText}>
+                            {item.property_bhk || 'Residential'} • ₹{safeLocale(item.property_amount)} ({item.property_transaction_type?.toUpperCase() || 'RENT'})
                           </Text>
+                          <Text style={styles.customerName}>Client: {item.customer_name}</Text>
+                        </View>
+
+                        {/* Direct Call / WhatsApp Buttons */}
+                        <View style={{ gap: 4 }}>
+                          <TouchableOpacity
+                            style={styles.directCallBtn}
+                            onPress={() => Linking.openURL(`tel:${item.customer_phone}`).catch(() => {})}
+                          >
+                            <Ionicons name="call" size={11} color="#FFFFFF" />
+                            <Text style={styles.directCallBtnText}>Call</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.directWaBtn}
+                            onPress={() => {
+                              const cleanPhone = (item.customer_phone || '').replace(/[^0-9]/g, '');
+                              Linking.openURL(`https://wa.me/91${cleanPhone}`).catch(() => {});
+                            }}
+                          >
+                            <Ionicons name="logo-whatsapp" size={11} color="#FFFFFF" />
+                            <Text style={styles.directCallBtnText}>WhatsApp</Text>
+                          </TouchableOpacity>
                         </View>
                       </View>
 
-                      {/* Client Notes Container (matching Stitch) */}
-                      <View style={styles.clientNotesBox}>
-                        <Ionicons name="reader-outline" size={14} color={themeTokens.colors.primaryDark} style={{ marginRight: 6 }} />
-                        <Text style={styles.clientNotesText} numberOfLines={2}>
-                          {item.remarks || item.reschedule_reason || 'Client scheduled for site showing. Show unit amenities and clubhouse.'}
-                        </Text>
-                      </View>
+                      {/* Rescheduled Notice */}
+                      {item.status === 'rescheduled' && item.reschedule_reason ? (
+                        <View style={styles.rescheduleNoticeBox}>
+                          <Ionicons name="repeat" size={13} color="#D97706" />
+                          <Text style={styles.rescheduleNoticeText}>
+                            Rescheduled: {item.reschedule_reason}
+                          </Text>
+                        </View>
+                      ) : null}
 
-                      {/* Action Button Row matching Stitch Image 5 */}
+                      {/* Completed Outcome Box */}
+                      {item.status === 'completed' ? (
+                        <View style={[
+                          styles.completedOutcomeBox,
+                          isDealClosed ? styles.completedOutcomeDealBox : null
+                        ]}>
+                          <Ionicons
+                            name={isDealClosed ? 'trophy' : 'checkmark-circle'}
+                            size={14}
+                            color={isDealClosed ? '#16A34A' : '#4F5278'}
+                          />
+                          <View style={{ flex: 1, marginLeft: 6 }}>
+                            <Text style={[styles.completedOutcomeTitle, isDealClosed ? { color: '#16A34A' } : null]}>
+                              Outcome: {item.outcome || 'Visit Completed'}
+                            </Text>
+                            {item.remarks ? (
+                              <Text style={styles.completedOutcomeRemarks}>{item.remarks}</Text>
+                            ) : null}
+                          </View>
+                        </View>
+                      ) : (
+                        /* Client Notes Container */
+                        <View style={styles.clientNotesBox}>
+                          <Ionicons name="reader-outline" size={14} color={themeTokens.colors.primaryDark} style={{ marginRight: 6 }} />
+                          <Text style={styles.clientNotesText} numberOfLines={2}>
+                            {item.remarks || item.notes || 'Client scheduled for site showing. Present unit features and property amenities.'}
+                          </Text>
+                        </View>
+                      )}
+
+                      {/* Action Button Row */}
                       <View style={styles.actionBtnRow}>
                         {item.status !== 'completed' && item.status !== 'cancelled' ? (
                           <>
-                            {/* Complete Button (Dark Slate) */}
                             <TouchableOpacity
                               style={styles.primaryActionBtn}
                               onPress={() => {
                                 setCompleteModalItem(item);
-                                setOutcome('Liked Property');
+                                setOutcome('🏆 Deal Closed / Booked');
+                                setDealAmount(item.property_amount ? String(item.property_amount) : '');
                                 setRemarks('');
                               }}
                               activeOpacity={0.85}
                             >
                               <Ionicons name="checkmark-circle-outline" size={15} color="#FFFFFF" style={{ marginRight: 5 }} />
-                              <Text style={styles.primaryActionBtnText}>Complete</Text>
+                              <Text style={styles.primaryActionBtnText}>Complete / Outcome</Text>
                             </TouchableOpacity>
 
-                            {/* Reschedule Button (Soft Lavender) */}
                             <TouchableOpacity
                               style={styles.secondaryActionBtn}
                               onPress={() => {
@@ -593,9 +866,10 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                             </TouchableOpacity>
                           </>
                         ) : (
-                          <View style={{ flex: 1, alignItems: 'center', paddingVertical: 6 }}>
-                            <Text style={{ fontSize: 12, color: themeTokens.colors.textSecondary, fontWeight: '600' }}>
-                              Visit Marked {item.status.toUpperCase()}
+                          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 4, gap: 6 }}>
+                            <Ionicons name="checkmark-done-circle" size={16} color="#16A34A" />
+                            <Text style={{ fontSize: 12, color: '#16A34A', fontWeight: '700' }}>
+                              Showing Concluded {isDealClosed ? '• Deal Closed 🏆' : ''}
                             </Text>
                           </View>
                         )}
@@ -629,7 +903,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                 />
               ) : (
                 followups.map((f) => {
-                  const sched = new Date(f.scheduled_at);
+                  const sched = parseUtcDate(f.scheduled_at);
                   const isOverdue = sched < new Date() && f.status !== 'completed' && f.status !== 'cancelled';
                   const isPostVisit = Boolean(
                     (f.notes && /visit|showing|seen|flat|site|inspection/i.test(f.notes)) ||
@@ -856,12 +1130,12 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
       {completeModalItem && (
         <Modal visible={true} animationType="fade" transparent>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+            <View style={[styles.modalContent, { maxHeight: '88%', width: '92%' }]}>
               <View style={styles.modalHeader}>
                 <View>
-                  <Text style={styles.modalTitle}>Complete Visit</Text>
+                  <Text style={styles.modalTitle}>Complete Site Visit</Text>
                   <Text style={{ fontSize: 11, color: themeTokens.colors.textSecondary }}>
-                    {completeModalItem.visit_id} • {completeModalItem.customer_name}
+                    #{completeModalItem.visit_id} • {completeModalItem.customer_name}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={() => setCompleteModalItem(null)}>
@@ -869,36 +1143,100 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.formLabel}>Visit Outcome</Text>
-              <TextInput
-                style={styles.formInput}
-                value={outcome}
-                onChangeText={setOutcome}
-                placeholder="e.g. Liked Property / Wants second visit"
-                placeholderTextColor={themeTokens.colors.textSecondary}
-              />
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Property Context Card */}
+                <View style={styles.modalPropSummaryCard}>
+                  <Ionicons name="business" size={16} color="#4F5278" />
+                  <Text style={styles.modalPropSummaryText}>
+                    #{completeModalItem.property_id} • {completeModalItem.property_society || 'Property'} • ₹{safeLocale(completeModalItem.property_amount)} ({completeModalItem.property_transaction_type?.toUpperCase() || 'RENT'})
+                  </Text>
+                </View>
 
-              <Text style={styles.formLabel}>Client Remarks & Next Steps</Text>
-              <TextInput
-                style={[styles.formInput, { height: 70 }]}
-                multiline
-                value={remarks}
-                onChangeText={setRemarks}
-                placeholder="Client feedback, requested changes, or negotiation terms"
-                placeholderTextColor={themeTokens.colors.textSecondary}
-              />
+                {/* Outcome Quick Selection Chips */}
+                <Text style={styles.formLabel}>Select Visit Outcome *</Text>
+                <View style={styles.outcomeChipsContainer}>
+                  {[
+                    { label: '🏆 Deal Closed / Booked', value: '🏆 Deal Closed / Booked', activeColor: '#16A34A', activeBg: '#DCFCE7' },
+                    { label: '🤝 Client Interested', value: '🤝 Interested / In Negotiation', activeColor: '#2563EB', activeBg: '#DBEAFE' },
+                    { label: '🔄 Need Another Unit', value: '🔄 Need Another Option / Revisit', activeColor: '#D97706', activeBg: '#FEF3C7' },
+                    { label: '❌ Not Interested', value: '❌ Disliked / Not Interested', activeColor: '#DC2626', activeBg: '#FEE2E2' },
+                  ].map((chip) => {
+                    const isSelected = outcome === chip.value;
+                    return (
+                      <TouchableOpacity
+                        key={chip.value}
+                        style={[
+                          styles.outcomeChip,
+                          isSelected && { backgroundColor: chip.activeBg, borderColor: chip.activeColor, borderWidth: 1.5 },
+                        ]}
+                        onPress={() => setOutcome(chip.value)}
+                        activeOpacity={0.8}
+                      >
+                        <Text
+                          style={[
+                            styles.outcomeChipText,
+                            isSelected && { color: chip.activeColor, fontWeight: '700' },
+                          ]}
+                        >
+                          {chip.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                {/* Dual Deal Sync Banner */}
+                {(outcome.includes('Deal Closed') || outcome.includes('Booked')) && (
+                  <View style={styles.dualSyncNoticeBox}>
+                    <Ionicons name="flash" size={16} color="#16A34A" />
+                    <View style={{ flex: 1, marginLeft: 6 }}>
+                      <Text style={styles.dualSyncNoticeTitle}>⚡ Dual Deal Sync Activated</Text>
+                      <Text style={styles.dualSyncNoticeBody}>
+                        Submitting will automatically mark Property #{completeModalItem.property_id} as {completeModalItem.property_transaction_type === 'rent' ? 'RENTED' : 'SOLD'} and Enquiry #{completeModalItem.enquiry_id} as DEAL CLOSED.
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Deal Amount input for closed deals */}
+                {(outcome.includes('Deal Closed') || outcome.includes('Booked')) && (
+                  <View style={{ marginTop: 8 }}>
+                    <Text style={styles.formLabel}>Agreed Deal Amount (₹)</Text>
+                    <TextInput
+                      style={styles.formInput}
+                      keyboardType="numeric"
+                      placeholder={`e.g. ${completeModalItem.property_amount || 25000}`}
+                      value={dealAmount}
+                      onChangeText={setDealAmount}
+                      placeholderTextColor={themeTokens.colors.textSecondary}
+                    />
+                  </View>
+                )}
+
+                <Text style={styles.formLabel}>Remarks & Client Feedback</Text>
+                <TextInput
+                  style={[styles.formInput, { height: 70 }]}
+                  multiline
+                  value={remarks}
+                  onChangeText={setRemarks}
+                  placeholder="Client feedback, terms discussed, advance token..."
+                  placeholderTextColor={themeTokens.colors.textSecondary}
+                />
+              </ScrollView>
 
               <View style={styles.modalFooter}>
                 <Button
                   label="Cancel"
                   variant="outline"
                   onPress={() => setCompleteModalItem(null)}
+                  disabled={submittingComplete}
                   style={{ flex: 1, marginRight: 8 }}
                 />
                 <Button
-                  label="Confirm Completed"
+                  label={submittingComplete ? 'Saving...' : (outcome.includes('Deal Closed') || outcome.includes('Booked')) ? '🏆 Close & Sync Deal' : 'Complete Visit'}
                   variant="primary"
                   onPress={handleComplete}
+                  disabled={submittingComplete}
                   style={{ flex: 1 }}
                 />
               </View>
@@ -911,12 +1249,12 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
       {rescheduleModalItem && (
         <Modal visible={true} animationType="fade" transparent>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+            <View style={[styles.modalContent, { maxHeight: '88%', width: '92%' }]}>
               <View style={styles.modalHeader}>
                 <View>
                   <Text style={styles.modalTitle}>Reschedule Visit</Text>
                   <Text style={{ fontSize: 11, color: themeTokens.colors.textSecondary }}>
-                    {rescheduleModalItem.visit_id} • {rescheduleModalItem.customer_name}
+                    #{rescheduleModalItem.visit_id} • {rescheduleModalItem.customer_name}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={() => setRescheduleModalItem(null)}>
@@ -924,22 +1262,54 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                 </TouchableOpacity>
               </View>
 
-              <DateTimePickerField
-                label="New Date & Showing Time"
-                value={newDate}
-                onChangeValue={setNewDate}
-                placeholder="Pick rescheduled date & clock..."
-                required
-              />
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <DateTimePickerField
+                  label="New Date & Showing Time"
+                  value={newDate}
+                  onChangeValue={setNewDate}
+                  placeholder="Pick rescheduled date & clock..."
+                  required
+                />
 
-              <Text style={styles.formLabel}>Mandatory Reschedule Reason *</Text>
-              <TextInput
-                style={styles.formInput}
-                placeholder="e.g. Client requested morning slot"
-                value={rescheduleReason}
-                onChangeText={setRescheduleReason}
-                placeholderTextColor={themeTokens.colors.textSecondary}
-              />
+                <Text style={styles.formLabel}>Quick Reasons</Text>
+                <View style={styles.reasonChipsContainer}>
+                  {[
+                    'Client requested next day',
+                    'Client running late / traffic',
+                    'Keys / Owner unavailable',
+                    'Client requested weekend',
+                    'Weather / Rain delay',
+                  ].map((r) => (
+                    <TouchableOpacity
+                      key={r}
+                      style={[
+                        styles.reasonChip,
+                        rescheduleReason === r && styles.reasonChipActive,
+                      ]}
+                      onPress={() => setRescheduleReason(r)}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.reasonChipText,
+                          rescheduleReason === r && styles.reasonChipTextActive,
+                        ]}
+                      >
+                        {r}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={styles.formLabel}>Mandatory Reschedule Reason *</Text>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="e.g. Client requested morning slot"
+                  value={rescheduleReason}
+                  onChangeText={setRescheduleReason}
+                  placeholderTextColor={themeTokens.colors.textSecondary}
+                />
+              </ScrollView>
 
               <View style={styles.modalFooter}>
                 <Button
@@ -1179,7 +1549,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                     <Ionicons name="calendar-outline" size={14} color={themeTokens.colors.primaryDark} />
                     <Text style={{ fontSize: 13, fontWeight: '700', color: themeTokens.colors.textPrimary }}>
-                      {new Date(selectedFollowupDetail.scheduled_at).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(selectedFollowupDetail.scheduled_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                      {formatDateTime(selectedFollowupDetail.scheduled_at)}
                     </Text>
                   </View>
 
@@ -1229,7 +1599,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                     </Text>
                   ) : (
                     followupHistory.map((h, idx) => {
-                      const hDate = new Date(h.scheduled_at);
+                      const hDate = parseUtcDate(h.scheduled_at);
                       const isCurrent = h.followup_id === selectedFollowupDetail.followup_id;
                       return (
                         <View
@@ -1389,6 +1759,8 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
         visible={filterDateModalVisible}
         mode="date"
         title="Filter Schedule by Date"
+        allowPast={true}
+        minDate={null}
         value={filterDate || new Date().toISOString()}
         onConfirm={(_d: Date, iso: string) => {
           setFilterDate(iso);
@@ -1498,6 +1870,138 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#DC2626',
   },
+  dateRibbonContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    paddingHorizontal: 16,
+  },
+  dateRibbonHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  dateRibbonTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#1E293B',
+    letterSpacing: 0.3,
+  },
+  activeFilterBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  activeFilterBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#991B1B',
+  },
+  quickRibbonBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: '#F1F5F9',
+  },
+  quickRibbonBtnActive: {
+    backgroundColor: '#4F5278',
+  },
+  quickRibbonBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  quickRibbonBtnTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  calendarPickerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 7,
+    paddingVertical: 4.5,
+    borderRadius: 6,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  calendarPickerBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#4F5278',
+    marginLeft: 3,
+  },
+  dateRibbonScroll: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  dateRibbonCard: {
+    width: 52,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  dateRibbonCardSelected: {
+    backgroundColor: '#292A3A',
+    borderColor: '#292A3A',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  dateRibbonCardToday: {
+    borderColor: '#4F5278',
+    borderWidth: 1.5,
+    backgroundColor: '#EEF2FF',
+  },
+  dateRibbonDayName: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 0.4,
+  },
+  dateRibbonDayNum: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginVertical: 1,
+  },
+  dateRibbonMonth: {
+    fontSize: 9.5,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  dateRibbonTextSelected: {
+    color: '#FFFFFF',
+  },
+  todayIndicatorDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#4F5278',
+    marginTop: 3,
+  },
+  tabBarWrapper: {
+    paddingHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  segmentedTabBarScroll: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingVertical: 2,
+  },
   segmentedTabBar: {
     flexDirection: 'row',
     backgroundColor: '#F1F5F9',
@@ -1509,17 +2013,17 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   segmentBtn: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
   },
   segmentBtnActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: themeTokens.colors.primaryDark,
     shadowColor: '#000',
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 2,
     elevation: 2,
@@ -1527,11 +2031,62 @@ const styles = StyleSheet.create({
   segmentBtnText: {
     fontSize: 11.5,
     fontWeight: '600',
-    color: '#64748B',
+    color: '#4F5278',
   },
   segmentBtnTextActive: {
-    color: '#1E293B',
+    color: '#FFFFFF',
     fontWeight: '800',
+  },
+  assignedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 'auto',
+  },
+  rescheduleNoticeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FEF3C7',
+    padding: 8,
+    borderRadius: 6,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#F59E0B',
+  },
+  rescheduleNoticeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#92400E',
+    flex: 1,
+  },
+  completedOutcomeBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F8FAFC',
+    padding: 8,
+    borderRadius: 6,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#4F5278',
+  },
+  completedOutcomeDealBox: {
+    backgroundColor: '#DCFCE7',
+    borderLeftColor: '#16A34A',
+  },
+  completedOutcomeTitle: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: themeTokens.colors.textPrimary,
+  },
+  completedOutcomeRemarks: {
+    fontSize: 11,
+    color: themeTokens.colors.textSecondary,
+    marginTop: 2,
   },
   filterBar: {
     flexDirection: 'row',
@@ -1729,6 +2284,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: themeTokens.colors.textPrimary,
+    flex: 1,
+    marginRight: 8,
   },
   sectionMeta: {
     fontSize: 11,
@@ -2022,5 +2579,85 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modalPropSummaryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F1F5F9',
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 10,
+  },
+  modalPropSummaryText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: themeTokens.colors.primaryDark,
+    flex: 1,
+  },
+  outcomeChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginVertical: 8,
+  },
+  outcomeChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+  },
+  outcomeChipText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: themeTokens.colors.textPrimary,
+  },
+  dualSyncNoticeBox: {
+    flexDirection: 'row',
+    backgroundColor: '#ECFDF5',
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  dualSyncNoticeTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#065F46',
+  },
+  dualSyncNoticeBody: {
+    fontSize: 11,
+    color: '#047857',
+    marginTop: 2,
+    lineHeight: 15,
+  },
+  reasonChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginVertical: 8,
+  },
+  reasonChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+  },
+  reasonChipActive: {
+    backgroundColor: '#EEF2FF',
+    borderColor: themeTokens.colors.primaryDark,
+  },
+  reasonChipText: {
+    fontSize: 11,
+    color: themeTokens.colors.textSecondary,
+  },
+  reasonChipTextActive: {
+    color: themeTokens.colors.primaryDark,
+    fontWeight: '700',
   },
 });

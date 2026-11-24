@@ -27,6 +27,7 @@ import {
 import { CustomerDetailScreen } from './CustomerDetailScreen';
 import { DuplicateCheckModal } from '../components/DuplicateCheckModal';
 import { DateTimePickerField } from '../components/DateTimePickerModal';
+import { formatDateTime } from '../utils/dateUtils';
 
 const safeLocale = (val: any): string => {
   if (val === null || val === undefined || isNaN(Number(val))) return '0';
@@ -734,9 +735,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                               💵 Budget: ₹{(enq.budget_min || 0) / 1000}k - ₹{(enq.budget_max || 0) / 1000}k/mo
                             </Text>
                             <Text style={styles.enquiryUpdatedText}>
-                              {enq.created_at
-                                ? new Date(enq.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ' ' + new Date(enq.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
-                                : 'Active'}
+                              🕒 {enq.created_at ? formatDateTime(enq.created_at) : 'Active'}
                             </Text>
                           </View>
                         </TouchableOpacity>
@@ -1412,17 +1411,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                     </View>
                   </View>
                   <Text style={{ fontSize: 11, color: themeTokens.colors.textSecondary, marginTop: 2 }}>
-                    Created:{' '}
-                    {selectedEnquiry.created_at
-                      ? new Date(selectedEnquiry.created_at).toLocaleDateString('en-IN', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true,
-                        })
-                      : 'Earlier'}
+                    Created: {selectedEnquiry.created_at ? formatDateTime(selectedEnquiry.created_at) : 'Earlier'}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={() => setSelectedEnquiry(null)}>
@@ -1569,13 +1558,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                           </Text>
                           <Text style={{ fontSize: 9, color: '#64748B' }}>
                             {item.created_at || item.scheduled_at
-                              ? new Date(item.created_at || item.scheduled_at).toLocaleDateString('en-IN', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  hour12: true,
-                                })
+                              ? formatDateTime(item.created_at || item.scheduled_at)
                               : ''}
                           </Text>
                         </View>

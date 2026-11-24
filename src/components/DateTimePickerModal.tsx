@@ -16,8 +16,9 @@ export interface DateTimePickerModalProps {
   onConfirm: (date: Date, isoString: string) => void;
   onClose: () => void;
   title?: string;
-  minDate?: Date;
+  minDate?: Date | null;
   mode?: 'datetime' | 'date' | 'time';
+  allowPast?: boolean;
 }
 
 const MONTH_NAMES = [
@@ -45,8 +46,9 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
   onConfirm,
   onClose,
   title = 'Select Date & Time',
-  minDate = new Date(),
+  minDate,
   mode = 'datetime',
+  allowPast = false,
 }) => {
   // Parse initial value
   const parseInitialDate = (): Date => {
@@ -162,10 +164,12 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
     );
   };
 
+  const effectiveMinDate = allowPast ? null : (minDate !== undefined ? minDate : new Date());
+
   const isDayDisabled = (day: number) => {
-    if (!minDate) return false;
+    if (!effectiveMinDate) return false;
     const checkDate = new Date(viewYear, viewMonth, day, 23, 59, 59);
-    return checkDate.getTime() < minDate.getTime();
+    return checkDate.getTime() < effectiveMinDate.getTime();
   };
 
   const isToday = (day: number) => {
@@ -249,20 +253,48 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
             {activeTab === 'date' && (
               <View>
                 {/* Quick Presets */}
-                <View style={styles.presetsRow}>
-                  <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(0, 11, 0)}>
-                    <Text style={styles.presetText}>Today</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(1, 11, 0)}>
-                    <Text style={styles.presetText}>Tomorrow</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(2, 16, 0)}>
-                    <Text style={styles.presetText}>+2 Days</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(7, 11, 0)}>
-                    <Text style={styles.presetText}>+1 Week</Text>
-                  </TouchableOpacity>
-                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.presetsRow}>
+                  {allowPast ? (
+                    <>
+                      <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(0, 11, 0)}>
+                        <Text style={styles.presetText}>Today</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(-1, 11, 0)}>
+                        <Text style={styles.presetText}>Yesterday</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(-7, 11, 0)}>
+                        <Text style={styles.presetText}>7d Ago</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(-30, 11, 0)}>
+                        <Text style={styles.presetText}>30d Ago</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={[styles.presetChip, { backgroundColor: '#EEF2FF', borderColor: '#4F5278' }]} onPress={() => applyPreset(-45, 11, 0)}>
+                        <Text style={[styles.presetText, { color: '#4F5278', fontWeight: '800' }]}>45d Ago</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(-60, 11, 0)}>
+                        <Text style={styles.presetText}>60d Ago</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(-90, 11, 0)}>
+                        <Text style={styles.presetText}>90d Ago</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(0, 11, 0)}>
+                        <Text style={styles.presetText}>Today</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(1, 11, 0)}>
+                        <Text style={styles.presetText}>Tomorrow</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(2, 16, 0)}>
+                        <Text style={styles.presetText}>+2 Days</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.presetChip} onPress={() => applyPreset(7, 11, 0)}>
+                        <Text style={styles.presetText}>+1 Week</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </ScrollView>
 
                 {/* Month & Year Navigation */}
                 <View style={styles.monthNavRow}>

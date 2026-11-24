@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { themeTokens } from '../theme/tokens';
 import { mobileApi, MobileProperty } from '../services/api';
 import { DateTimePickerField } from '../components/DateTimePickerModal';
+import { formatDateTime } from '../utils/dateUtils';
 
 interface PropertyDetailScreenProps {
   propertyId: string;
@@ -289,6 +290,17 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
               <Ionicons name="chevron-down" size={12} color={statusColor} style={{ marginLeft: 3 }} />
             </TouchableOpacity>
           </View>
+
+          {/* Creation Date & Time Stamp */}
+          {property.created_at ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4, marginBottom: 8 }}>
+              <Ionicons name="time-outline" size={12} color="#64748B" />
+              <Text style={{ fontSize: 11, color: '#64748B' }}>
+                Added: {formatDateTime(property.created_at)}
+                {property.created_by_name ? ` by ${property.created_by_name}` : ''}
+              </Text>
+            </View>
+          ) : null}
 
           {/* Pricing Row */}
           <View style={styles.pricingSection}>
