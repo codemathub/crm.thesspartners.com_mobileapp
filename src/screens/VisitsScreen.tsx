@@ -138,14 +138,24 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
   const getCalendarDays = () => {
     const days: Date[] = [];
     const now = new Date();
-    // 14 days in past to 14 days in future (total 29 dates)
-    for (let i = -14; i <= 14; i++) {
+    // Upcoming 14 days starting from today (Day 0 to Day 13)
+    for (let i = 0; i < 14; i++) {
       const d = new Date(now);
       d.setDate(now.getDate() + i);
       days.push(d);
     }
     return days;
   };
+
+  const visitDatesWithVisits = React.useMemo(() => {
+    const dateSet = new Set<string>();
+    visits.forEach((v) => {
+      if (v.scheduled_at) {
+        dateSet.add(formatLocalDate(parseUtcDate(v.scheduled_at)));
+      }
+    });
+    return dateSet;
+  }, [visits]);
 
   const fetchVisits = async () => {
     try {
@@ -439,12 +449,12 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             activeOpacity={0.85}
           >
             <Ionicons name="add" size={16} color="#FFFFFF" style={{ marginRight: 3 }} />
-            <Text style={styles.scheduleBtnText}>+ Visit</Text>
+            <Text style={styles.scheduleBtnText}>Visit</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Calendly-Style Schedule Browser: Interactive Horizontal Date Ribbon */}
+      {/* Calendly-Style Schedule Browser: Interactive Horizontal Date Ribbon (Upcoming 14 Days) */}
       <View style={styles.dateRibbonContainer}>
         <View style={styles.dateRibbonHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
@@ -496,7 +506,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
           </View>
         </View>
 
-        {/* Scrollable Horizontal Date Cards Strip (Past 14 Days to Next 14 Days) */}
+        {/* Scrollable Horizontal Date Cards Strip (Upcoming 14 Days from Today) */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -506,6 +516,7 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
             const dayStr = formatLocalDate(day);
             const isSelected = filterDate === dayStr;
             const isToday = dayStr === formatLocalDate(new Date());
+            const hasVisits = visitDatesWithVisits.has(dayStr);
             const dayName = day.toLocaleDateString('en-IN', { weekday: 'short' }).toUpperCase();
             const dayNumber = day.getDate();
             const monthName = day.toLocaleDateString('en-IN', { month: 'short' });
@@ -515,8 +526,8 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                 key={dayStr}
                 style={[
                   styles.dateRibbonCard,
+                  isToday && !isSelected && styles.dateRibbonCardTodayGreen,
                   isSelected && styles.dateRibbonCardSelected,
-                  isToday && !isSelected && styles.dateRibbonCardToday,
                 ]}
                 onPress={() => {
                   if (isSelected) {
@@ -527,18 +538,41 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
                 }}
                 activeOpacity={0.75}
               >
-                <Text style={[styles.dateRibbonDayName, isSelected && styles.dateRibbonTextSelected]}>
+                <Text
+                  style={[
+                    styles.dateRibbonDayName,
+                    isToday && !isSelected && styles.dateRibbonTextTodayGreen,
+                    isSelected && styles.dateRibbonTextSelected,
+                  ]}
+                >
                   {dayName}
                 </Text>
-                <Text style={[styles.dateRibbonDayNum, isSelected && styles.dateRibbonTextSelected]}>
+                <Text
+                  style={[
+                    styles.dateRibbonDayNum,
+                    isToday && !isSelected && styles.dateRibbonNumTodayGreen,
+                    isSelected && styles.dateRibbonTextSelected,
+                  ]}
+                >
                   {dayNumber}
                 </Text>
-                <Text style={[styles.dateRibbonMonth, isSelected && styles.dateRibbonTextSelected]}>
+                <Text
+                  style={[
+                    styles.dateRibbonMonth,
+                    isToday && !isSelected && styles.dateRibbonTextTodayGreen,
+                    isSelected && styles.dateRibbonTextSelected,
+                  ]}
+                >
                   {monthName}
                 </Text>
 
-                {isToday && (
-                  <View style={[styles.todayIndicatorDot, isSelected && { backgroundColor: '#FFFFFF' }]} />
+                {/* Highlight Today with Green Dot, or other days with visit under-dot; blank if no visit */}
+                {isToday ? (
+                  <View style={[styles.todayGreenDot, isSelected && { backgroundColor: '#FFFFFF' }]} />
+                ) : hasVisits ? (
+                  <View style={[styles.visitScheduleUnderDot, isSelected && { backgroundColor: '#FFFFFF' }]} />
+                ) : (
+                  <View style={styles.blankDotPlaceholder} />
                 )}
               </TouchableOpacity>
             );
@@ -2005,17 +2039,30 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     backgroundColor: '#EEF2FF',
   },
+  dateRibbonCardTodayGreen: {
+    borderColor: '#16A34A',
+    borderWidth: 1.5,
+    backgroundColor: '#DCFCE7',
+  },
   dateRibbonDayName: {
     fontSize: 9.5,
     fontWeight: '700',
     color: '#64748B',
     letterSpacing: 0.4,
   },
+  dateRibbonTextTodayGreen: {
+    color: '#15803D',
+    fontWeight: '800',
+  },
   dateRibbonDayNum: {
     fontSize: 16,
     fontWeight: '800',
     color: '#1E293B',
     marginVertical: 1,
+  },
+  dateRibbonNumTodayGreen: {
+    color: '#166534',
+    fontWeight: '900',
   },
   dateRibbonMonth: {
     fontSize: 9.5,
@@ -2030,6 +2077,25 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: '#4F5278',
+    marginTop: 3,
+  },
+  todayGreenDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#16A34A',
+    marginTop: 3,
+  },
+  visitScheduleUnderDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#2563EB',
+    marginTop: 3,
+  },
+  blankDotPlaceholder: {
+    width: 4,
+    height: 4,
     marginTop: 3,
   },
   tabBarWrapper: {

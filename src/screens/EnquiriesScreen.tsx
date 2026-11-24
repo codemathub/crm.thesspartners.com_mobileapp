@@ -619,7 +619,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
           {groupedCustomers.length === 0 ? (
             <EmptyState
               title="No customer pipelines"
-              description="Register client requirements using the + Add Customer / Enquiry button."
+              description="Register client requirements using the + Add Enquiry button."
               iconName="people-outline"
             />
           ) : (
@@ -790,14 +790,14 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
         </ScrollView>
       )}
 
-      {/* Floating Action Button: + Add Customer / Enquiry matching Stitch Image 2 */}
+      {/* Floating Action Button: + Add Enquiry */}
       <TouchableOpacity
         style={styles.fabBtn}
         onPress={() => setAddModalVisible(true)}
         activeOpacity={0.85}
       >
         <Ionicons name="add" size={20} color="#FFFFFF" style={{ marginRight: 4 }} />
-        <Text style={styles.fabBtnText}>Add Customer / Enquiry</Text>
+        <Text style={styles.fabBtnText}>Add Enquiry</Text>
       </TouchableOpacity>
 
       {/* Modal 1: Add Customer & Enquiry with 100% Options Parity matching Web Super Admin Console */}

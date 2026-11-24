@@ -27,7 +27,7 @@ interface CustomerDetailScreenProps {
   onScheduleVisit?: (customer: MobileCustomer, enquiry?: MobileEnquiry) => void;
 }
 
-type TabMode = 'requirements' | 'notes' | 'timeline' | 'matches';
+type TabMode = 'requirements' | 'visits' | 'notes' | 'timeline' | 'matches';
 
 export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
   customerId,
@@ -45,6 +45,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
   } | null>(null);
 
   const [activeTab, setActiveTab] = useState<TabMode>('requirements');
+  const [selectedEnquiry, setSelectedEnquiry] = useState<MobileEnquiry | null>(null);
 
   // Follow-up note input state
   const [newNote, setNewNote] = useState('');
@@ -391,85 +392,138 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* KPI Stats Bar */}
+      {/* KPI Stats Bar: Interactive Navigation to Sections */}
       <View style={styles.kpiRow}>
-        <View style={styles.kpiCard}>
-          <Text style={styles.kpiNumber}>{stats?.total_enquiries || enquiries.length}</Text>
-          <Text style={styles.kpiLabel}>Requirements</Text>
-        </View>
-        <View style={styles.kpiCard}>
-          <Text style={styles.kpiNumber}>{stats?.total_visits || visits.length}</Text>
-          <Text style={styles.kpiLabel}>Visits</Text>
-        </View>
-        <View style={styles.kpiCard}>
-          <Text style={styles.kpiNumber}>{stats?.total_followups || followups.length}</Text>
-          <Text style={styles.kpiLabel}>Notes</Text>
-        </View>
-        <View style={styles.kpiCard}>
-          <Text style={[styles.kpiNumber, { color: '#16A34A' }]}>
+        <TouchableOpacity
+          style={[styles.kpiCard, activeTab === 'requirements' && styles.kpiCardActive]}
+          onPress={() => setActiveTab('requirements')}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.kpiNumber, activeTab === 'requirements' && styles.kpiNumberActive]}>
+            {stats?.total_enquiries || enquiries.length}
+          </Text>
+          <Text style={[styles.kpiLabel, activeTab === 'requirements' && styles.kpiLabelActive]}>
+            Requirements
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.kpiCard, activeTab === 'visits' && styles.kpiCardActive]}
+          onPress={() => setActiveTab('visits')}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.kpiNumber, activeTab === 'visits' && styles.kpiNumberActive]}>
+            {stats?.total_visits || visits.length}
+          </Text>
+          <Text style={[styles.kpiLabel, activeTab === 'visits' && styles.kpiLabelActive]}>
+            Visits
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.kpiCard, activeTab === 'notes' && styles.kpiCardActive]}
+          onPress={() => setActiveTab('notes')}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.kpiNumber, activeTab === 'notes' && styles.kpiNumberActive]}>
+            {stats?.total_followups || followups.length}
+          </Text>
+          <Text style={[styles.kpiLabel, activeTab === 'notes' && styles.kpiLabelActive]}>
+            Notes
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.kpiCard, activeTab === 'matches' && styles.kpiCardActive]}
+          onPress={() => setActiveTab('matches')}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.kpiNumber, { color: '#16A34A' }, activeTab === 'matches' && styles.kpiNumberActive]}>
             {stats?.matched_properties_count || matched_properties.length}
           </Text>
-          <Text style={styles.kpiLabel}>Matched</Text>
-        </View>
+          <Text style={[styles.kpiLabel, activeTab === 'matches' && styles.kpiLabelActive]}>
+            Matched
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Navigation Tabs */}
+      {/* Navigation Tabs (Scrollable 5 Tabs) */}
       <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'requirements' && styles.activeTabItem]}
-          onPress={() => setActiveTab('requirements')}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabBarScroll}
         >
-          <Ionicons
-            name="list-outline"
-            size={16}
-            color={activeTab === 'requirements' ? themeTokens.colors.primaryDark : themeTokens.colors.textSecondary}
-          />
-          <Text style={[styles.tabItemText, activeTab === 'requirements' && styles.activeTabItemText]}>
-            Requirements ({enquiries.length})
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'requirements' && styles.activeTabItem]}
+            onPress={() => setActiveTab('requirements')}
+          >
+            <Ionicons
+              name="list-outline"
+              size={15}
+              color={activeTab === 'requirements' ? themeTokens.colors.primaryDark : themeTokens.colors.textSecondary}
+            />
+            <Text style={[styles.tabItemText, activeTab === 'requirements' && styles.activeTabItemText]}>
+              Requirements ({enquiries.length})
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'notes' && styles.activeTabItem]}
-          onPress={() => setActiveTab('notes')}
-        >
-          <Ionicons
-            name="chatbubble-ellipses-outline"
-            size={16}
-            color={activeTab === 'notes' ? themeTokens.colors.primaryDark : themeTokens.colors.textSecondary}
-          />
-          <Text style={[styles.tabItemText, activeTab === 'notes' && styles.activeTabItemText]}>
-            Notes ({followups.length})
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'visits' && styles.activeTabItem]}
+            onPress={() => setActiveTab('visits')}
+          >
+            <Ionicons
+              name="walk-outline"
+              size={15}
+              color={activeTab === 'visits' ? themeTokens.colors.primaryDark : themeTokens.colors.textSecondary}
+            />
+            <Text style={[styles.tabItemText, activeTab === 'visits' && styles.activeTabItemText]}>
+              Visits ({visits.length})
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'timeline' && styles.activeTabItem]}
-          onPress={() => setActiveTab('timeline')}
-        >
-          <Ionicons
-            name="time-outline"
-            size={16}
-            color={activeTab === 'timeline' ? themeTokens.colors.primaryDark : themeTokens.colors.textSecondary}
-          />
-          <Text style={[styles.tabItemText, activeTab === 'timeline' && styles.activeTabItemText]}>
-            Timeline ({timelineEvents.length})
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'notes' && styles.activeTabItem]}
+            onPress={() => setActiveTab('notes')}
+          >
+            <Ionicons
+              name="chatbubble-ellipses-outline"
+              size={15}
+              color={activeTab === 'notes' ? themeTokens.colors.primaryDark : themeTokens.colors.textSecondary}
+            />
+            <Text style={[styles.tabItemText, activeTab === 'notes' && styles.activeTabItemText]}>
+              Notes ({followups.length})
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'matches' && styles.activeTabItem]}
-          onPress={() => setActiveTab('matches')}
-        >
-          <Ionicons
-            name="home-outline"
-            size={16}
-            color={activeTab === 'matches' ? themeTokens.colors.primaryDark : themeTokens.colors.textSecondary}
-          />
-          <Text style={[styles.tabItemText, activeTab === 'matches' && styles.activeTabItemText]}>
-            Matches ({matched_properties.length})
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'matches' && styles.activeTabItem]}
+            onPress={() => setActiveTab('matches')}
+          >
+            <Ionicons
+              name="home-outline"
+              size={15}
+              color={activeTab === 'matches' ? themeTokens.colors.primaryDark : themeTokens.colors.textSecondary}
+            />
+            <Text style={[styles.tabItemText, activeTab === 'matches' && styles.activeTabItemText]}>
+              Matches ({matched_properties.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'timeline' && styles.activeTabItem]}
+            onPress={() => setActiveTab('timeline')}
+          >
+            <Ionicons
+              name="time-outline"
+              size={15}
+              color={activeTab === 'timeline' ? themeTokens.colors.primaryDark : themeTokens.colors.textSecondary}
+            />
+            <Text style={[styles.tabItemText, activeTab === 'timeline' && styles.activeTabItemText]}>
+              Timeline ({timelineEvents.length})
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
 
       {/* Main Tab Content */}
@@ -496,7 +550,12 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
               </View>
             ) : (
               enquiries.map((enq) => (
-                <View key={enq.enquiry_id || enq.id} style={styles.enquiryCard}>
+                <TouchableOpacity
+                  key={enq.enquiry_id || enq.id}
+                  style={styles.enquiryCard}
+                  onPress={() => setSelectedEnquiry(enq)}
+                  activeOpacity={0.88}
+                >
                   <View style={styles.enquiryTopRow}>
                     <Text style={styles.enquiryId}>#{enq.enquiry_id}</Text>
                     <View style={styles.statusBadge}>
@@ -530,13 +589,20 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                   <View style={styles.enquiryActionRow}>
                     <TouchableOpacity
                       style={styles.enqScheduleBtn}
-                      onPress={() => openScheduleVisitModal(undefined, enq)}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        openScheduleVisitModal(undefined, enq);
+                      }}
                     >
                       <Ionicons name="calendar-outline" size={14} color={themeTokens.colors.primaryDark} />
                       <Text style={styles.enqScheduleBtnText}>Schedule Site Visit</Text>
                     </TouchableOpacity>
+
+                    <View style={styles.viewDetailPill}>
+                      <Text style={styles.viewDetailPillText}>View Details →</Text>
+                    </View>
                   </View>
-                </View>
+                </TouchableOpacity>
               ))
             )}
 
@@ -566,6 +632,131 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                 </View>
               )}
             </View>
+          </View>
+        )}
+
+        {/* TAB: VISITS - Full Showing History for this Customer */}
+        {activeTab === 'visits' && (
+          <View>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Customer Visit History ({visits.length})</Text>
+              <TouchableOpacity
+                style={styles.addMiniBtn}
+                onPress={() => openScheduleVisitModal()}
+              >
+                <Ionicons name="calendar" size={14} color={themeTokens.colors.primaryDark} />
+                <Text style={styles.addMiniBtnText}>+ Schedule Visit</Text>
+              </TouchableOpacity>
+            </View>
+
+            {visits.length === 0 ? (
+              <View style={styles.emptyBox}>
+                <Ionicons name="walk-outline" size={36} color={themeTokens.colors.textSecondary} />
+                <Text style={styles.emptyTitle}>No site visits recorded yet</Text>
+                <Text style={styles.emptyDesc}>Schedule a property showing for this client to begin the visit trail.</Text>
+                <TouchableOpacity
+                  style={[styles.addMiniBtn, { marginTop: 12, paddingHorizontal: 16, paddingVertical: 8 }]}
+                  onPress={() => openScheduleVisitModal()}
+                >
+                  <Text style={[styles.addMiniBtnText, { fontWeight: '800' }]}>+ Schedule First Showing</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              visits.map((v: any, vIdx: number) => {
+                const schedDate = parseUtcDate(v.scheduled_at || v.created_at);
+                const isCompleted = v.status === 'completed';
+                const isCancelled = v.status === 'cancelled';
+                const executiveName =
+                  v.agent_name ||
+                  v.assigned_executive ||
+                  v.claimed_by_name ||
+                  v.created_by_name ||
+                  v.completed_by_name ||
+                  'Staff Executive';
+
+                return (
+                  <View key={v.visit_id || v.id || vIdx} style={styles.visitHistoryCard}>
+                    {/* Header: Property & Status */}
+                    <View style={styles.visitCardHeader}>
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={styles.visitPropTitle} numberOfLines={1}>
+                          #{v.property_id} • {v.property_society || 'Property Showing'}
+                        </Text>
+                        {v.property_bhk ? (
+                          <Text style={styles.visitPropSubtitle}>{v.property_bhk} Unit</Text>
+                        ) : null}
+                      </View>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          isCompleted
+                            ? { backgroundColor: '#DCFCE7' }
+                            : isCancelled
+                            ? { backgroundColor: '#FEE2E2' }
+                            : { backgroundColor: '#DBEAFE' },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.statusBadgeText,
+                            isCompleted
+                              ? { color: '#15803D' }
+                              : isCancelled
+                              ? { color: '#B91C1C' }
+                              : { color: '#1D4ED8' },
+                          ]}
+                        >
+                          {(v.status || 'SCHEDULED').toUpperCase()}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Date & Time in IST */}
+                    <View style={styles.visitDateRow}>
+                      <Ionicons name="time-outline" size={14} color="#64748B" />
+                      <Text style={styles.visitDateText}>
+                        {formatDateTime(schedDate)}
+                      </Text>
+                    </View>
+
+                    {/* Handled By / Completed By Executive */}
+                    <View style={styles.executivePill}>
+                      <Ionicons name="person" size={12} color="#1D4ED8" />
+                      <Text style={styles.executivePillText}>
+                        {isCompleted ? 'Completed by:' : 'Assigned Executive:'} {executiveName}
+                      </Text>
+                    </View>
+
+                    {/* Outcome Badge if recorded */}
+                    {v.outcome ? (
+                      <View style={styles.outcomeBox}>
+                        <Text style={styles.outcomeBoxText}>🎯 Outcome: {v.outcome}</Text>
+                      </View>
+                    ) : null}
+
+                    {/* Notes & Remarks */}
+                    {(v.notes || v.remarks) ? (
+                      <View style={styles.visitNotesBox}>
+                        <Text style={styles.visitNotesText}>
+                          &quot;{v.notes || v.remarks}&quot;
+                        </Text>
+                      </View>
+                    ) : null}
+
+                    {/* Actions */}
+                    <View style={styles.visitCardFooter}>
+                      <TouchableOpacity
+                        style={styles.visitFooterBtn}
+                        onPress={() => openScheduleVisitModal(undefined, enquiries[0])}
+                      >
+                        <Ionicons name="repeat" size={13} color={themeTokens.colors.primaryDark} />
+                        <Text style={styles.visitFooterBtnText}>Schedule Another Showing</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })
+            )}
           </View>
         )}
 
@@ -1079,6 +1270,118 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
           </View>
         </View>
       </Modal>
+
+      {/* MODAL 4: ENQUIRY DOSSIER & DETAIL */}
+      {selectedEnquiry && (
+        <Modal visible={Boolean(selectedEnquiry)} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxHeight: '90%' }]}>
+              {/* Modal Header */}
+              <View style={styles.modalHeader}>
+                <View>
+                  <Text style={styles.modalTitle}>Enquiry #{selectedEnquiry.enquiry_id}</Text>
+                  <Text style={{ fontSize: 11, color: themeTokens.colors.textSecondary }}>
+                    Full Client Requirement Dossier
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => setSelectedEnquiry(null)}>
+                  <Ionicons name="close" size={22} color={themeTokens.colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={{ maxHeight: 440 }} showsVerticalScrollIndicator={false}>
+                {/* Status & Transaction Type */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <View style={[styles.priorityPill, { backgroundColor: '#EEF2FF' }]}>
+                    <Text style={[styles.priorityText, { color: '#3730A3' }]}>
+                      {(selectedEnquiry.transaction_type || 'Rent').toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.statusBadge}>
+                    <Text style={styles.statusBadgeText}>{(selectedEnquiry.status || 'NEW').toUpperCase()}</Text>
+                  </View>
+                </View>
+
+                {/* Requirement Info */}
+                <View style={styles.enquiryDossierSection}>
+                  <Text style={styles.enquiryDossierLabel}>LOOKING FOR</Text>
+                  <Text style={styles.enquiryDossierValue}>{selectedEnquiry.looking_for}</Text>
+                </View>
+
+                <View style={styles.enquiryDossierSection}>
+                  <Text style={styles.enquiryDossierLabel}>BUDGET RANGE</Text>
+                  <Text style={[styles.enquiryDossierValue, { color: '#057A55', fontWeight: '800' }]}>
+                    ₹{(selectedEnquiry.budget_min || 0).toLocaleString('en-IN')} - ₹{(selectedEnquiry.budget_max || 0).toLocaleString('en-IN')}
+                    {selectedEnquiry.transaction_type === 'rent' ? '/mo' : ''}
+                  </Text>
+                </View>
+
+                {selectedEnquiry.preferred_societies && selectedEnquiry.preferred_societies.length > 0 && (
+                  <View style={styles.enquiryDossierSection}>
+                    <Text style={styles.enquiryDossierLabel}>PREFERRED SOCIETIES</Text>
+                    <Text style={styles.enquiryDossierValue}>{selectedEnquiry.preferred_societies.join(', ')}</Text>
+                  </View>
+                )}
+
+                {selectedEnquiry.notes && (
+                  <View style={styles.enquiryDossierSection}>
+                    <Text style={styles.enquiryDossierLabel}>NOTES & REMARKS</Text>
+                    <View style={styles.visitNotesBox}>
+                      <Text style={styles.visitNotesText}>&quot;{selectedEnquiry.notes}&quot;</Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Customer Contact Direct Actions */}
+                <View style={styles.enquiryContactBox}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: themeTokens.colors.textPrimary }}>
+                      {customer.name}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: themeTokens.colors.textSecondary }}>
+                      {customer.primary_phone}
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TouchableOpacity style={styles.miniCallBtn} onPress={handleCall}>
+                      <Ionicons name="call" size={14} color="#FFFFFF" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.miniWaBtn} onPress={handleWhatsApp}>
+                      <Ionicons name="logo-whatsapp" size={15} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollView>
+
+              {/* Action Buttons in Footer */}
+              <View style={styles.enquiryDossierFooter}>
+                <TouchableOpacity
+                  style={styles.dossierActionBtnSecondary}
+                  onPress={() => {
+                    setSelectedEnquiry(null);
+                    setActiveTab('matches');
+                  }}
+                >
+                  <Ionicons name="home-outline" size={14} color={themeTokens.colors.primaryDark} />
+                  <Text style={styles.dossierActionBtnSecondaryText}>View Matches</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.dossierActionBtnPrimary}
+                  onPress={() => {
+                    const enq = selectedEnquiry;
+                    setSelectedEnquiry(null);
+                    openScheduleVisitModal(undefined, enq);
+                  }}
+                >
+                  <Ionicons name="calendar" size={14} color="#FFFFFF" />
+                  <Text style={styles.dossierActionBtnPrimaryText}>Schedule Visit</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -1200,6 +1503,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRightWidth: 1,
     borderRightColor: themeTokens.colors.softSurface,
+    paddingVertical: 4,
+  },
+  kpiCardActive: {
+    backgroundColor: '#EEF0F8',
+    borderRadius: 8,
+  },
+  kpiNumberActive: {
+    color: themeTokens.colors.primaryDark,
+  },
+  kpiLabelActive: {
+    color: themeTokens.colors.primaryDark,
+    fontWeight: '700',
   },
   kpiNumber: {
     fontSize: 16,
@@ -1212,18 +1527,22 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   tabBar: {
-    flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: themeTokens.colors.border,
   },
+  tabBarScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
   tabItem: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
     paddingVertical: 11,
+    paddingHorizontal: 12,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
@@ -1238,6 +1557,205 @@ const styles = StyleSheet.create({
   activeTabItemText: {
     color: themeTokens.colors.primaryDark,
     fontWeight: '800',
+  },
+  viewDetailPill: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  viewDetailPillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#4338CA',
+  },
+  visitHistoryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000000',
+    shadowOpacity: 0.04,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  visitCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  visitPropTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: themeTokens.colors.textPrimary,
+  },
+  visitPropSubtitle: {
+    fontSize: 11,
+    color: themeTokens.colors.textSecondary,
+    marginTop: 2,
+  },
+  visitDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  visitDateText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  executivePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  executivePillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#1D4ED8',
+  },
+  outcomeBox: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  outcomeBoxText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#15803D',
+  },
+  visitNotesBox: {
+    backgroundColor: '#F8FAFC',
+    borderLeftWidth: 3,
+    borderLeftColor: '#94A3B8',
+    padding: 8,
+    borderRadius: 4,
+    marginTop: 4,
+  },
+  visitNotesText: {
+    fontSize: 11,
+    color: '#334155',
+    fontStyle: 'italic',
+  },
+  visitCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingTop: 10,
+    marginTop: 8,
+  },
+  visitFooterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  visitFooterBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: themeTokens.colors.primaryDark,
+  },
+  enquiryDossierSection: {
+    marginBottom: 12,
+  },
+  enquiryDossierLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748B',
+    marginBottom: 4,
+  },
+  enquiryDossierValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: themeTokens.colors.textPrimary,
+  },
+  enquiryContactBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  miniCallBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#16A34A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  miniWaBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#25D366',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  enquiryDossierFooter: {
+    flexDirection: 'row',
+    gap: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    paddingTop: 12,
+    marginTop: 6,
+  },
+  dossierActionBtnPrimary: {
+    flex: 1.2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: themeTokens.colors.primaryDark,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  dossierActionBtnPrimaryText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  dossierActionBtnSecondary: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#EEF0F8',
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  dossierActionBtnSecondaryText: {
+    color: themeTokens.colors.primaryDark,
+    fontSize: 12,
+    fontWeight: '700',
   },
   content: {
     flex: 1,

@@ -225,6 +225,7 @@ export default function App() {
             onLogout={handleLogout}
             onOpenTasks={() => setTasksModalVisible(true)}
             onOpenNotifications={() => setNotifModalVisible(true)}
+            onOpenQuickAction={handleQuickAction}
           />
         );
     }

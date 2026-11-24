@@ -26,6 +26,7 @@ import {
   authenticateWithBiometrics,
   BiometricCapabilities,
 } from '../services/biometrics';
+import { QuickActionFAB } from '../components/QuickActionFAB';
 
 interface MoreScreenProps {
   currentUser?: any;
@@ -33,6 +34,7 @@ interface MoreScreenProps {
   onLogout: () => void;
   onOpenTasks?: () => void;
   onOpenNotifications?: () => void;
+  onOpenQuickAction?: (action: string) => void;
 }
 
 export const MoreScreen: React.FC<MoreScreenProps> = ({
@@ -41,6 +43,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
   onLogout,
   onOpenTasks,
   onOpenNotifications,
+  onOpenQuickAction,
 }) => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
 
@@ -288,7 +291,8 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.rootWrapper}>
+      <ScrollView contentContainerStyle={styles.container}>
       {/* Identity Card */}
       <View style={styles.identityCard}>
         <View style={styles.avatarContainer}>
@@ -937,14 +941,28 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
           </View>
         </Modal>
       )}
-    </ScrollView>
+      </ScrollView>
+
+      {/* Floating Action Button (+ Property, + Enquiry, + Visit) */}
+      <QuickActionFAB
+        onOpenQuickAction={
+          onOpenQuickAction ||
+          ((act) => onNavigateTab(act === 'ADD_PROPERTY' ? 'Inventory' : act === 'ADD_ENQUIRY' ? 'Enquiries' : 'Schedule'))
+        }
+        bottomOffset={20}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  rootWrapper: {
+    flex: 1,
+    backgroundColor: '#F7F8FC',
+  },
   container: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 80,
     backgroundColor: '#F7F8FC',
   },
   identityCard: {

@@ -18,6 +18,7 @@ import { mobileApi, MobileVisit, MobileFollowUp } from '../services/api';
 import { CustomerDetailScreen } from './CustomerDetailScreen';
 import { parseUtcDate, formatTime, formatDateTime } from '../utils/dateUtils';
 import { scheduleActivityReminder } from '../services/notifications';
+import { QuickActionFAB } from '../components/QuickActionFAB';
 
 interface HomeScreenProps {
   currentUser?: any;
@@ -114,10 +115,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
+    <View style={styles.rootWrapper}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
       {/* Stitch Top Identity Card (Image 3) */}
       <View style={styles.identityCard}>
         <View style={styles.avatarCircle}>
@@ -474,6 +476,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           );
         })
       )}
+      </ScrollView>
 
       {/* Customer 360 Panoramic Dossier Modal */}
       {customer360Id && (
@@ -491,14 +494,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           />
         </Modal>
       )}
-    </ScrollView>
+
+      {/* Floating Action Button (+ Property, + Enquiry, + Visit) */}
+      <QuickActionFAB onOpenQuickAction={onOpenQuickAction} bottomOffset={20} />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  rootWrapper: {
+    flex: 1,
+    backgroundColor: themeTokens.colors.appBackground,
+  },
   container: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 80,
     backgroundColor: themeTokens.colors.appBackground,
   },
   identityCard: {
