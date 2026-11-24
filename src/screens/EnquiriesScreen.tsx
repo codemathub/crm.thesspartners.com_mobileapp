@@ -1196,39 +1196,131 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                   </Text>
                 </View>
               ) : (
-                <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
+                <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
                   {matchesList.length === 0 ? (
                     <Text style={{ padding: 20, textAlign: 'center', color: themeTokens.colors.textSecondary }}>
                       No matching properties currently available in inventory.
                     </Text>
                   ) : (
-                    matchesList.map((m) => (
-                      <View key={m.property_id} style={styles.matchCandidateCard}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: themeTokens.colors.primaryDark }}>
-                            #{m.property_id} • {m.bhk || 'Residential'}
+                    matchesList.map((m: any, idx: number) => {
+                      const p = m.property || m;
+                      const propId = p.property_id || m.property_id || `PROP-${idx}`;
+                      const socName = p.society_name || m.society_name || 'Society Scheduled';
+                      const loc = p.location || m.location || 'Service Area';
+                      const bhk = p.bhk || p.property_type || m.bhk || 'Residential Unit';
+                      const expectedAmount = p.expected_amount !== undefined ? p.expected_amount : (m.expected_amount || 0);
+                      const txType = p.transaction_type || m.transaction_type || (matchingEnquiry?.transaction_type || 'rent');
+                      const matchScore = m.match_score !== undefined ? m.match_score : 85;
+                      const matchReasons = m.match_reasons || [];
+
+                      return (
+                        <View key={propId || idx} style={styles.matchCandidateCard}>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Text style={{ fontSize: 13, fontWeight: '800', color: themeTokens.colors.primaryDark }}>
+                                #{propId}
+                              </Text>
+                              <Text style={{ fontSize: 12, fontWeight: '600', color: '#1E293B' }}>
+                                • {bhk}
+                              </Text>
+                            </View>
+                            <View style={styles.matchScoreBadge}>
+                              <Text style={styles.matchScoreBadgeText}>{matchScore}% Match</Text>
+                            </View>
+                          </View>
+
+                          <Text style={{ fontSize: 14, fontWeight: '800', color: themeTokens.colors.textPrimary, marginTop: 4 }}>
+                            {socName}
                           </Text>
-                          <View style={styles.matchScoreBadge}>
-                            <Text style={styles.matchScoreBadgeText}>{m.match_score}% Match</Text>
+                          <Text style={{ fontSize: 12, color: themeTokens.colors.textSecondary, marginTop: 2 }}>
+                            {loc} • ₹{safeLocale(expectedAmount)}{txType === 'rent' ? '/mo' : ''}
+                          </Text>
+
+                          {/* Match Reasons Tags */}
+                          {matchReasons.length > 0 && (
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
+                              {matchReasons.map((r: string, rIdx: number) => (
+                                <View key={rIdx} style={styles.matchTagPill}>
+                                  <Text style={styles.matchTagText}>✓ {r}</Text>
+                                </View>
+                              ))}
+                            </View>
+                          )}
+
+                          {/* Quick Action Buttons on Each Matched Unit */}
+                          <View style={{ flexDirection: 'row', gap: 6, marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#E5E7EB' }}>
+                            <TouchableOpacity
+                              style={{
+                                flex: 1,
+                                backgroundColor: '#4338CA',
+                                paddingVertical: 7,
+                                borderRadius: 6,
+                                alignItems: 'center',
+                                flexDirection: 'row',
+                                justifyContent: 'center',
+                                gap: 4,
+                              }}
+                              onPress={() => {
+                                const enq = matchingEnquiry;
+                                setMatchesModalVisible(false);
+                                if (onSelectEnquiry && enq) {
+                                  onSelectEnquiry(enq.enquiry_id, propId);
+                                } else {
+                                  Alert.alert('Schedule Showing', `Showing booked for Enquiry #${enq?.enquiry_id} on Property #${propId}.`);
+                                }
+                              }}
+                            >
+                              <Ionicons name="calendar-outline" size={13} color="#FFFFFF" />
+                              <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>Schedule Showing</Text>
+                            </TouchableOpacity>
+
+                            {matchingEnquiry?.customer_phone && (
+                              <TouchableOpacity
+                                style={{
+                                  backgroundColor: '#DCFCE7',
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 7,
+                                  borderRadius: 6,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                                onPress={() => {
+                                  const text = encodeURIComponent(
+                                    `Hello ${matchingEnquiry.customer_name}! We found a matching property for you:\n\n*${socName}* (${bhk})\n📍 ${loc}\n💰 ₹${safeLocale(expectedAmount)}${txType === 'rent' ? '/month' : ''}\nRef ID: ${propId}\n\nWould you like to schedule a showing visit?`
+                                  );
+                                  const cleanPhone = matchingEnquiry.customer_phone.replace(/[^0-9]/g, '');
+                                  Linking.openURL(`https://wa.me/${cleanPhone}?text=${text}`);
+                                }}
+                              >
+                                <Ionicons name="logo-whatsapp" size={15} color="#16A34A" />
+                              </TouchableOpacity>
+                            )}
+
+                            <TouchableOpacity
+                              style={{
+                                backgroundColor: '#ECFDF5',
+                                paddingHorizontal: 8,
+                                paddingVertical: 7,
+                                borderRadius: 6,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderWidth: 1,
+                                borderColor: '#A7F3D0',
+                              }}
+                              onPress={() => {
+                                setMatchesModalVisible(false);
+                                setSelectedEnquiry(matchingEnquiry);
+                                setDealPropId(propId);
+                                setDealPrice(String(expectedAmount || ''));
+                                setCloseDealVisible(true);
+                              }}
+                            >
+                              <Text style={{ color: '#047857', fontSize: 11, fontWeight: '700' }}>Close Deal</Text>
+                            </TouchableOpacity>
                           </View>
                         </View>
-                        <Text style={{ fontSize: 14, fontWeight: '800', color: themeTokens.colors.textPrimary, marginTop: 2 }}>
-                          {m.society_name}
-                        </Text>
-                        <Text style={{ fontSize: 12, color: themeTokens.colors.textSecondary }}>
-                          {m.location} • ₹{safeLocale(m.expected_amount)}/mo
-                        </Text>
-
-                        {/* Verified Match Rules */}
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
-                          {m.match_reasons.map((r: string, idx: number) => (
-                            <View key={idx} style={styles.matchTagPill}>
-                              <Text style={styles.matchTagText}>✓ {r}</Text>
-                            </View>
-                          ))}
-                        </View>
-                      </View>
-                    ))
+                      );
+                    })
                   )}
                 </ScrollView>
               )}

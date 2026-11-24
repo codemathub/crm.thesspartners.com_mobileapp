@@ -329,18 +329,33 @@ export interface MobileSearchResultItem {
 }
 
 export interface MobilePropertyMatchItem {
-  property_id: string;
-  society_name: string;
-  location: string;
+  property?: {
+    id?: string;
+    property_id: string;
+    society_name: string;
+    location: string;
+    property_type?: string;
+    bhk?: string;
+    expected_amount: number;
+    transaction_type?: string;
+    currency?: string;
+    negotiable?: boolean;
+    status?: string;
+    owner_name?: string;
+    owner_phone?: string;
+  };
+  property_id?: string;
+  society_name?: string;
+  location?: string;
   bhk?: string;
-  expected_amount: number;
-  currency: string;
-  negotiable: boolean;
-  status: string;
+  expected_amount?: number;
+  currency?: string;
+  negotiable?: boolean;
+  status?: string;
   match_score: number;
   match_reasons: string[];
-  owner_name: string;
-  owner_phone: string;
+  owner_name?: string;
+  owner_phone?: string;
 }
 
 export interface MobileEnquiryMatchesResponse {
