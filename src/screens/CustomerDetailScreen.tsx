@@ -21,6 +21,11 @@ import { mobileApi, MobileCustomer, MobileEnquiry } from '../services/api';
 import { DateTimePickerField } from '../components/DateTimePickerModal';
 import { parseUtcDate, formatDateTime } from '../utils/dateUtils';
 
+const safeLocale = (val: any): string => {
+  if (val === null || val === undefined || isNaN(Number(val))) return '0';
+  return Number(val).toLocaleString('en-IN');
+};
+
 interface CustomerDetailScreenProps {
   customerId: string;
   onClose: () => void;
@@ -45,7 +50,46 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
   } | null>(null);
 
   const [activeTab, setActiveTab] = useState<TabMode>('requirements');
+  
+  // Selected Enquiry Modal & Timeline (100% parity with EnquiriesScreen)
   const [selectedEnquiry, setSelectedEnquiry] = useState<MobileEnquiry | null>(null);
+  const [enquiryTimeline, setEnquiryTimeline] = useState<any[]>([]);
+  const [loadingTimeline, setLoadingTimeline] = useState(false);
+  const [timelineNote, setTimelineNote] = useState('');
+  const [savingTimelineNote, setSavingTimelineNote] = useState(false);
+
+  const openEnquiryDetail = async (enq: MobileEnquiry) => {
+    setSelectedEnquiry(enq);
+    setLoadingTimeline(true);
+    try {
+      const res = await mobileApi.getEnquiryTimeline(enq.enquiry_id);
+      setEnquiryTimeline(res.events || []);
+    } catch {
+      setEnquiryTimeline([]);
+    } finally {
+      setLoadingTimeline(false);
+    }
+  };
+
+  const handleAddTimelineNote = async () => {
+    if (!selectedEnquiry || !timelineNote.trim()) return;
+    setSavingTimelineNote(true);
+    try {
+      await mobileApi.createFollowUp({
+        enquiry_id: selectedEnquiry.enquiry_id,
+        scheduled_at: new Date().toISOString(),
+        notes: timelineNote.trim(),
+      });
+      setTimelineNote('');
+      const res = await mobileApi.getEnquiryTimeline(selectedEnquiry.enquiry_id);
+      setEnquiryTimeline(res.events || []);
+      fetchDossier();
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Could not add timeline note');
+    } finally {
+      setSavingTimelineNote(false);
+    }
+  };
 
   // Follow-up note input state
   const [newNote, setNewNote] = useState('');
@@ -553,7 +597,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                 <TouchableOpacity
                   key={enq.enquiry_id || enq.id}
                   style={styles.enquiryCard}
-                  onPress={() => setSelectedEnquiry(enq)}
+                  onPress={() => openEnquiryDetail(enq)}
                   activeOpacity={0.88}
                 >
                   <View style={styles.enquiryTopRow}>
@@ -585,6 +629,15 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                   {enq.notes && (
                     <Text style={styles.enquiryNotes}>&quot;{enq.notes}&quot;</Text>
                   )}
+
+                  {/* Creator / Added by details as shown in inventory */}
+                  <View style={styles.creatorMetaRow}>
+                    <Ionicons name="person-circle-outline" size={13} color="#64748B" />
+                    <Text style={styles.creatorMetaText}>
+                      Added by <Text style={{ fontWeight: '700', color: '#1E293B' }}>{enq.created_by_name || 'Admin User'}</Text>
+                      {enq.created_by_role ? ` (${enq.created_by_role.replace('_', ' ')})` : ''} • {enq.created_at ? formatDateTime(enq.created_at) : 'Earlier'}
+                    </Text>
+                  </View>
 
                   <View style={styles.enquiryActionRow}>
                     <TouchableOpacity
@@ -667,12 +720,14 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                 const isCompleted = v.status === 'completed';
                 const isCancelled = v.status === 'cancelled';
                 const executiveName =
-                  v.agent_name ||
-                  v.assigned_executive ||
+                  v.assigned_name ||
                   v.claimed_by_name ||
+                  v.agent_name ||
                   v.created_by_name ||
+                  v.assigned_executive ||
                   v.completed_by_name ||
-                  'Staff Executive';
+                  (v.assigned_to && !v.assigned_to.match(/^[0-9a-fA-F]{24}$/) ? v.assigned_to : null) ||
+                  'Executive';
 
                 return (
                   <View key={v.visit_id || v.id || vIdx} style={styles.visitHistoryCard}>
@@ -1271,17 +1326,47 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
         </View>
       </Modal>
 
-      {/* MODAL 4: ENQUIRY DOSSIER & DETAIL */}
+      {/* MODAL 4: FULL ENQUIRY DETAIL & TIMELINE MODAL (100% Identical to Enquiries Screen) */}
       {selectedEnquiry && (
         <Modal visible={Boolean(selectedEnquiry)} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { maxHeight: '90%' }]}>
-              {/* Modal Header */}
+            <View style={[styles.modalContent, { maxHeight: '88%' }]}>
+              {/* Header */}
               <View style={styles.modalHeader}>
-                <View>
-                  <Text style={styles.modalTitle}>Enquiry #{selectedEnquiry.enquiry_id}</Text>
-                  <Text style={{ fontSize: 11, color: themeTokens.colors.textSecondary }}>
-                    Full Client Requirement Dossier
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={styles.modalTitle}>Enquiry #{selectedEnquiry.enquiry_id}</Text>
+                    <View
+                      style={[
+                        styles.badgePillSmall,
+                        {
+                          backgroundColor:
+                            selectedEnquiry.status === 'deal_closed'
+                              ? '#D1FAE5'
+                              : selectedEnquiry.status === 'aborted'
+                              ? '#FEE2E2'
+                              : '#EEF2FF',
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          fontWeight: '800',
+                          color:
+                            selectedEnquiry.status === 'deal_closed'
+                              ? '#047857'
+                              : selectedEnquiry.status === 'aborted'
+                              ? '#B91C1C'
+                              : '#4338CA',
+                        }}
+                      >
+                        {selectedEnquiry.status.replace('_', ' ').toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 11, color: themeTokens.colors.textSecondary, marginTop: 2 }}>
+                    Created: {selectedEnquiry.created_at ? formatDateTime(selectedEnquiry.created_at) : 'Earlier'}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={() => setSelectedEnquiry(null)}>
@@ -1289,95 +1374,187 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={{ maxHeight: 440 }} showsVerticalScrollIndicator={false}>
-                {/* Status & Transaction Type */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <View style={[styles.priorityPill, { backgroundColor: '#EEF2FF' }]}>
-                    <Text style={[styles.priorityText, { color: '#3730A3' }]}>
-                      {(selectedEnquiry.transaction_type || 'Rent').toUpperCase()}
-                    </Text>
-                  </View>
-                  <View style={styles.statusBadge}>
-                    <Text style={styles.statusBadgeText}>{(selectedEnquiry.status || 'NEW').toUpperCase()}</Text>
-                  </View>
-                </View>
-
-                {/* Requirement Info */}
-                <View style={styles.enquiryDossierSection}>
-                  <Text style={styles.enquiryDossierLabel}>LOOKING FOR</Text>
-                  <Text style={styles.enquiryDossierValue}>{selectedEnquiry.looking_for}</Text>
-                </View>
-
-                <View style={styles.enquiryDossierSection}>
-                  <Text style={styles.enquiryDossierLabel}>BUDGET RANGE</Text>
-                  <Text style={[styles.enquiryDossierValue, { color: '#057A55', fontWeight: '800' }]}>
-                    ₹{(selectedEnquiry.budget_min || 0).toLocaleString('en-IN')} - ₹{(selectedEnquiry.budget_max || 0).toLocaleString('en-IN')}
-                    {selectedEnquiry.transaction_type === 'rent' ? '/mo' : ''}
-                  </Text>
-                </View>
-
-                {selectedEnquiry.preferred_societies && selectedEnquiry.preferred_societies.length > 0 && (
-                  <View style={styles.enquiryDossierSection}>
-                    <Text style={styles.enquiryDossierLabel}>PREFERRED SOCIETIES</Text>
-                    <Text style={styles.enquiryDossierValue}>{selectedEnquiry.preferred_societies.join(', ')}</Text>
-                  </View>
-                )}
-
-                {selectedEnquiry.notes && (
-                  <View style={styles.enquiryDossierSection}>
-                    <Text style={styles.enquiryDossierLabel}>NOTES & REMARKS</Text>
-                    <View style={styles.visitNotesBox}>
-                      <Text style={styles.visitNotesText}>&quot;{selectedEnquiry.notes}&quot;</Text>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 6 }}>
+                {/* Client Contact Quick Action Card */}
+                <View style={{ backgroundColor: '#F8FAFC', padding: 12, borderRadius: 8, borderColor: '#E2E8F0', borderWidth: 1 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 }}>CLIENT CONTACT</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                    <View>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#1E293B' }}>{selectedEnquiry.customer_name || customer.name}</Text>
+                      <Text style={{ fontSize: 12, color: '#475569' }}>{selectedEnquiry.customer_phone || customer.primary_phone}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
+                      {(selectedEnquiry.customer_phone || customer.primary_phone) ? (
+                        <>
+                          <TouchableOpacity
+                            style={{ backgroundColor: '#EEF2FF', padding: 6, borderRadius: 6 }}
+                            onPress={handleCall}
+                          >
+                            <Ionicons name="call" size={16} color="#4338CA" />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={{ backgroundColor: '#DCFCE7', padding: 6, borderRadius: 6 }}
+                            onPress={handleWhatsApp}
+                          >
+                            <Ionicons name="logo-whatsapp" size={16} color="#16A34A" />
+                          </TouchableOpacity>
+                        </>
+                      ) : null}
                     </View>
                   </View>
-                )}
+                </View>
 
-                {/* Customer Contact Direct Actions */}
-                <View style={styles.enquiryContactBox}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 13, fontWeight: '800', color: themeTokens.colors.textPrimary }}>
-                      {customer.name}
-                    </Text>
-                    <Text style={{ fontSize: 11, color: themeTokens.colors.textSecondary }}>
-                      {customer.primary_phone}
+                {/* Requirement Specifications */}
+                <View style={{ backgroundColor: '#FFFFFF', padding: 12, borderRadius: 8, borderColor: '#E2E8F0', borderWidth: 1, gap: 6 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 }}>REQUIREMENT SPECS</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text style={{ fontSize: 12, color: '#64748B' }}>Looking For:</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#0F172A' }}>
+                      {selectedEnquiry.looking_for} ({selectedEnquiry.transaction_type ? selectedEnquiry.transaction_type.toUpperCase() : 'RENT'})
                     </Text>
                   </View>
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <TouchableOpacity style={styles.miniCallBtn} onPress={handleCall}>
-                      <Ionicons name="call" size={14} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.miniWaBtn} onPress={handleWhatsApp}>
-                      <Ionicons name="logo-whatsapp" size={15} color="#FFFFFF" />
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text style={{ fontSize: 12, color: '#64748B' }}>Budget Range:</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#0F172A' }}>
+                      ₹{safeLocale(selectedEnquiry.budget_min)} - ₹{safeLocale(selectedEnquiry.budget_max)}
+                      {selectedEnquiry.transaction_type === 'rent' ? '/mo' : ''}
+                    </Text>
+                  </View>
+                  {(selectedEnquiry.preferred_societies && selectedEnquiry.preferred_societies.length > 0) || (selectedEnquiry.preferred_locations && selectedEnquiry.preferred_locations.length > 0) ? (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                      <Text style={{ fontSize: 12, color: '#64748B' }}>Locations:</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: '#334155', flex: 1, textAlign: 'right' }}>
+                        {(selectedEnquiry.preferred_societies || selectedEnquiry.preferred_locations || []).join(', ')}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {selectedEnquiry.notes ? (
+                    <View style={{ backgroundColor: '#FFFBEB', padding: 8, borderRadius: 6, marginTop: 4 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#B45309' }}>NOTES</Text>
+                      <Text style={{ fontSize: 11, color: '#78350F', marginTop: 2 }}>{selectedEnquiry.notes}</Text>
+                    </View>
+                  ) : null}
+
+                  {/* Who added this requirement with small detail below */}
+                  <View style={[styles.creatorMetaRow, { marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#F1F5F9' }]}>
+                    <Ionicons name="person-circle-outline" size={13} color="#64748B" />
+                    <Text style={styles.creatorMetaText}>
+                      Added by <Text style={{ fontWeight: '700', color: '#1E293B' }}>{selectedEnquiry.created_by_name || 'Admin User'}</Text>
+                      {selectedEnquiry.created_by_role ? ` (${selectedEnquiry.created_by_role.replace('_', ' ')})` : ''} • {selectedEnquiry.created_at ? formatDateTime(selectedEnquiry.created_at) : 'Earlier'}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Executive Action Timeline */}
+                <View style={{ backgroundColor: '#FFFFFF', padding: 12, borderRadius: 8, borderColor: '#E2E8F0', borderWidth: 1 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#1E293B' }}>EXECUTIVE TIMELINE</Text>
+                    <Text style={{ fontSize: 10, color: '#64748B' }}>{enquiryTimeline.length} events</Text>
+                  </View>
+
+                  {/* Quick Note Input */}
+                  <View style={{ flexDirection: 'row', gap: 6, marginBottom: 10 }}>
+                    <TextInput
+                      style={{
+                        flex: 1,
+                        paddingHorizontal: 10,
+                        paddingVertical: 6,
+                        borderWidth: 1,
+                        borderColor: '#CBD5E1',
+                        borderRadius: 6,
+                        fontSize: 12,
+                        backgroundColor: '#F8FAFC',
+                      }}
+                      placeholder="Add follow-up note..."
+                      placeholderTextColor="#94A3B8"
+                      value={timelineNote}
+                      onChangeText={setTimelineNote}
+                    />
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: '#4338CA',
+                        paddingHorizontal: 12,
+                        justifyContent: 'center',
+                        borderRadius: 6,
+                      }}
+                      onPress={handleAddTimelineNote}
+                      disabled={savingTimelineNote || !timelineNote.trim()}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>
+                        {savingTimelineNote ? '...' : '+ Note'}
+                      </Text>
                     </TouchableOpacity>
                   </View>
+
+                  {/* Timeline Stream */}
+                  {loadingTimeline ? (
+                    <ActivityIndicator size="small" color="#4338CA" style={{ padding: 12 }} />
+                  ) : enquiryTimeline.length === 0 ? (
+                    <Text style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center', padding: 8 }}>
+                      No action timeline logged yet.
+                    </Text>
+                  ) : (
+                    enquiryTimeline.map((item, idx) => (
+                      <View
+                        key={idx}
+                        style={{
+                          padding: 8,
+                          backgroundColor: item.type === 'visit' ? '#F0FDF4' : item.type === 'followup' ? '#FFFBEB' : '#F8FAFC',
+                          borderLeftWidth: 3,
+                          borderLeftColor: item.type === 'visit' ? '#16A34A' : item.type === 'followup' ? '#D97706' : '#4338CA',
+                          borderRadius: 4,
+                          marginBottom: 6,
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#1E293B' }}>
+                            {item.type === 'visit' ? 'Site Showing' : item.type === 'followup' ? 'Follow-up' : item.event_type || 'Activity'}
+                          </Text>
+                          <Text style={{ fontSize: 9, color: '#64748B' }}>
+                            {item.created_at || item.scheduled_at
+                              ? formatDateTime(item.created_at || item.scheduled_at)
+                              : ''}
+                          </Text>
+                        </View>
+                        <Text style={{ fontSize: 11, color: '#334155', marginTop: 2 }}>
+                          {item.notes || item.remarks || item.outcome || (item.details ? JSON.stringify(item.details) : '')}
+                        </Text>
+                        <Text style={{ fontSize: 9, color: '#64748B', marginTop: 2 }}>
+                          By: <Text style={{ fontWeight: '700', color: '#0F172A' }}>{item.actor_name || item.executive_name || item.created_by_name || 'System'}</Text>
+                        </Text>
+                      </View>
+                    ))
+                  )}
+                </View>
+
+                {/* Action Suite Buttons */}
+                <View style={{ gap: 6, marginTop: 4 }}>
+                  <TouchableOpacity
+                    style={[styles.modalSubmitBtn, { backgroundColor: '#4338CA' }]}
+                    onPress={() => {
+                      setSelectedEnquiry(null);
+                      setActiveTab('matches');
+                    }}
+                  >
+                    <Text style={styles.modalSubmitBtnText}>✨ View Smart Property Matches</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.modalSubmitBtn, { backgroundColor: themeTokens.colors.primaryDark }]}
+                    onPress={() => {
+                      const enq = selectedEnquiry;
+                      setSelectedEnquiry(null);
+                      openScheduleVisitModal(undefined, enq);
+                    }}
+                  >
+                    <Text style={styles.modalSubmitBtnText}>📅 Schedule Site Visit</Text>
+                  </TouchableOpacity>
                 </View>
               </ScrollView>
 
-              {/* Action Buttons in Footer */}
-              <View style={styles.enquiryDossierFooter}>
-                <TouchableOpacity
-                  style={styles.dossierActionBtnSecondary}
-                  onPress={() => {
-                    setSelectedEnquiry(null);
-                    setActiveTab('matches');
-                  }}
-                >
-                  <Ionicons name="home-outline" size={14} color={themeTokens.colors.primaryDark} />
-                  <Text style={styles.dossierActionBtnSecondaryText}>View Matches</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.dossierActionBtnPrimary}
-                  onPress={() => {
-                    const enq = selectedEnquiry;
-                    setSelectedEnquiry(null);
-                    openScheduleVisitModal(undefined, enq);
-                  }}
-                >
-                  <Ionicons name="calendar" size={14} color="#FFFFFF" />
-                  <Text style={styles.dossierActionBtnPrimaryText}>Schedule Visit</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity style={[styles.modalCancelBtn, { marginTop: 6 }]} onPress={() => setSelectedEnquiry(null)}>
+                <Text style={styles.modalCancelBtnText}>Dismiss</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </Modal>
@@ -2327,6 +2504,36 @@ const styles = StyleSheet.create({
   },
   enqSelectDesc: {
     fontSize: 11,
+    color: '#64748B',
+  },
+  creatorMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  creatorMetaText: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+  badgePillSmall: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+  },
+  modalCancelBtn: {
+    paddingVertical: 11,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
     color: '#64748B',
   },
 });

@@ -261,6 +261,9 @@ export interface MobileProperty {
   notes?: string;
   created_by?: string;
   created_by_name?: string;
+  created_by_role?: string;
+  creator_name?: string;
+  assigned_to_name?: string;
   created_at: string;
 }
 
@@ -311,6 +314,9 @@ export interface MobileEnquiry {
   notes?: string;
   created_by?: string;
   created_by_name?: string;
+  created_by_role?: string;
+  creator_name?: string;
+  assigned_to_name?: string;
   created_at: string;
 }
 
