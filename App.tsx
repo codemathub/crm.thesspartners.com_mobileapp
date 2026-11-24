@@ -270,15 +270,18 @@ export default function App() {
         </TouchableOpacity>
       )}
 
-      {/* Top Header matching G² Brothers Luxury Theme */}
+      {/* Top Header matching G² Brothers Luxury Reference */}
       <View style={styles.header}>
         <View style={styles.brandRow}>
-          <View style={styles.brandLogoWrapper}>
-            <Image
-              source={require('./assets/logo.png')}
-              style={styles.brandLogoImg}
-              resizeMode="contain"
-            />
+          <Image
+            source={require('./assets/g2-tile.png')}
+            style={styles.brandTileImg}
+            resizeMode="cover"
+          />
+          <View style={styles.brandDivider} />
+          <View style={styles.brandTextColumn}>
+            <Text style={styles.brandTitleText}>G² BROTHERS</Text>
+            <Text style={styles.brandTaglineText}>BUILDING VALUE | CREATING LEGACY</Text>
           </View>
         </View>
 
@@ -306,8 +309,10 @@ export default function App() {
           <TouchableOpacity
             style={styles.profileCircleBtn}
             onPress={() => setActiveTab('More')}
+            accessibilityLabel="User profile"
+            accessibilityRole="button"
           >
-            <Text style={styles.profileCircleText}>{initials}</Text>
+            <Ionicons name="person" size={15} color={themeTokens.colors.primaryDark} />
           </TouchableOpacity>
         </View>
       </View>
@@ -462,21 +467,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  brandLogoWrapper: {
+  brandTileImg: {
+    width: 38,
     height: 38,
-    width: 104,
+    borderRadius: 10,
     backgroundColor: '#020912',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#1E293B',
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    alignItems: 'center',
+  },
+  brandDivider: {
+    width: 1.5,
+    height: 26,
+    backgroundColor: '#CBD5E1',
+    marginHorizontal: 9,
+  },
+  brandTextColumn: {
     justifyContent: 'center',
   },
-  brandLogoImg: {
-    width: '100%',
-    height: '100%',
+  brandTitleText: {
+    fontSize: 15.5,
+    fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: 0.6,
+    lineHeight: 18,
+  },
+  brandTaglineText: {
+    fontSize: 7.2,
+    fontWeight: '800',
+    color: '#D97706',
+    letterSpacing: 0.7,
+    marginTop: 2,
   },
   headerActions: {
     flexDirection: 'row',
@@ -505,14 +523,11 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#1D4ED8', // Sapphire blue
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  profileCircleText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#FFFFFF',
   },
   body: {
     flex: 1,
