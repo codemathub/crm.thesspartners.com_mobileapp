@@ -126,13 +126,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <Text style={styles.avatarText}>{initials}</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={styles.greetingTitle}>Welcome Back, {userName.split(' ')[0]}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={styles.greetingTitle}>Welcome</Text>
             <View style={[styles.adminRolePill, { backgroundColor: roleBg }]}>
               <Text style={[styles.adminRoleText, { color: roleColor }]}>{roleLabel}</Text>
             </View>
           </View>
-          <Text style={styles.branchSubtext}>Enterprise Real Estate CRM</Text>
         </View>
       </View>
 
@@ -531,7 +530,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#3F4462',
+    backgroundColor: '#1D4ED8',
     alignItems: 'center',
     justifyContent: 'center',
   },
