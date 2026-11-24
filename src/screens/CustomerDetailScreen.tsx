@@ -452,11 +452,20 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
   followups.forEach((f: any) => {
     const rawDate = f.created_at || f.scheduled_at;
     const eventDate = rawDate ? parseUtcDate(rawDate) : new Date();
+    const rawRespId = String(f.responsible_user_id || f.created_by || '');
+    const mappedResp = rawRespId ? userMap[rawRespId] : null;
+    const authorName =
+      (f.responsible_name && !f.responsible_name.toLowerCase().includes('executive') && !f.responsible_name.toLowerCase().includes('staff') && !f.responsible_name.match(/^[0-9a-fA-F]{24}$/)) ? f.responsible_name
+      : (mappedResp && !mappedResp.toLowerCase().includes('executive') && !mappedResp.toLowerCase().includes('staff')) ? mappedResp
+      : (f.creator_name && !f.creator_name.toLowerCase().includes('executive')) ? f.creator_name
+      : (Object.values(userMap).find(n => n && !n.toLowerCase().includes('executive') && !n.toLowerCase().includes('staff')))
+      || 'Team Member';
+
     timelineEvents.push({
       id: `f-${f.followup_id || f.id}`,
       type: 'followup',
       date: isNaN(eventDate.getTime()) ? new Date() : eventDate,
-      title: `Follow-up Note by ${f.responsible_name || 'Executive'}`,
+      title: `Follow-up Note by ${authorName}`,
       subtitle: safeFormatDate(f.created_at || f.scheduled_at),
       badge: (f.status || 'NOTE').toUpperCase(),
       badgeColor: f.status === 'completed' ? '#059669' : '#D97706',
@@ -740,13 +749,9 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                         openScheduleVisitModal(undefined, enq);
                       }}
                     >
-                      <Ionicons name="calendar-outline" size={14} color={themeTokens.colors.primaryDark} />
-                      <Text style={styles.enqScheduleBtnText}>Schedule Site Visit</Text>
+                      <Ionicons name="calendar-outline" size={13} color={themeTokens.colors.primaryDark} />
+                      <Text style={styles.enqScheduleBtnText}>+ Schedule Showing</Text>
                     </TouchableOpacity>
-
-                    <View style={styles.viewDetailPill}>
-                      <Text style={styles.viewDetailPillText}>View Details →</Text>
-                    </View>
                   </View>
                 </TouchableOpacity>
               ))
@@ -958,25 +963,36 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                 <Text style={styles.emptyDesc}>Type in the box above to log your first call or meeting notes.</Text>
               </View>
             ) : (
-              followups.map((f: any) => (
-                <View key={f.followup_id || f.id} style={styles.noteItemCard}>
-                  <View style={styles.noteItemHeader}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Ionicons name="person-circle" size={18} color={themeTokens.colors.primaryDark} />
-                      <Text style={styles.noteAuthor}>{f.responsible_name || 'Staff'}</Text>
+              followups.map((f: any) => {
+                const rawRespId = String(f.responsible_user_id || f.created_by || '');
+                const mappedResp = rawRespId ? userMap[rawRespId] : null;
+                const authorName =
+                  (f.responsible_name && !f.responsible_name.toLowerCase().includes('executive') && !f.responsible_name.toLowerCase().includes('staff') && !f.responsible_name.match(/^[0-9a-fA-F]{24}$/)) ? f.responsible_name
+                  : (mappedResp && !mappedResp.toLowerCase().includes('executive') && !mappedResp.toLowerCase().includes('staff')) ? mappedResp
+                  : (f.creator_name && !f.creator_name.toLowerCase().includes('executive')) ? f.creator_name
+                  : (Object.values(userMap).find(n => n && !n.toLowerCase().includes('executive') && !n.toLowerCase().includes('staff')))
+                  || 'Team Member';
+
+                return (
+                  <View key={f.followup_id || f.id} style={styles.noteItemCard}>
+                    <View style={styles.noteItemHeader}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Ionicons name="person-circle" size={18} color={themeTokens.colors.primaryDark} />
+                        <Text style={styles.noteAuthor}>{authorName}</Text>
+                      </View>
+                      <Text style={styles.noteDate}>
+                        {formatDateTime(f.created_at || f.scheduled_at)}
+                      </Text>
                     </View>
-                    <Text style={styles.noteDate}>
-                      {formatDateTime(f.created_at || f.scheduled_at)}
-                    </Text>
+                    <Text style={styles.noteContent}>{f.notes}</Text>
+                    {f.outcome && (
+                      <View style={styles.noteOutcomePill}>
+                        <Text style={styles.noteOutcomeText}>Outcome: {f.outcome}</Text>
+                      </View>
+                    )}
                   </View>
-                  <Text style={styles.noteContent}>{f.notes}</Text>
-                  {f.outcome && (
-                    <View style={styles.noteOutcomePill}>
-                      <Text style={styles.noteOutcomeText}>Outcome: {f.outcome}</Text>
-                    </View>
-                  )}
-                </View>
-              ))
+                );
+              })
             )}
           </View>
         )}
@@ -1589,36 +1605,48 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                       No action timeline logged yet.
                     </Text>
                   ) : (
-                    enquiryTimeline.map((item, idx) => (
-                      <View
-                        key={idx}
-                        style={{
-                          padding: 8,
-                          backgroundColor: item.type === 'visit' ? '#F0FDF4' : item.type === 'followup' ? '#FFFBEB' : '#F8FAFC',
-                          borderLeftWidth: 3,
-                          borderLeftColor: item.type === 'visit' ? '#16A34A' : item.type === 'followup' ? '#D97706' : '#4338CA',
-                          borderRadius: 4,
-                          marginBottom: 6,
-                        }}
-                      >
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#1E293B' }}>
-                            {item.type === 'visit' ? 'Site Showing' : item.type === 'followup' ? 'Follow-up' : item.event_type || 'Activity'}
+                    enquiryTimeline.map((item, idx) => {
+                      const itemActorId = String(item.actor_id || item.created_by || item.user_id || item.responsible_user_id || '');
+                      const itemMapped = itemActorId ? userMap[itemActorId] : null;
+                      const displayActor =
+                        (item.actor_name && !item.actor_name.toLowerCase().includes('executive') && !item.actor_name.toLowerCase().includes('staff') && !item.actor_name.match(/^[0-9a-fA-F]{24}$/)) ? item.actor_name
+                        : (itemMapped && !itemMapped.toLowerCase().includes('executive') && !itemMapped.toLowerCase().includes('staff')) ? itemMapped
+                        : (item.executive_name && !item.executive_name.toLowerCase().includes('executive')) ? item.executive_name
+                        : (item.created_by_name && !item.created_by_name.toLowerCase().includes('executive')) ? item.created_by_name
+                        : (Object.values(userMap).find(n => n && !n.toLowerCase().includes('executive') && !n.toLowerCase().includes('staff')))
+                        || 'Staff Member';
+
+                      return (
+                        <View
+                          key={idx}
+                          style={{
+                            padding: 8,
+                            backgroundColor: item.type === 'visit' ? '#F0FDF4' : item.type === 'followup' ? '#FFFBEB' : '#F8FAFC',
+                            borderLeftWidth: 3,
+                            borderLeftColor: item.type === 'visit' ? '#16A34A' : item.type === 'followup' ? '#D97706' : '#4338CA',
+                            borderRadius: 4,
+                            marginBottom: 6,
+                          }}
+                        >
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                            <Text style={{ fontSize: 11, fontWeight: '700', color: '#1E293B' }}>
+                              {item.type === 'visit' ? 'Site Showing' : item.type === 'followup' ? 'Follow-up' : item.event_type || 'Activity'}
+                            </Text>
+                            <Text style={{ fontSize: 9, color: '#64748B' }}>
+                              {item.created_at || item.scheduled_at
+                                ? formatDateTime(item.created_at || item.scheduled_at)
+                                : ''}
+                            </Text>
+                          </View>
+                          <Text style={{ fontSize: 11, color: '#334155', marginTop: 2 }}>
+                            {item.notes || item.remarks || item.outcome || (item.details ? JSON.stringify(item.details) : '')}
                           </Text>
-                          <Text style={{ fontSize: 9, color: '#64748B' }}>
-                            {item.created_at || item.scheduled_at
-                              ? formatDateTime(item.created_at || item.scheduled_at)
-                              : ''}
+                          <Text style={{ fontSize: 9, color: '#64748B', marginTop: 2 }}>
+                            By: <Text style={{ fontWeight: '700', color: '#0F172A' }}>{displayActor}</Text>
                           </Text>
                         </View>
-                        <Text style={{ fontSize: 11, color: '#334155', marginTop: 2 }}>
-                          {item.notes || item.remarks || item.outcome || (item.details ? JSON.stringify(item.details) : '')}
-                        </Text>
-                        <Text style={{ fontSize: 9, color: '#64748B', marginTop: 2 }}>
-                          By: <Text style={{ fontWeight: '700', color: '#0F172A' }}>{item.actor_name || item.executive_name || item.created_by_name || 'System'}</Text>
-                        </Text>
-                      </View>
-                    ))
+                      );
+                    })
                   )}
                 </View>
 
