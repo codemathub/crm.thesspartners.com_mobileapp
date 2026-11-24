@@ -751,7 +751,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                       onPress={() => Linking.openURL(`tel:${cust.primary_phone}`).catch(() => {})}
                     >
                       <Ionicons name="call-outline" size={13} color={themeTokens.colors.primaryDark} style={{ marginRight: 4 }} />
-                      <Text style={styles.actionPillBtnText}>Call</Text>
+                      <Text style={styles.actionPillBtnText} numberOfLines={1}>Call</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -759,7 +759,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                       onPress={() => Linking.openURL(`https://wa.me/${cust.primary_phone.replace(/\D/g, '')}`).catch(() => {})}
                     >
                       <Ionicons name="logo-whatsapp" size={13} color="#25D366" style={{ marginRight: 4 }} />
-                      <Text style={styles.actionPillBtnText}>WhatsApp</Text>
+                      <Text style={styles.actionPillBtnText} numberOfLines={1}>WhatsApp</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -767,8 +767,8 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                       onPress={() => setCustomer360Id(cust.customer_id)}
                     >
                       <Ionicons name="person-outline" size={13} color="#FFFFFF" style={{ marginRight: 4 }} />
-                      <Text style={[styles.actionPillBtnText, { color: '#FFFFFF', fontWeight: '700' }]}>
-                        Customer Details
+                      <Text style={[styles.actionPillBtnText, { color: '#FFFFFF', fontWeight: '700' }]} numberOfLines={1}>
+                        Details
                       </Text>
                     </TouchableOpacity>
 
@@ -778,7 +778,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                         onPress={() => openMatchesModal(cust.enquiriesList[0])}
                       >
                         <Ionicons name="business-outline" size={13} color={themeTokens.colors.primaryDark} style={{ marginRight: 4 }} />
-                        <Text style={[styles.actionPillBtnText, { color: themeTokens.colors.primaryDark, fontWeight: '700' }]}>
+                        <Text style={[styles.actionPillBtnText, { color: themeTokens.colors.primaryDark, fontWeight: '700' }]} numberOfLines={1}>
                           Matches
                         </Text>
                       </TouchableOpacity>
@@ -2075,7 +2075,8 @@ const styles = StyleSheet.create({
   },
   actionButtonsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
+    alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
     paddingTop: 10,
@@ -2087,7 +2088,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#EEF0F8', // Soft lavender
     paddingVertical: 7,
+    paddingHorizontal: 4,
     borderRadius: 8,
+    minHeight: 32,
   },
   actionPillBtnText: {
     fontSize: 11,
