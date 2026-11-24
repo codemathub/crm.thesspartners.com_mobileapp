@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import { Platform, Linking } from 'react-native';
 import Constants from 'expo-constants';
 import { mobileApi } from './api';
+import { parseUtcDate } from '../utils/dateUtils';
 
 // Configure notification presentation behavior when the app is in foreground
 Notifications.setNotificationHandler({
@@ -66,6 +67,82 @@ export async function displayLocalNotification(
     });
   } catch (err) {
     console.warn('Could not display local notification:', err);
+  }
+}
+
+/**
+ * Schedule local reminder notification for an upcoming visit or callback.
+ * Fires 15 minutes before and at the exact showing/call time.
+ */
+export async function scheduleActivityReminder(
+  type: 'visit' | 'followup',
+  id: string,
+  clientName: string,
+  scheduledAt: string | Date,
+  details?: string
+) {
+  try {
+    await ensureNotificationChannelAsync();
+    const schedDate = parseUtcDate(scheduledAt);
+    const now = new Date();
+
+    // 15 minutes before the appointment
+    const reminderTime = new Date(schedDate.getTime() - 15 * 60 * 1000);
+
+    if (reminderTime.getTime() > now.getTime()) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${type}_reminder_${id}`,
+        content: {
+          title: type === 'visit' ? `⏰ Upcoming Site Visit: ${clientName}` : `📞 Upcoming Callback: ${clientName}`,
+          body: type === 'visit'
+            ? `Site showing in 15 mins at ${details || 'property'}. Tap to review details.`
+            : `Client callback due in 15 mins. Tap to prepare and call ${clientName}.`,
+          sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          vibrate: [0, 250, 250, 250],
+          data: { type, id, phone: details },
+        },
+        trigger: {
+          date: reminderTime,
+          channelId: 'default',
+        },
+      });
+    }
+
+    // Exact time alert
+    if (schedDate.getTime() > now.getTime()) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${type}_exact_${id}`,
+        content: {
+          title: type === 'visit' ? `🚨 Site Visit Now: ${clientName}` : `🚨 Callback Due Now: ${clientName}`,
+          body: type === 'visit'
+            ? `Showing starting now for ${clientName} at ${details || 'property'}.`
+            : `Time to call ${clientName} (${details || 'follow-up'}).`,
+          sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          vibrate: [0, 300, 200, 300],
+          data: { type, id, phone: details },
+        },
+        trigger: {
+          date: schedDate,
+          channelId: 'default',
+        },
+      });
+    }
+  } catch (err) {
+    console.warn(`Could not schedule ${type} reminder:`, err);
+  }
+}
+
+/**
+ * Cancel scheduled reminders when a visit or callback is completed or cancelled.
+ */
+export async function cancelActivityReminder(type: 'visit' | 'followup', id: string) {
+  try {
+    await Notifications.cancelScheduledNotificationAsync(`${type}_reminder_${id}`);
+    await Notifications.cancelScheduledNotificationAsync(`${type}_exact_${id}`);
+  } catch (err) {
+    // ignore
   }
 }
 

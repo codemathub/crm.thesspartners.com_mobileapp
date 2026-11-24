@@ -16,6 +16,8 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { mobileApi, MobileVisit, MobileFollowUp } from '../services/api';
 import { CustomerDetailScreen } from './CustomerDetailScreen';
+import { parseUtcDate, formatTime, formatDateTime } from '../utils/dateUtils';
+import { scheduleActivityReminder } from '../services/notifications';
 
 interface HomeScreenProps {
   currentUser?: any;
@@ -73,9 +75,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       setSoldProps(props.filter((p) => p.status === 'sold').length);
 
       setTotalEnquiries(enqRes.total || (enqRes.items || []).length);
-      setTodayVisits(visitsRes.items || []);
-      setFollowups(followupsRes.items || []);
-      setOverdueFollowupsCount(followupsRes.overdue_count || 0);
+
+      // ONLY pending/scheduled visits that have to be done! (Exclude completed and cancelled)
+      const activeVisits = (visitsRes.items || []).filter(
+        (v) => v.status !== 'completed' && v.status !== 'cancelled'
+      );
+      setTodayVisits(activeVisits);
+
+      // ONLY pending/scheduled callbacks that have to be done! (Exclude completed and cancelled)
+      const activeFollowups = (followupsRes.items || []).filter(
+        (f) => f.status !== 'completed' && f.status !== 'cancelled'
+      );
+      setFollowups(activeFollowups);
+      setOverdueFollowupsCount(activeFollowups.filter((f) => new Date(f.scheduled_at) < new Date()).length);
+
+      // Schedule local notification reminders for pending visits & follow-ups
+      activeVisits.forEach((v) => {
+        scheduleActivityReminder('visit', v.visit_id, v.customer_name, v.scheduled_at, v.property_society);
+      });
+      activeFollowups.forEach((f) => {
+        scheduleActivityReminder('followup', f.followup_id, f.customer_name, f.scheduled_at, f.customer_phone);
+      });
     } catch {
       // offline fallback
     } finally {
@@ -194,38 +214,37 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         </TouchableOpacity>
 
-        {/* Tile 3: Today Site Visits */}
+        {/* Tile 3: Pending Site Visits */}
         <TouchableOpacity
           style={styles.kpiTile}
           onPress={() => onNavigateTab('Schedule')}
           activeOpacity={0.8}
         >
           <View style={styles.kpiTileHeader}>
-            <Text style={styles.kpiTileLabel}>Site Visits</Text>
+            <Text style={styles.kpiTileLabel}>Pending Visits</Text>
             <Ionicons name="walk" size={16} color={themeTokens.colors.primaryDark} />
           </View>
           <Text style={styles.kpiTileValue}>
             {todayVisits.length}
             <Text style={styles.kpiTileSubval}>
-              {' '}
-              ({todayVisits.filter((v) => v.status === 'completed').length} done)
+              {' '}to do today
             </Text>
           </Text>
           <View style={styles.kpiTileFooter}>
-            <Text style={styles.kpiFootText}>
-              {todayVisits.filter((v) => v.status === 'scheduled').length} remaining
+            <Text style={[styles.kpiFootText, todayVisits.length === 0 ? { color: '#057A55', fontWeight: '700' } : {}]}>
+              {todayVisits.length === 0 ? 'All completed ✓' : `${todayVisits.length} remaining`}
             </Text>
           </View>
         </TouchableOpacity>
 
-        {/* Tile 4: Client Callbacks */}
+        {/* Tile 4: Pending Client Callbacks */}
         <TouchableOpacity
           style={styles.kpiTile}
           onPress={() => onNavigateTab('Schedule', 'followups')}
           activeOpacity={0.8}
         >
           <View style={styles.kpiTileHeader}>
-            <Text style={styles.kpiTileLabel}>Client Callbacks</Text>
+            <Text style={styles.kpiTileLabel}>Pending Callbacks</Text>
             <Ionicons name="call" size={16} color={themeTokens.colors.primaryDark} />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
@@ -237,31 +256,39 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             )}
           </View>
           <View style={styles.kpiTileFooter}>
-            <Text style={styles.kpiFootText}>
-              Upcoming: {followups.filter((f) => f.status === 'scheduled').length}
+            <Text style={[styles.kpiFootText, followups.length === 0 ? { color: '#057A55', fontWeight: '700' } : {}]}>
+              {followups.length === 0 ? 'All completed ✓' : 'Due for attention'}
             </Text>
           </View>
         </TouchableOpacity>
       </View>
 
-      {/* Today's Scheduled Visits Preview matching Stitch Image 3 */}
+      {/* Today's Pending Site Visits Preview */}
       <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Today's Site Visits</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Ionicons name="calendar-outline" size={16} color={themeTokens.colors.primaryDark} />
+          <Text style={styles.sectionTitle}>Today's Pending Visits ({todayVisits.length})</Text>
+        </View>
         <TouchableOpacity onPress={() => onNavigateTab('Schedule')}>
-          <Text style={styles.viewScheduleLink}>View Schedule ({todayVisits.length})</Text>
+          <Text style={styles.viewScheduleLink}>Full Schedule →</Text>
         </TouchableOpacity>
       </View>
 
       {todayVisits.length === 0 ? (
-        <Card style={styles.emptyCard}>
-          <Text style={styles.emptyCardText}>No visits scheduled for today.</Text>
-        </Card>
+        <View style={styles.completedCard}>
+          <View style={styles.completedCardContent}>
+            <View style={styles.completedIconCircle}>
+              <Ionicons name="checkmark-done" size={20} color="#057A55" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.completedCardTitle}>All site visits completed</Text>
+              <Text style={styles.completedCardSub}>No pending showings remaining for today. Great job!</Text>
+            </View>
+          </View>
+        </View>
       ) : (
         todayVisits.slice(0, 3).map((v) => {
-          const timeStr = new Date(v.scheduled_at).toLocaleTimeString('en-IN', {
-            hour: '2-digit',
-            minute: '2-digit',
-          });
+          const timeStr = formatTime(v.scheduled_at);
           return (
             <TouchableOpacity
               key={v.visit_id}
@@ -275,7 +302,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.visitItemClient}>{v.customer_name}</Text>
-                  <Text style={styles.visitItemSub}>
+                  <Text style={styles.visitItemSub} numberOfLines={1}>
                     #{v.property_id} • {v.property_society}
                   </Text>
                 </View>
@@ -318,29 +345,37 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         })
       )}
 
-      {/* Client Callbacks Section matching Stitch Image 3 */}
+      {/* Client Callbacks Section */}
       <View style={[styles.sectionHeaderRow, { marginTop: 18 }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Ionicons name="call-outline" size={16} color={themeTokens.colors.primaryDark} />
-          <Text style={styles.sectionTitle}>Client Callbacks Due</Text>
+          <Text style={styles.sectionTitle}>Pending Callbacks Due ({followups.length})</Text>
         </View>
         <TouchableOpacity
           style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
           onPress={() => onNavigateTab('Schedule', 'followups')}
         >
-          <Text style={styles.viewScheduleLink}>View Callbacks ({followups.length})</Text>
+          <Text style={styles.viewScheduleLink}>View All ({followups.length})</Text>
           <Ionicons name="chevron-forward" size={13} color={themeTokens.colors.primaryDark} />
         </TouchableOpacity>
       </View>
 
       {followups.length === 0 ? (
-        <Card style={styles.emptyCard}>
-          <Text style={styles.emptyCardText}>All scheduled customer callbacks are up to date.</Text>
-        </Card>
+        <View style={styles.completedCard}>
+          <View style={styles.completedCardContent}>
+            <View style={styles.completedIconCircle}>
+              <Ionicons name="checkmark-done" size={20} color="#057A55" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.completedCardTitle}>All callbacks completed</Text>
+              <Text style={styles.completedCardSub}>All client follow-up calls are done and up to date.</Text>
+            </View>
+          </View>
+        </View>
       ) : (
         followups.slice(0, 4).map((f) => {
-          const sched = new Date(f.scheduled_at);
-          const isOverdue = sched < new Date() && f.status !== 'completed' && f.status !== 'cancelled';
+          const sched = parseUtcDate(f.scheduled_at);
+          const isOverdue = sched < new Date();
           const isPostVisit = Boolean(
             (f.notes && /visit|showing|seen|flat|site|inspection/i.test(f.notes)) ||
             (f.outcome && /visit/i.test(f.outcome))
@@ -348,6 +383,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           const callReason = isPostVisit
             ? `Post-Visit Feedback • ${f.enquiry_requirement || 'Property Showing'}`
             : `Requirement Follow-up • ${f.enquiry_requirement || 'General Enquiry'}`;
+
+          const dateStr = sched.toLocaleDateString('en-IN', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+          });
 
           return (
             <TouchableOpacity
@@ -409,16 +452,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <Text style={styles.followupEnquiry}>
                 Enquiry #{f.enquiry_id} {f.enquiry_requirement ? `• ${f.enquiry_requirement}` : ''}
               </Text>
-              <Text style={styles.followupNotes} numberOfLines={2}>
-                &quot;{f.notes}&quot;
-              </Text>
+              {f.notes ? (
+                <Text style={styles.followupNotes} numberOfLines={2}>
+                  &quot;{f.notes}&quot;
+                </Text>
+              ) : null}
 
               {/* Action Prompt Pill at Bottom of Card */}
               <View style={styles.followupCardFooterRow}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Ionicons name="time-outline" size={11} color={themeTokens.colors.textSecondary} />
                   <Text style={styles.followupFooterDate}>
-                    {sched.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    {dateStr}
                   </Text>
                 </View>
                 <View style={styles.tapToViewPill}>
@@ -630,6 +675,37 @@ const styles = StyleSheet.create({
   emptyCardText: {
     fontSize: 12,
     color: themeTokens.colors.textSecondary,
+  },
+  completedCard: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    padding: 14,
+    marginBottom: 10,
+  },
+  completedCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  completedIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  completedCardTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#166534',
+  },
+  completedCardSub: {
+    fontSize: 11,
+    color: '#15803D',
+    marginTop: 2,
   },
   visitItemCard: {
     backgroundColor: '#FFFFFF',

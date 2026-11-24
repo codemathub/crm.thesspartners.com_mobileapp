@@ -21,6 +21,7 @@ import { mobileApi, MobileVisit, MobileFollowUp } from '../services/api';
 import { AutocompleteIdInput } from '../components/AutocompleteIdInput';
 import { DateTimePickerField, DateTimePickerModal } from '../components/DateTimePickerModal';
 import { parseUtcDate, formatDateTime } from '../utils/dateUtils';
+import { scheduleActivityReminder, cancelActivityReminder } from '../services/notifications';
 
 const safeLocale = (val: any): string => {
   if (val === null || val === undefined || isNaN(Number(val))) return '0';
@@ -196,6 +197,18 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
         next_followup_at: chainNextFollowup && nextFollowupDate ? nextFollowupDate : undefined,
         next_followup_notes: chainNextFollowup && nextFollowupNotes ? nextFollowupNotes : undefined,
       });
+      // Cancel reminder for this completed callback
+      cancelActivityReminder('followup', completeFollowupModalItem.followup_id);
+      // If chaining another follow-up, schedule a reminder for the new date
+      if (chainNextFollowup && nextFollowupDate) {
+        scheduleActivityReminder(
+          'followup',
+          `${completeFollowupModalItem.followup_id}_next`,
+          completeFollowupModalItem.customer_name,
+          nextFollowupDate,
+          completeFollowupModalItem.customer_phone
+        );
+      }
       Alert.alert('Follow-up Recorded', `Outcome logged for #${completeFollowupModalItem.followup_id}`);
       setCompleteFollowupModalItem(null);
       setFollowupRemarks('');
@@ -214,6 +227,14 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
     try {
       const target = followupNewDate.trim() || new Date(Date.now() + 86400000).toISOString();
       await mobileApi.rescheduleFollowUp(rescheduleFollowupModalItem.followup_id, target, followupRescheduleReason.trim());
+      // Update reminder for the new rescheduled time
+      scheduleActivityReminder(
+        'followup',
+        rescheduleFollowupModalItem.followup_id,
+        rescheduleFollowupModalItem.customer_name,
+        target,
+        rescheduleFollowupModalItem.customer_phone
+      );
       Alert.alert('Follow-up Rescheduled', `Updated #${rescheduleFollowupModalItem.followup_id}`);
       setRescheduleFollowupModalItem(null);
       setFollowupRescheduleReason('');
@@ -314,6 +335,8 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
         await mobileApi.completeVisit(completeModalItem.visit_id, outcome, remarks.trim() || undefined);
         Alert.alert('Visit Completed', `Visit #${completeModalItem.visit_id} recorded with outcome: ${outcome}`);
       }
+      // Cancel upcoming notification reminders for this completed visit
+      cancelActivityReminder('visit', completeModalItem.visit_id);
       setCompleteModalItem(null);
       setOutcome('🏆 Deal Closed / Booked');
       setDealAmount('');
@@ -334,6 +357,14 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
     try {
       const targetDate = newDate.trim() || new Date(Date.now() + 86400000).toISOString();
       await mobileApi.rescheduleVisit(rescheduleModalItem.visit_id, targetDate, rescheduleReason.trim());
+      // Re-schedule reminder for the updated visit time
+      scheduleActivityReminder(
+        'visit',
+        rescheduleModalItem.visit_id,
+        rescheduleModalItem.customer_name,
+        targetDate,
+        rescheduleModalItem.property_society
+      );
       Alert.alert('Visit Rescheduled', `Visit #${rescheduleModalItem.visit_id} updated to new date/time.`);
       setRescheduleModalItem(null);
       setNewDate('');
@@ -352,12 +383,21 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
     setSavingVisit(true);
     try {
       const visitDate = scheduledDate.trim() || new Date(Date.now() + 7200000).toISOString();
-      await mobileApi.createVisit({
+      const created = await mobileApi.createVisit({
         enquiry_id: enquiryId.trim(),
         property_id: propertyId.trim().toUpperCase(),
         scheduled_at: visitDate,
         notes: notes.trim() || undefined,
       });
+      if (created && (created as any).visit_id) {
+        scheduleActivityReminder(
+          'visit',
+          (created as any).visit_id,
+          (created as any).customer_name || 'Client',
+          visitDate,
+          (created as any).property_society
+        );
+      }
       Alert.alert('Visit Scheduled', 'Visit scheduled and assigned to your schedule.');
       setScheduleModalVisible(false);
       setEnquiryId('');
