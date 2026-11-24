@@ -69,6 +69,69 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
   const [editCustType, setEditCustType] = useState<'tenant' | 'buyer' | 'owner' | 'agent'>('tenant');
   const [savingProfile, setSavingProfile] = useState(false);
 
+  // Schedule Site Visit Modal State
+  const [scheduleModalVisible, setScheduleModalVisible] = useState(false);
+  const [scheduleTargetProp, setScheduleTargetProp] = useState<any>(null);
+  const [scheduleSelectedEnquiryId, setScheduleSelectedEnquiryId] = useState('');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleNotes, setScheduleNotes] = useState('');
+  const [schedulingVisit, setSchedulingVisit] = useState(false);
+
+  const openScheduleVisitModal = (prop?: any, enq?: MobileEnquiry) => {
+    setScheduleTargetProp(prop || null);
+    if (enq) {
+      setScheduleSelectedEnquiryId(enq.enquiry_id);
+    } else if (data?.enquiries && data.enquiries.length > 0) {
+      // Find first non-closed enquiry or fallback
+      const activeEnq = data.enquiries.find((e) => !['deal_closed', 'aborted', 'cancelled'].includes(e.status)) || data.enquiries[0];
+      setScheduleSelectedEnquiryId(activeEnq.enquiry_id);
+    } else {
+      setScheduleSelectedEnquiryId('');
+    }
+    const targetDate = new Date(Date.now() + 2 * 3600 * 1000);
+    setScheduleDate(targetDate.toISOString());
+    setScheduleNotes(prop ? `Site visit showing for #${prop.property_id} at ${prop.society_name || 'Society'}` : 'Site visit showing');
+    setScheduleModalVisible(true);
+  };
+
+  const handleConfirmScheduleVisit = async () => {
+    if (!scheduleSelectedEnquiryId) {
+      Alert.alert('Enquiry Required', 'Please select or add an active requirement / enquiry for this customer.');
+      return;
+    }
+    if (!scheduleTargetProp?.property_id) {
+      Alert.alert('Property Required', 'Target Property ID is required for a showing.');
+      return;
+    }
+    if (!scheduleDate) {
+      Alert.alert('Date Required', 'Please select a visit date and time.');
+      return;
+    }
+
+    setSchedulingVisit(true);
+    try {
+      await mobileApi.createVisit({
+        enquiry_id: scheduleSelectedEnquiryId,
+        property_id: scheduleTargetProp.property_id,
+        scheduled_at: scheduleDate,
+        notes: scheduleNotes.trim() || undefined,
+      });
+
+      Alert.alert(
+        'Visit Scheduled!',
+        `Site showing for Unit #${scheduleTargetProp.property_id} (${scheduleTargetProp.society_name || 'Society'}) has been booked.`
+      );
+      setScheduleModalVisible(false);
+      setScheduleTargetProp(null);
+      await fetchDossier();
+      setActiveTab('timeline');
+    } catch (err: any) {
+      Alert.alert('Schedule Error', err.message || 'Could not schedule visit.');
+    } finally {
+      setSchedulingVisit(false);
+    }
+  };
+
   const fetchDossier = async () => {
     try {
       setLoading(true);
@@ -466,7 +529,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                   <View style={styles.enquiryActionRow}>
                     <TouchableOpacity
                       style={styles.enqScheduleBtn}
-                      onPress={() => onScheduleVisit && onScheduleVisit(customer, enq)}
+                      onPress={() => openScheduleVisitModal(undefined, enq)}
                     >
                       <Ionicons name="calendar-outline" size={14} color={themeTokens.colors.primaryDark} />
                       <Text style={styles.enqScheduleBtnText}>Schedule Site Visit</Text>
@@ -676,7 +739,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                       </Text>
                       <TouchableOpacity
                         style={styles.matchScheduleBtn}
-                        onPress={() => onScheduleVisit && onScheduleVisit(customer)}
+                        onPress={() => openScheduleVisitModal(prop)}
                       >
                         <Ionicons name="calendar-outline" size={14} color="#FFFFFF" />
                         <Text style={styles.matchScheduleBtnText}>Schedule Visit</Text>
@@ -877,6 +940,146 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                 <Text style={styles.modalSubmitBtnText}>Update Customer Details</Text>
               )}
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL 3: SCHEDULE SITE SHOWING VISIT */}
+      <Modal visible={scheduleModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="calendar" size={20} color={themeTokens.colors.primaryDark} />
+                <Text style={styles.modalTitle}>Schedule Site Visit</Text>
+              </View>
+              <TouchableOpacity onPress={() => setScheduleModalVisible(false)}>
+                <Ionicons name="close" size={22} color={themeTokens.colors.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 440 }} showsVerticalScrollIndicator={false}>
+              {/* Selected Property Preview Banner */}
+              {scheduleTargetProp && (
+                <View style={styles.schedulePropCard}>
+                  <View style={styles.schedulePropHeader}>
+                    <Text style={styles.schedulePropId}>#{scheduleTargetProp.property_id}</Text>
+                    <View style={styles.schedulePropBadge}>
+                      <Text style={styles.schedulePropBadgeText}>
+                        {scheduleTargetProp.transaction_type === 'rent' ? 'FOR RENT' : 'FOR SALE'}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.schedulePropSociety}>{scheduleTargetProp.society_name}</Text>
+                  <Text style={styles.schedulePropMeta}>
+                    {scheduleTargetProp.bhk || scheduleTargetProp.property_type || 'Residential'} • {scheduleTargetProp.location || 'Prime Location'}
+                  </Text>
+                  <Text style={styles.schedulePropPrice}>
+                    ₹{(scheduleTargetProp.expected_amount || 0).toLocaleString('en-IN')}
+                    {scheduleTargetProp.transaction_type === 'rent' ? '/month' : ''}
+                  </Text>
+                </View>
+              )}
+
+              {/* Customer Info Row */}
+              {customer && (
+                <View style={styles.scheduleCustRow}>
+                  <Ionicons name="person-circle-outline" size={18} color="#4F5278" />
+                  <Text style={styles.scheduleCustText}>
+                    Client: <Text style={{ fontWeight: '700', color: '#1E293B' }}>{customer.name}</Text> ({customer.primary_phone})
+                  </Text>
+                </View>
+              )}
+
+              {/* Enquiry / Requirement Selector */}
+              <Text style={styles.formLabel}>Target Requirement / Enquiry *</Text>
+              {enquiries.length === 0 ? (
+                <View style={styles.noEnqWarningBox}>
+                  <Text style={styles.noEnqWarningText}>
+                    This customer has no active requirements. Please add a requirement first.
+                  </Text>
+                </View>
+              ) : enquiries.length === 1 ? (
+                <View style={styles.singleEnqBox}>
+                  <Text style={styles.singleEnqId}>#{enquiries[0].enquiry_id}</Text>
+                  <Text style={styles.singleEnqReq}>{enquiries[0].looking_for || 'Client Requirement'}</Text>
+                </View>
+              ) : (
+                <View style={{ gap: 6, marginBottom: 12 }}>
+                  {enquiries.map((e) => (
+                    <TouchableOpacity
+                      key={e.enquiry_id}
+                      style={[
+                        styles.enqSelectPill,
+                        scheduleSelectedEnquiryId === e.enquiry_id && styles.enqSelectPillActive,
+                      ]}
+                      onPress={() => setScheduleSelectedEnquiryId(e.enquiry_id)}
+                    >
+                      <Ionicons
+                        name={scheduleSelectedEnquiryId === e.enquiry_id ? 'radio-button-on' : 'radio-button-off'}
+                        size={16}
+                        color={scheduleSelectedEnquiryId === e.enquiry_id ? '#4F5278' : '#94A3B8'}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.enqSelectId, scheduleSelectedEnquiryId === e.enquiry_id && { color: '#4F5278' }]}>
+                          #{e.enquiry_id} • {e.transaction_type?.toUpperCase()}
+                        </Text>
+                        <Text style={styles.enqSelectDesc} numberOfLines={1}>
+                          {e.looking_for || 'Requirement'}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Date & Time Picker */}
+              <View style={{ marginVertical: 6 }}>
+                <DateTimePickerField
+                  label="Showing Date & Time *"
+                  value={scheduleDate}
+                  onChangeValue={setScheduleDate}
+                  placeholder="Select visit date & time..."
+                  required
+                />
+              </View>
+
+              {/* Instructions / Notes */}
+              <Text style={styles.formLabel}>Showing Instructions / Notes</Text>
+              <TextInput
+                style={[styles.modalInput, { height: 64, textAlignVertical: 'top' }]}
+                placeholder="e.g. Client requested evening showing, wants clubhouse tour"
+                placeholderTextColor={themeTokens.colors.textSecondary}
+                multiline
+                numberOfLines={2}
+                value={scheduleNotes}
+                onChangeText={setScheduleNotes}
+              />
+            </ScrollView>
+
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+              <TouchableOpacity
+                style={[styles.modalSubmitBtn, { flex: 1, backgroundColor: '#E2E8F0', marginTop: 0 }]}
+                onPress={() => setScheduleModalVisible(false)}
+              >
+                <Text style={[styles.modalSubmitBtnText, { color: '#475569' }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalSubmitBtn,
+                  { flex: 1.5, marginTop: 0 },
+                  (schedulingVisit || !scheduleSelectedEnquiryId || !scheduleDate) && { opacity: 0.6 },
+                ]}
+                onPress={handleConfirmScheduleVisit}
+                disabled={schedulingVisit || !scheduleSelectedEnquiryId || !scheduleDate}
+              >
+                {schedulingVisit ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.modalSubmitBtnText}>Confirm Visit</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -1499,5 +1702,117 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
+  },
+  schedulePropCard: {
+    backgroundColor: '#F5F3FF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+    padding: 12,
+    marginBottom: 12,
+  },
+  schedulePropHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  schedulePropId: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#6D28D9',
+  },
+  schedulePropBadge: {
+    backgroundColor: '#EDE9FE',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  schedulePropBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#6D28D9',
+  },
+  schedulePropSociety: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 2,
+  },
+  schedulePropMeta: {
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: 4,
+  },
+  schedulePropPrice: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#16A34A',
+  },
+  scheduleCustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 12,
+  },
+  scheduleCustText: {
+    fontSize: 12,
+    color: '#475569',
+  },
+  noEnqWarningBox: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  noEnqWarningText: {
+    fontSize: 12,
+    color: '#B91C1C',
+  },
+  singleEnqBox: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  singleEnqId: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: themeTokens.colors.primaryDark,
+    marginBottom: 2,
+  },
+  singleEnqReq: {
+    fontSize: 12,
+    color: '#334155',
+  },
+  enqSelectPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+  },
+  enqSelectPillActive: {
+    borderColor: '#4F5278',
+    backgroundColor: '#F8FAFC',
+  },
+  enqSelectId: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  enqSelectDesc: {
+    fontSize: 11,
+    color: '#64748B',
   },
 });
