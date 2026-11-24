@@ -207,7 +207,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={themeTokens.colors.primaryDark} />
-        <Text style={styles.loadingText}>Loading 360° Customer Dossier...</Text>
+        <Text style={styles.loadingText}>Loading Customer Details...</Text>
       </View>
     );
   }

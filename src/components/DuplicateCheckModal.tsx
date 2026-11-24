@@ -177,7 +177,7 @@ export const DuplicateCheckModal: React.FC<DuplicateCheckModalProps> = ({
                           }}
                         >
                           <Ionicons name="person-circle-outline" size={16} color="#FFFFFF" />
-                          <Text style={styles.open360BtnText}>Open Customer 360°</Text>
+                          <Text style={styles.open360BtnText}>Open Customer Details</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity

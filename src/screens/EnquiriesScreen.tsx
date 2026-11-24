@@ -768,7 +768,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                     >
                       <Ionicons name="person-outline" size={13} color="#FFFFFF" style={{ marginRight: 4 }} />
                       <Text style={[styles.actionPillBtnText, { color: '#FFFFFF', fontWeight: '700' }]}>
-                        360° View
+                        Customer Details
                       </Text>
                     </TouchableOpacity>
 
@@ -1467,7 +1467,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                           if (target) setCustomer360Id(target);
                         }}
                       >
-                        <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>360°</Text>
+                        <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>Details</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
