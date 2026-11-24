@@ -409,7 +409,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                 <View style={styles.systemPushNotice}>
                   <Ionicons name="shield-checkmark" size={14} color="#1D4ED8" />
                   <Text style={styles.systemPushText}>
-                    Background push notifications active • Alerts trigger even when EstateCRM is minimized.
+                    Background push notifications active • Alerts trigger even when G² Brothers CRM is minimized.
                   </Text>
                 </View>
               </>

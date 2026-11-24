@@ -1,4 +1,4 @@
-import * as Notifications from 'expo-notifications';
+﻿import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform, Linking } from 'react-native';
 import Constants from 'expo-constants';
@@ -24,7 +24,7 @@ export async function ensureNotificationChannelAsync() {
   if (Platform.OS === 'android') {
     try {
       await Notifications.setNotificationChannelAsync('default', {
-        name: 'EstateCRM Operational Notifications',
+        name: 'G² Brothers CRM Operational Notifications',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#4F5278',
@@ -263,10 +263,10 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
       token = tokenData?.data || null;
 
-      // Register with EstateCRM backend
+      // Register with G² Brothers CRM backend
       if (token) {
         await mobileApi.registerPushToken(token);
-        console.log('Push token successfully registered with EstateCRM backend:', token);
+        console.log('Push token successfully registered with G² Brothers CRM backend:', token);
       }
     } catch (error) {
       console.warn('Failed to obtain Expo push token (remote push might be limited in simulator):', error);

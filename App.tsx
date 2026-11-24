@@ -273,14 +273,12 @@ export default function App() {
       {/* Top Header matching G² Brothers Luxury Theme */}
       <View style={styles.header}>
         <View style={styles.brandRow}>
-          <Image
-            source={require('./assets/logo.png')}
-            style={styles.brandLogoImg}
-            resizeMode="contain"
-          />
-          <View style={{ marginLeft: 8 }}>
-            <Text style={styles.brandName}>G² BROTHERS</Text>
-            <Text style={styles.brandEnv}>REAL ESTATE CRM</Text>
+          <View style={styles.brandLogoWrapper}>
+            <Image
+              source={require('./assets/logo.png')}
+              style={styles.brandLogoImg}
+              resizeMode="contain"
+            />
           </View>
         </View>
 
@@ -463,33 +461,22 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
-  brandLogoBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+  brandLogoWrapper: {
+    height: 38,
+    width: 104,
     backgroundColor: '#020912',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   brandLogoImg: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: '#020912',
-  },
-  brandName: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#0F172A',
-    letterSpacing: 0.3,
-  },
-  brandEnv: {
-    fontSize: 8.5,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    color: '#D97706',
+    width: '100%',
+    height: '100%',
   },
   headerActions: {
     flexDirection: 'row',

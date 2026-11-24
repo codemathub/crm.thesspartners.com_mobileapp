@@ -4,7 +4,7 @@ import { themeTokens } from '../../theme/tokens';
 
 export interface BadgeProps {
   label: string;
-  variant?: 'success' | 'warning' | 'danger' | 'info' | 'primary' | 'neutral';
+  variant?: 'success' | 'warning' | 'danger' | 'info' | 'primary' | 'neutral' | 'gold';
   style?: ViewStyle;
 }
 
@@ -25,6 +25,8 @@ export const Badge: React.FC<BadgeProps> = ({
         return { bg: '#EAF0F6', text: themeTokens.colors.info };
       case 'primary':
         return { bg: themeTokens.colors.primarySoft, text: themeTokens.colors.primaryDark };
+      case 'gold':
+        return { bg: themeTokens.colors.accentGoldSoft, text: themeTokens.colors.accentGold };
       case 'neutral':
       default:
         return { bg: themeTokens.colors.softSurface, text: themeTokens.colors.textSecondary };

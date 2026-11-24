@@ -12,7 +12,7 @@ import { themeTokens } from '../../theme/tokens';
 export interface ButtonProps {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'soft';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'soft' | 'gold';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   disabled?: boolean;
@@ -46,6 +46,8 @@ export const Button: React.FC<ButtonProps> = ({
         return styles.dangerBtn;
       case 'soft':
         return styles.softBtn;
+      case 'gold':
+        return styles.goldBtn;
       default:
         return styles.primaryBtn;
     }
@@ -63,6 +65,8 @@ export const Button: React.FC<ButtonProps> = ({
         return styles.dangerText;
       case 'soft':
         return styles.softText;
+      case 'gold':
+        return styles.goldText;
       default:
         return styles.primaryText;
     }
@@ -130,41 +134,56 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   primaryBtn: {
-    backgroundColor: themeTokens.colors.primary,
+    backgroundColor: themeTokens.colors.primaryDark,
+    borderRadius: 10,
   },
   primaryText: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   secondaryBtn: {
-    backgroundColor: themeTokens.colors.primaryDark,
+    backgroundColor: themeTokens.colors.primary,
+    borderRadius: 10,
   },
   secondaryText: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  goldBtn: {
+    backgroundColor: themeTokens.colors.accentGold,
+    borderRadius: 10,
+  },
+  goldText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
   },
   outlineBtn: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: themeTokens.colors.border,
+    borderRadius: 10,
   },
   outlineText: {
     color: themeTokens.colors.textPrimary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   dangerBtn: {
     backgroundColor: themeTokens.colors.danger,
+    borderRadius: 10,
   },
   dangerText: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   softBtn: {
     backgroundColor: themeTokens.colors.primarySoft,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: 10,
   },
   softText: {
     color: themeTokens.colors.primaryDark,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   baseText: {
     fontSize: 14,

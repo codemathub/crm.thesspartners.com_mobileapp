@@ -53,13 +53,13 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#4F5278"
+          "color": "#1D4ED8"
         }
       ],
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Allow EstateCRM to securely authenticate field executives using Face ID"
+          "faceIDPermission": "Allow G² Brothers CRM to securely authenticate field executives using Face ID"
         }
       ]
     ],

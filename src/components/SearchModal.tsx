@@ -112,7 +112,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
               <Ionicons name="business" size={16} color="#FFFFFF" />
             </View>
             <View>
-              <Text style={styles.brandTitle}>EstateCRM</Text>
+              <Text style={styles.brandTitle}>G² Brothers CRM</Text>
               <Text style={styles.brandSub}>GLOBAL SEARCH & MATCHER</Text>
             </View>
           </View>

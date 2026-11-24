@@ -231,7 +231,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
       `*Society:* ${item.society_name}, ${item.location}\n` +
       `*Expected Price:* ${priceStr}\n` +
       `*Tenant Preference:* ${item.tenant_type || 'Family / Bachelors'}\n\n` +
-      `_Shared via EstateFlow CRM_`;
+      `_Shared via G² Brothers CRM_`;
 
     Linking.openURL(`whatsapp://send?text=${encodeURIComponent(text)}`).catch(() => {
       Alert.alert('Notice', 'WhatsApp is not installed on this device.');

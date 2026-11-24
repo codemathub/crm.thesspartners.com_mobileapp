@@ -99,7 +99,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
     if (!property) return;
     const formattedPrice = `₹${(property.expected_amount ?? 0).toLocaleString('en-IN')}${property.transaction_type === 'rent' ? '/month' : ''}`;
     const message =
-      `🏢 *EstateCRM Property Listing: ${property.property_id}*\n` +
+      `🏢 *G² Brothers CRM Property Listing: ${property.property_id}*\n` +
       `• *Configuration:* ${property.property_type} (${property.transaction_type.toUpperCase()})\n` +
       `• *Society:* ${property.society_name}\n` +
       `• *Location:* ${property.location}\n` +
@@ -108,7 +108,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
       `• *Maintenance:* ${property.maintenance_mode === 'included' ? 'Included' : `₹${property.maintenance_amount || 0}/mo extra`}\n` +
       (property.tenant_type ? `• *Tenant Preference:* ${property.tenant_type}\n` : '') +
       (property.notes ? `• *Key Highlights:* ${property.notes}\n` : '') +
-      `\nFor showings and inquiries, contact EstateCRM Authorized Operations.`;
+      `\nFor showings and inquiries, contact G² Brothers CRM Authorized Operations.`;
 
     try {
       await Share.share({ message });
@@ -121,12 +121,12 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
     if (!property) return;
     const formattedPrice = `₹${(property.expected_amount ?? 0).toLocaleString('en-IN')}${property.transaction_type === 'rent' ? '/month' : ''}`;
     const text =
-      `🏢 *EstateCRM Property Listing: ${property.property_id}*\n` +
+      `🏢 *G² Brothers CRM Property Listing: ${property.property_id}*\n` +
       `• *Type:* ${property.property_type} (${property.transaction_type.toUpperCase()})\n` +
       `• *Society:* ${property.society_name}\n` +
       `• *Location:* ${property.location}\n` +
       `• *Price:* ${formattedPrice}\n\n` +
-      `Direct Showing & Key Custody managed by EstateCRM.`;
+      `Direct Showing & Key Custody managed by G² Brothers CRM.`;
 
     const targetPhone = property.owner_phone ? property.owner_phone.replace(/\D/g, '') : '';
     const url = targetPhone ? `https://wa.me/${targetPhone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;

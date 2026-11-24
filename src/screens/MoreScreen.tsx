@@ -366,7 +366,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
             <Text style={styles.menuSubtitle}>
               {bioEnabled
                 ? 'Active for instant Face/Fingerprint unlock on site visits'
-                : 'Turn on to unlock EstateCRM with Face ID without typing password'}
+                : 'Turn on to unlock G² Brothers CRM with Face ID without typing password'}
             </Text>
           </View>
           <Switch
@@ -665,7 +665,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
                             />
                             <TextInput
                               style={styles.modalInput}
-                              placeholder="Corporate Email (e.g. rahul@estatecrm.com)"
+                              placeholder="Corporate Email (e.g. rahul@g2brothers.com)"
                               value={newEmail}
                               onChangeText={setNewEmail}
                               autoCapitalize="none"

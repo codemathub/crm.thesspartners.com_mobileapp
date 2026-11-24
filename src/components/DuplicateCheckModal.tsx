@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -208,7 +208,7 @@ export const DuplicateCheckModal: React.FC<DuplicateCheckModalProps> = ({
 
           {/* Policy Information Box */}
           <View style={styles.policyCard}>
-            <Text style={styles.policyTitle}>EstateFlow Anti-Duplicate Policy (PRD 5.8)</Text>
+            <Text style={styles.policyTitle}>G² Brothers CRM Anti-Duplicate Policy (PRD 5.8)</Text>
             <Text style={styles.policyText}>
               • Single Client Panoramas: Each client should maintain one unified customer profile with multiple linked requirements.
             </Text>

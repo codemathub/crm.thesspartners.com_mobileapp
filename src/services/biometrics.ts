@@ -2,10 +2,10 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-const STORAGE_KEY_TOKEN = 'estatecrm_biometric_jwt_token';
-const STORAGE_KEY_USER = 'estatecrm_biometric_user_profile';
-const STORAGE_KEY_ENABLED = 'estatecrm_biometric_enabled';
-const STORAGE_KEY_TIMESTAMP = 'estatecrm_biometric_timestamp';
+const STORAGE_KEY_TOKEN = 'g2brothers_biometric_jwt_token';
+const STORAGE_KEY_USER = 'g2brothers_biometric_user_profile';
+const STORAGE_KEY_ENABLED = 'g2brothers_biometric_enabled';
+const STORAGE_KEY_TIMESTAMP = 'g2brothers_biometric_timestamp';
 
 // 7-day JWT expiration policy
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -29,10 +29,13 @@ const inMemoryFallback: Record<string, string> = {};
 async function secureGet(key: string): Promise<string | null> {
   try {
     if (Platform.OS === 'web') {
-      return (typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null) || inMemoryFallback[key] || null;
+      const legacyKey = key.replace('g2brothers_', 'estatecrm_');
+      return (typeof localStorage !== 'undefined' ? (localStorage.getItem(key) || localStorage.getItem(legacyKey)) : null) || inMemoryFallback[key] || inMemoryFallback[legacyKey] || null;
     }
     const val = await SecureStore.getItemAsync(key);
-    return val || inMemoryFallback[key] || null;
+    if (val) return val;
+    const legacyVal = await SecureStore.getItemAsync(key.replace('g2brothers_', 'estatecrm_')).catch(() => null);
+    return legacyVal || inMemoryFallback[key] || null;
   } catch (err) {
     console.warn(`[Biometrics] SecureStore.getItemAsync failed for ${key}:`, err);
     return inMemoryFallback[key] || null;
@@ -201,7 +204,7 @@ export async function getSavedBiometricSession(): Promise<SavedSession | null> {
  * Prompt device biometric authentication (Face ID / Fingerprint / Device PIN)
  */
 export async function authenticateWithBiometrics(
-  reason = 'Scan Face / Fingerprint to securely unlock EstateCRM'
+  reason = 'Scan Face / Fingerprint to securely unlock G² Brothers CRM'
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const result = await LocalAuthentication.authenticateAsync({
