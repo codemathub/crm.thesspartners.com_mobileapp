@@ -2148,11 +2148,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    shadowColor: '#000000',
-    shadowOpacity: 0.04,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
   },
   visitCardHeader: {
     flexDirection: 'row',
