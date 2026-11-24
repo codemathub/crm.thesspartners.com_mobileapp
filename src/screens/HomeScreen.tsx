@@ -126,8 +126,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <Text style={styles.avatarText}>{initials}</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={styles.greetingTitle}>Welcome</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <Text style={styles.greetingTitle} numberOfLines={1}>Welcome, {userName}</Text>
             <View style={[styles.adminRolePill, { backgroundColor: roleBg }]}>
               <Text style={[styles.adminRoleText, { color: roleColor }]}>{roleLabel}</Text>
             </View>
