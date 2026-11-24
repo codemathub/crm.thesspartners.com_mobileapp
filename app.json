@@ -29,8 +29,21 @@
         "INTERNET",
         "ACCESS_NETWORK_STATE",
         "USE_BIOMETRIC",
-        "USE_FINGERPRINT"
+        "USE_FINGERPRINT",
+        "POST_NOTIFICATIONS",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.VIBRATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED"
       ]
+    },
+    "notification": {
+      "icon": "./assets/icon.png",
+      "color": "#4F5278",
+      "androidMode": "default"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -49,6 +62,11 @@
           "faceIDPermission": "Allow EstateCRM to securely authenticate field executives using Face ID"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "981d82a0-0a25-4082-bf5f-a1c77d0bb5fe"
+      }
+    }
   }
 }

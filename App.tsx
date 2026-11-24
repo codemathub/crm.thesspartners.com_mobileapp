@@ -23,7 +23,12 @@ import { TasksScreen } from './src/screens/TasksScreen';
 import { MoreScreen } from './src/screens/MoreScreen';
 import { SearchModal } from './src/components/SearchModal';
 import { NotificationModal } from './src/components/NotificationModal';
-import { registerForPushNotificationsAsync } from './src/services/notifications';
+import {
+  registerForPushNotificationsAsync,
+  ensureNotificationChannelAsync,
+  displayLocalNotification,
+} from './src/services/notifications';
+import { mobileApi } from './src/services/api';
 
 export type TabType = 'Home' | 'Inventory' | 'Enquiries' | 'Schedule' | 'Visits' | 'More';
 
@@ -43,6 +48,64 @@ export default function App() {
   const [targetEnquiryId, setTargetEnquiryId] = useState<string | null>(null);
   const [targetVisitEnquiryId, setTargetVisitEnquiryId] = useState<string | null>(null);
   const [targetVisitPropertyId, setTargetVisitPropertyId] = useState<string | null>(null);
+
+  // Live Notification Synchronization & Heads-up Pop-up
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+  const [inAppToast, setInAppToast] = useState<{ id: string; title: string; body: string } | null>(null);
+  const seenNotifIdsRef = React.useRef<Set<string>>(new Set());
+  const isInitialSyncRef = React.useRef(true);
+
+  React.useEffect(() => {
+    if (!isLoggedIn) return;
+
+    ensureNotificationChannelAsync().catch(() => {});
+    registerForPushNotificationsAsync().catch(() => {});
+
+    const syncNotifications = async () => {
+      try {
+        const res = await mobileApi.getNotifications(true);
+        const unreadItems = res.items || [];
+        setUnreadNotifCount(unreadItems.length);
+
+        if (isInitialSyncRef.current) {
+          unreadItems.forEach((n) => seenNotifIdsRef.current.add(n.id));
+          isInitialSyncRef.current = false;
+          return;
+        }
+
+        const newItems = unreadItems.filter((n) => !seenNotifIdsRef.current.has(n.id));
+        if (newItems.length > 0) {
+          newItems.forEach((n) => seenNotifIdsRef.current.add(n.id));
+
+          // Pop up native phone notification bar alert & vibration
+          const latest = newItems[0];
+          await displayLocalNotification(latest.title, latest.body, {
+            id: latest.id,
+            entity_type: latest.entity_type,
+            entity_id: latest.entity_id,
+          });
+
+          // In-app floating popup banner
+          setInAppToast({ id: latest.id, title: latest.title, body: latest.body });
+        }
+      } catch {
+        // silent on network error
+      }
+    };
+
+    syncNotifications();
+    const interval = setInterval(syncNotifications, 10000);
+    return () => clearInterval(interval);
+  }, [isLoggedIn]);
+
+  React.useEffect(() => {
+    if (inAppToast) {
+      const timer = setTimeout(() => {
+        setInAppToast(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [inAppToast]);
 
   const handleNavigateTab = (tab: TabType, subTab?: string) => {
     const target = (tab === 'Visits' || tab === 'Schedule') ? 'Schedule' : tab;
@@ -178,6 +241,33 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
 
+      {/* Floating In-App Heads-Up Notification Banner */}
+      {inAppToast && (
+        <TouchableOpacity
+          style={styles.toastBanner}
+          activeOpacity={0.9}
+          onPress={() => {
+            setInAppToast(null);
+            setNotifModalVisible(true);
+          }}
+        >
+          <View style={styles.toastIconBox}>
+            <Ionicons name="notifications" size={16} color="#FFFFFF" />
+          </View>
+          <View style={styles.toastContent}>
+            <Text style={styles.toastTitle} numberOfLines={1}>{inAppToast.title}</Text>
+            <Text style={styles.toastBody} numberOfLines={2}>{inAppToast.body}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.toastCloseBtn}
+            onPress={() => setInAppToast(null)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="close" size={16} color="#FFFFFF" />
+          </TouchableOpacity>
+        </TouchableOpacity>
+      )}
+
       {/* Top Header matching Stitch Theme */}
       <View style={styles.header}>
         <View style={styles.brandRow}>
@@ -206,7 +296,7 @@ export default function App() {
             accessibilityLabel="Notifications"
             accessibilityRole="button"
           >
-            <View style={styles.badgeDot} />
+            {unreadNotifCount > 0 && <View style={styles.badgeDot} />}
             <Ionicons name="notifications-outline" size={17} color={themeTokens.colors.primaryDark} />
           </TouchableOpacity>
 
@@ -463,5 +553,48 @@ const styles = StyleSheet.create({
   navLabelActive: {
     color: '#4F5278',
     fontWeight: '800',
+  },
+  toastBanner: {
+    position: 'absolute',
+    top: STATUSBAR_HEIGHT + 55,
+    left: 12,
+    right: 12,
+    backgroundColor: '#303350',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    zIndex: 9999,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+  },
+  toastIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#4F5278',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toastContent: {
+    flex: 1,
+  },
+  toastTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  toastBody: {
+    fontSize: 11,
+    color: '#D1D5DB',
+  },
+  toastCloseBtn: {
+    padding: 4,
   },
 });
