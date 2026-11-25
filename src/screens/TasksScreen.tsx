@@ -27,9 +27,16 @@ import {
 interface TasksScreenProps {
   onClose?: () => void;
   onNavigateTab?: (tab: string) => void;
+  initialTaskId?: string;
+  onClearInitialTaskId?: () => void;
 }
 
-export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab }) => {
+export const TasksScreen: React.FC<TasksScreenProps> = ({
+  onClose,
+  onNavigateTab,
+  initialTaskId,
+  onClearInitialTaskId,
+}) => {
   const [activeTab, setActiveTab] = useState<'NOTIFICATIONS' | 'TASKS' | 'ANNOUNCEMENTS'>('TASKS');
   const [tasks, setTasks] = useState<MobileTask[]>([]);
   const [announcements, setAnnouncements] = useState<MobileAnnouncement[]>([]);
@@ -68,6 +75,20 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (initialTaskId && tasks.length > 0) {
+      const cleanTarget = String(initialTaskId).trim();
+      const found = tasks.find(
+        (t) => String(t.task_id) === cleanTarget || String(t.id || (t as any)._id) === cleanTarget
+      );
+      if (found) {
+        setActiveTab('TASKS');
+        setViewingTask(found);
+        onClearInitialTaskId?.();
+      }
+    }
+  }, [initialTaskId, tasks]);
 
   const handleRefresh = () => {
     setRefreshing(true);

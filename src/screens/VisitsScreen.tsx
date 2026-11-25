@@ -37,6 +37,8 @@ interface VisitsScreenProps {
   onCompleteVisit?: (visitId: string) => void;
   initialEnquiryId?: string;
   initialPropertyId?: string;
+  initialVisitId?: string;
+  onClearInitialVisitId?: () => void;
 }
 
 export const VisitsScreen: React.FC<VisitsScreenProps> = ({
@@ -45,6 +47,8 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
   onActionHandled,
   initialEnquiryId,
   initialPropertyId,
+  initialVisitId,
+  onClearInitialVisitId,
 }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'today' | 'completed' | 'followups' | 'claim'>(initialTab);
 
@@ -123,6 +127,20 @@ export const VisitsScreen: React.FC<VisitsScreenProps> = ({
   const [rescheduleModalItem, setRescheduleModalItem] = useState<MobileVisit | null>(null);
   const [newDate, setNewDate] = useState('');
   const [rescheduleReason, setRescheduleReason] = useState('');
+
+  useEffect(() => {
+    if (initialVisitId && visits.length > 0) {
+      const cleanTarget = String(initialVisitId).trim();
+      const found = visits.find(
+        (v) => String(v.visit_id) === cleanTarget || String(v.id || (v as any)._id) === cleanTarget
+      );
+      if (found) {
+        setActiveTab('today');
+        setCompleteModalItem(found);
+        onClearInitialVisitId?.();
+      }
+    }
+  }, [initialVisitId, visits]);
 
   // Custom Date Filter (Enterprise Calendar Picker)
   const [filterDate, setFilterDate] = useState<string | null>(null);

@@ -58,6 +58,8 @@ export default function App() {
   const [targetEnquiryId, setTargetEnquiryId] = useState<string | null>(null);
   const [targetVisitEnquiryId, setTargetVisitEnquiryId] = useState<string | null>(null);
   const [targetVisitPropertyId, setTargetVisitPropertyId] = useState<string | null>(null);
+  const [targetVisitId, setTargetVisitId] = useState<string | null>(null);
+  const [targetTaskId, setTargetTaskId] = useState<string | null>(null);
 
   // Live Notification Synchronization & Heads-up Pop-up
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
@@ -124,6 +126,9 @@ export default function App() {
         textHint.includes('showing') ||
         textHint.includes('callback')
       ) {
+        if (cleanId) {
+          setTargetVisitId(cleanId);
+        }
         if (rawEntity === 'followup' || rawNotifType.includes('followup') || textHint.includes('callback')) {
           handleNavigateTab('Schedule', 'followups');
         } else if (rawNotifType.includes('claim')) {
@@ -198,6 +203,9 @@ export default function App() {
         textHint.includes('directive') ||
         textHint.includes('announcement')
       ) {
+        if (cleanId) {
+          setTargetTaskId(cleanId);
+        }
         setTasksModalVisible(true);
         return;
       }
@@ -397,6 +405,8 @@ export default function App() {
             }}
             initialEnquiryId={targetVisitEnquiryId || undefined}
             initialPropertyId={targetVisitPropertyId || undefined}
+            initialVisitId={targetVisitId || undefined}
+            onClearInitialVisitId={() => setTargetVisitId(null)}
           />
         );
       case 'More':
@@ -647,7 +657,12 @@ export default function App() {
       <Modal visible={tasksModalVisible} animationType="slide">
         <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
           <TasksScreen
-            onClose={() => setTasksModalVisible(false)}
+            initialTaskId={targetTaskId || undefined}
+            onClearInitialTaskId={() => setTargetTaskId(null)}
+            onClose={() => {
+              setTargetTaskId(null);
+              setTasksModalVisible(false);
+            }}
             onNavigateTab={(tab) => {
               setTasksModalVisible(false);
               setActiveTab(tab as TabType);
