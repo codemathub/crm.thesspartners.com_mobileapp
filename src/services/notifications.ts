@@ -5,6 +5,25 @@ import Constants from 'expo-constants';
 import { mobileApi } from './api';
 import { parseUtcDate } from '../utils/dateUtils';
 
+export type NotificationResponsePayload = {
+  entity_type?: string;
+  entity_id?: string;
+  notification_type?: string;
+  type?: string;
+  id?: string;
+  phone?: string;
+  location?: string;
+  title?: string;
+  body?: string;
+};
+
+type NotificationResponseCallback = (payload: NotificationResponsePayload) => void;
+let globalNotificationResponseHandler: NotificationResponseCallback | null = null;
+
+export function setNotificationResponseHandler(handler: NotificationResponseCallback | null) {
+  globalNotificationResponseHandler = handler;
+}
+
 // Configure notification presentation behavior when the app is in foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -131,7 +150,13 @@ export async function scheduleActivityReminder(
           sound: 'default',
           priority: Notifications.AndroidNotificationPriority.MAX,
           vibrate: [0, 250, 250, 250],
-          data: { type, id, phone: details },
+          data: {
+            type,
+            id,
+            entity_type: type === 'visit' ? 'visit' : 'followup',
+            entity_id: id,
+            phone: details,
+          },
         },
         trigger: {
           date: reminderTime,
@@ -153,7 +178,13 @@ export async function scheduleActivityReminder(
           sound: 'default',
           priority: Notifications.AndroidNotificationPriority.MAX,
           vibrate: [0, 300, 200, 300],
-          data: { type, id, phone: details },
+          data: {
+            type,
+            id,
+            entity_type: type === 'visit' ? 'visit' : 'followup',
+            entity_id: id,
+            phone: details,
+          },
         },
         trigger: {
           date: schedDate,
@@ -249,6 +280,22 @@ export async function setupNotificationCategoriesAsync() {
         Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(data.location)}`).catch(() => {});
       } else if (actionId === 'mark_read' && data?.notification_id) {
         mobileApi.markNotificationRead(data.notification_id).catch(() => {});
+      }
+
+      // If user tapped the notification itself or an action that opens the app:
+      if (
+        actionId === Notifications.DEFAULT_ACTION_IDENTIFIER ||
+        !actionId ||
+        actionId === 'navigate' ||
+        actionId === 'acknowledge'
+      ) {
+        if (globalNotificationResponseHandler) {
+          globalNotificationResponseHandler({
+            ...data,
+            title: response.notification.request.content.title || undefined,
+            body: response.notification.request.content.body || undefined,
+          });
+        }
       }
     });
   } catch (err) {

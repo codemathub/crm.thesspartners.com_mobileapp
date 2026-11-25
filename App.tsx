@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
 
 const ANDROID_STATUSBAR_HEIGHT = Platform.OS === 'android'
   ? Math.max(RNStatusBar.currentHeight || 0, (Constants as any)?.statusBarHeight || 0, 38)
@@ -31,6 +32,7 @@ import {
   registerForPushNotificationsAsync,
   ensureNotificationChannelAsync,
   displayLocalNotification,
+  setNotificationResponseHandler,
 } from './src/services/notifications';
 import { mobileApi } from './src/services/api';
 
@@ -59,7 +61,177 @@ export default function App() {
 
   // Live Notification Synchronization & Heads-up Pop-up
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
-  const [inAppToast, setInAppToast] = useState<{ id: string; title: string; body: string } | null>(null);
+  const [inAppToast, setInAppToast] = useState<{
+    id: string;
+    title: string;
+    body: string;
+    entity_type?: string;
+    entity_id?: string;
+    notification_type?: string;
+  } | null>(null);
+
+  const handleNavigateTab = (tab: TabType, subTab?: string) => {
+    const target = (tab === 'Visits' || tab === 'Schedule') ? 'Schedule' : tab;
+    if (tab === 'Visits' || tab === 'Schedule') {
+      if (subTab === 'followups' || subTab === 'callbacks') {
+        setVisitsInitialTab('followups');
+      } else if (subTab === 'claim') {
+        setVisitsInitialTab('claim');
+      } else if (subTab === 'all') {
+        setVisitsInitialTab('all');
+      } else {
+        setVisitsInitialTab('today');
+      }
+    }
+    setActiveTab(target);
+  };
+
+  /**
+   * Unified notification click navigator:
+   * Directs user to the exact target screen, visit, client, property, or task
+   */
+  const navigateToNotificationTarget = React.useCallback(
+    (payload: {
+      entity_type?: string;
+      entity_id?: string;
+      notification_type?: string;
+      type?: string;
+      id?: string;
+      phone?: string;
+      location?: string;
+      title?: string;
+      body?: string;
+    }) => {
+      // Dismiss any open popups or toasts
+      setNotifModalVisible(false);
+      setSearchModalVisible(false);
+      setInAppToast(null);
+
+      const rawEntity = String(payload.entity_type || payload.type || '').toLowerCase().trim();
+      const rawNotifType = String(payload.notification_type || '').toLowerCase().trim();
+      const cleanId = String(payload.entity_id || payload.id || '').trim();
+      const textHint = `${payload.title || ''} ${payload.body || ''}`.toLowerCase();
+
+      // 1. Visits / Showings / Follow-ups / Callbacks
+      if (
+        rawEntity === 'visit' ||
+        rawEntity === 'followup' ||
+        rawEntity === 'showing' ||
+        rawEntity === 'touchpoint' ||
+        rawNotifType.includes('visit') ||
+        rawNotifType.includes('followup') ||
+        textHint.includes('visit') ||
+        textHint.includes('showing') ||
+        textHint.includes('callback')
+      ) {
+        if (rawEntity === 'followup' || rawNotifType.includes('followup') || textHint.includes('callback')) {
+          handleNavigateTab('Schedule', 'followups');
+        } else if (rawNotifType.includes('claim')) {
+          handleNavigateTab('Schedule', 'claim');
+        } else {
+          handleNavigateTab('Schedule', 'today');
+        }
+        return;
+      }
+
+      // 2. Property / Inventory Unit
+      if (
+        rawEntity === 'property' ||
+        rawEntity === 'inventory' ||
+        rawEntity === 'unit' ||
+        rawNotifType.includes('property') ||
+        textHint.includes('property') ||
+        textHint.includes('inventory') ||
+        textHint.includes('unit')
+      ) {
+        if (cleanId) {
+          setTargetPropertyId(cleanId);
+        }
+        setActiveTab('Inventory');
+        return;
+      }
+
+      // 3. Customer / Client Profile
+      if (
+        rawEntity === 'customer' ||
+        rawEntity === 'client' ||
+        rawEntity === 'profile' ||
+        rawNotifType.includes('customer') ||
+        rawNotifType.includes('client') ||
+        textHint.includes('customer') ||
+        textHint.includes('client')
+      ) {
+        if (cleanId) {
+          setTargetCustomerId(cleanId);
+        }
+        setActiveTab('Enquiries');
+        return;
+      }
+
+      // 4. Enquiry / Lead / Deal
+      if (
+        rawEntity === 'enquiry' ||
+        rawEntity === 'lead' ||
+        rawEntity === 'deal' ||
+        rawNotifType.includes('lead') ||
+        rawNotifType.includes('enquiry') ||
+        rawNotifType.includes('deal') ||
+        textHint.includes('enquiry') ||
+        textHint.includes('lead') ||
+        textHint.includes('deal')
+      ) {
+        if (cleanId) {
+          setTargetEnquiryId(cleanId);
+        }
+        setActiveTab('Enquiries');
+        return;
+      }
+
+      // 5. Tasks / Operational Directives / Announcements
+      if (
+        rawEntity === 'task' ||
+        rawEntity === 'directive' ||
+        rawEntity === 'announcement' ||
+        rawNotifType.includes('task') ||
+        rawNotifType.includes('announcement') ||
+        textHint.includes('task') ||
+        textHint.includes('directive') ||
+        textHint.includes('announcement')
+      ) {
+        setTasksModalVisible(true);
+        return;
+      }
+
+      // Fallback: Open home screen
+      setActiveTab('Home');
+    },
+    []
+  );
+
+  // Native notification response listener (when tapping OS status bar / lockscreen banners)
+  React.useEffect(() => {
+    setNotificationResponseHandler((payload) => {
+      navigateToNotificationTarget(payload);
+    });
+
+    // Check cold-start notification click
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (response) {
+          const data = (response.notification.request.content.data || {}) as any;
+          navigateToNotificationTarget({
+            ...data,
+            title: response.notification.request.content.title || undefined,
+            body: response.notification.request.content.body || undefined,
+          });
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      setNotificationResponseHandler(null);
+    };
+  }, [navigateToNotificationTarget]);
 
   React.useEffect(() => {
     if (!isLoggedIn) return;
@@ -99,10 +271,20 @@ export default function App() {
             id: latest.id,
             entity_type: latest.entity_type,
             entity_id: latest.entity_id,
+            notification_type: latest.notification_type,
+            title: latest.title,
+            body: latest.body,
           });
 
           // In-app floating popup banner
-          setInAppToast({ id: latest.id, title: latest.title, body: latest.body });
+          setInAppToast({
+            id: latest.id,
+            title: latest.title,
+            body: latest.body,
+            entity_type: latest.entity_type,
+            entity_id: latest.entity_id,
+            notification_type: latest.notification_type,
+          });
         }
       } catch {
         // silent on network error
@@ -122,22 +304,6 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [inAppToast]);
-
-  const handleNavigateTab = (tab: TabType, subTab?: string) => {
-    const target = (tab === 'Visits' || tab === 'Schedule') ? 'Schedule' : tab;
-    if (tab === 'Visits' || tab === 'Schedule') {
-      if (subTab === 'followups' || subTab === 'callbacks') {
-        setVisitsInitialTab('followups');
-      } else if (subTab === 'claim') {
-        setVisitsInitialTab('claim');
-      } else if (subTab === 'all') {
-        setVisitsInitialTab('all');
-      } else {
-        setVisitsInitialTab('today');
-      }
-    }
-    setActiveTab(target);
-  };
 
   const handleLoginSuccess = (user: any) => {
     setCurrentUser(user);
@@ -264,8 +430,9 @@ export default function App() {
           style={styles.toastBanner}
           activeOpacity={0.92}
           onPress={() => {
+            const toast = inAppToast;
             setInAppToast(null);
-            setNotifModalVisible(true);
+            navigateToNotificationTarget(toast);
           }}
         >
           <View style={styles.toastIconBox}>
@@ -458,6 +625,11 @@ export default function App() {
         onOpenEnquiries={(enqId) => {
           setNotifModalVisible(false);
           if (enqId) setTargetEnquiryId(enqId);
+          setActiveTab('Enquiries');
+        }}
+        onOpenCustomer={(custId) => {
+          setNotifModalVisible(false);
+          if (custId) setTargetCustomerId(custId);
           setActiveTab('Enquiries');
         }}
         onOpenProperty={(propId) => {

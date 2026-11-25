@@ -27,6 +27,7 @@ export interface NotificationModalProps {
   onClose: () => void;
   onOpenTasksScreen?: () => void;
   onOpenEnquiries?: (enquiryId?: string) => void;
+  onOpenCustomer?: (customerId: string) => void;
   onOpenProperty?: (propertyId: string) => void;
   onOpenSchedule?: (subTab?: string) => void;
   onUpdateUnreadCount?: (newCount: number) => void;
@@ -39,6 +40,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
   onClose,
   onOpenTasksScreen,
   onOpenEnquiries,
+  onOpenCustomer,
   onOpenProperty,
   onOpenSchedule,
   onUpdateUnreadCount,
@@ -134,17 +136,73 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
       await mobileApi.markNotificationRead(item.id);
 
       // 3. Navigation to target item like a real enterprise app
-      if (item.entity_type === 'enquiry' && item.entity_id) {
-        onClose();
-        onOpenEnquiries?.(item.entity_id);
-      } else if (item.entity_type === 'property' && item.entity_id) {
-        onClose();
-        onOpenProperty?.(item.entity_id);
-      } else if (item.entity_type === 'visit') {
-        onClose();
-        onOpenSchedule?.('today');
-      } else if (item.entity_type === 'task') {
-        onClose();
+      onClose();
+      const entity = String(item.entity_type || '').toLowerCase().trim();
+      const notifType = String(item.notification_type || '').toLowerCase().trim();
+      const cleanId = String(item.entity_id || '').trim();
+      const textHint = `${item.title || ''} ${item.body || ''}`.toLowerCase();
+
+      // Visit / Showing / Callback
+      if (
+        entity === 'visit' ||
+        entity === 'followup' ||
+        notifType.includes('visit') ||
+        notifType.includes('followup') ||
+        textHint.includes('visit') ||
+        textHint.includes('showing') ||
+        textHint.includes('callback')
+      ) {
+        if (entity === 'followup' || textHint.includes('callback')) {
+          onOpenSchedule?.('followups');
+        } else if (notifType.includes('claim')) {
+          onOpenSchedule?.('claim');
+        } else {
+          onOpenSchedule?.('today');
+        }
+      } else if (
+        entity === 'property' ||
+        notifType.includes('property') ||
+        textHint.includes('property') ||
+        textHint.includes('unit')
+      ) {
+        onOpenProperty?.(cleanId);
+      } else if (
+        entity === 'customer' ||
+        entity === 'client' ||
+        notifType.includes('customer') ||
+        notifType.includes('client') ||
+        textHint.includes('customer') ||
+        textHint.includes('client')
+      ) {
+        if (onOpenCustomer && cleanId) {
+          onOpenCustomer(cleanId);
+        } else {
+          onOpenEnquiries?.();
+        }
+      } else if (
+        entity === 'enquiry' ||
+        entity === 'lead' ||
+        entity === 'deal' ||
+        notifType.includes('lead') ||
+        notifType.includes('enquiry') ||
+        notifType.includes('deal') ||
+        textHint.includes('enquiry') ||
+        textHint.includes('lead') ||
+        textHint.includes('deal')
+      ) {
+        onOpenEnquiries?.(cleanId);
+      } else if (
+        entity === 'task' ||
+        entity === 'directive' ||
+        entity === 'announcement' ||
+        notifType.includes('task') ||
+        notifType.includes('announcement') ||
+        textHint.includes('task') ||
+        textHint.includes('directive') ||
+        textHint.includes('announcement')
+      ) {
+        onOpenTasksScreen?.();
+      } else {
         onOpenTasksScreen?.();
       }
     } catch {
@@ -287,7 +345,15 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                   .map((t) => {
                     const isAck = t.status === 'acknowledged' || acknowledgedTaskIds.includes(t.task_id);
                     return (
-                      <View key={t.task_id} style={[styles.alertCard, !isAck && styles.alertCardPriority]}>
+                      <TouchableOpacity
+                        key={t.task_id}
+                        style={[styles.alertCard, !isAck && styles.alertCardPriority]}
+                        activeOpacity={0.88}
+                        onPress={() => {
+                          onClose();
+                          onOpenTasksScreen?.();
+                        }}
+                      >
                         <View style={styles.cardHeader}>
                           <View style={[styles.cardTypeIcon, { backgroundColor: isAck ? '#DCFCE7' : '#FEE2E2' }]}>
                             <Ionicons name={isAck ? 'checkmark' : 'alert-circle'} size={14} color={isAck ? '#16A34A' : '#DC2626'} />
@@ -304,15 +370,19 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                             </View>
                             <Text style={styles.cardTitle}>{t.title}</Text>
                           </View>
+                          <Ionicons name="chevron-forward" size={14} color="#94A3B8" />
                         </View>
 
-                        <Text style={styles.cardBody}>{t.instructions || 'Action item assigned.'}</Text>
+                        <Text style={styles.cardBody}>{t.instructions || 'Action item assigned. Tap to view.'}</Text>
 
                         {!isAck ? (
                           <View style={styles.actionsRow}>
                             <TouchableOpacity
                               style={styles.primaryActionBtn}
-                              onPress={() => handleAcknowledgeTask(t.task_id)}
+                              onPress={(e) => {
+                                e.stopPropagation();
+                                handleAcknowledgeTask(t.task_id);
+                              }}
                               activeOpacity={0.88}
                             >
                               <Ionicons name="checkmark-circle" size={14} color="#FFFFFF" />
@@ -325,14 +395,22 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                             <Text style={styles.acknowledgedNoticeText}>Task Acknowledged</Text>
                           </View>
                         )}
-                      </View>
+                      </TouchableOpacity>
                     );
                   })}
 
                 {/* 2. REAL SCHEDULED VISITS FOR TODAY */}
                 {(activeFilter === 'ALL' || activeFilter === 'VISITS') &&
                   todayVisits.map((v) => (
-                    <View key={v.visit_id} style={styles.alertCard}>
+                    <TouchableOpacity
+                      key={v.visit_id}
+                      style={styles.alertCard}
+                      activeOpacity={0.88}
+                      onPress={() => {
+                        onClose();
+                        onOpenSchedule?.('today');
+                      }}
+                    >
                       <View style={styles.cardHeader}>
                         <View style={[styles.cardTypeIcon, { backgroundColor: '#DBEAFE' }]}>
                           <Ionicons name="calendar" size={14} color="#2563EB" />
@@ -349,6 +427,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                           </View>
                           <Text style={styles.cardTitle}>Visit #{v.visit_id}: {v.property_society}</Text>
                         </View>
+                        <Ionicons name="chevron-forward" size={14} color="#94A3B8" />
                       </View>
                       <Text style={styles.cardBody}>
                         Client: <Text style={{ fontWeight: '700', color: '#1F2937' }}>{v.customer_name}</Text> • Property #{v.property_id} ({v.property_bhk || 'Residential'}) • Status: {v.status.toUpperCase()}
@@ -356,7 +435,10 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                       <View style={styles.actionsRow}>
                         <TouchableOpacity
                           style={styles.callActionBtn}
-                          onPress={() => handleCallClient(v.customer_phone)}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            handleCallClient(v.customer_phone);
+                          }}
                           activeOpacity={0.88}
                         >
                           <Ionicons name="call" size={14} color="#059669" />
@@ -364,20 +446,31 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={styles.secondaryActionBtn}
-                          onPress={() => handleNavigate(`${v.property_society} ${v.property_location}`)}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            handleNavigate(`${v.property_society} ${v.property_location}`);
+                          }}
                           activeOpacity={0.88}
                         >
                           <Ionicons name="navigate-outline" size={14} color="#1D4ED8" />
                           <Text style={styles.secondaryActionBtnText} numberOfLines={1}>Navigate</Text>
                         </TouchableOpacity>
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   ))}
 
                 {/* 3. REAL BRANCH ANNOUNCEMENTS */}
                 {(activeFilter === 'ALL' || activeFilter === 'ANNOUNCEMENTS') &&
                   announcements.map((a) => (
-                    <View key={a.id} style={styles.alertCard}>
+                    <TouchableOpacity
+                      key={a.id}
+                      style={styles.alertCard}
+                      activeOpacity={0.88}
+                      onPress={() => {
+                        onClose();
+                        onOpenTasksScreen?.();
+                      }}
+                    >
                       <View style={styles.cardHeader}>
                         <View style={[styles.cardTypeIcon, { backgroundColor: '#F3E8FF' }]}>
                           <Ionicons name="megaphone" size={14} color="#7C3AED" />
@@ -392,9 +485,10 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                           </View>
                           <Text style={styles.cardTitle}>{a.title}</Text>
                         </View>
+                        <Ionicons name="chevron-forward" size={14} color="#94A3B8" />
                       </View>
                       <Text style={styles.cardBody}>{a.body}</Text>
-                    </View>
+                    </TouchableOpacity>
                   ))}
 
                 {/* 4. REAL SERVER NOTIFICATIONS */}
@@ -429,6 +523,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                           </View>
                           <Text style={styles.cardTitle}>{item.title}</Text>
                         </View>
+                        <Ionicons name="chevron-forward" size={14} color="#94A3B8" />
                       </View>
                       <Text style={styles.cardBody}>{item.body}</Text>
                     </TouchableOpacity>
