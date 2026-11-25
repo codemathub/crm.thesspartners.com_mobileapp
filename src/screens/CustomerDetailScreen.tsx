@@ -17,7 +17,7 @@ import {
 const STATUSBAR_HEIGHT = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0;
 import { Ionicons } from '@expo/vector-icons';
 import { themeTokens } from '../theme/tokens';
-import { mobileApi, MobileCustomer, MobileEnquiry } from '../services/api';
+import { mobileApi, MobileCustomer, MobileEnquiry, MobileSociety } from '../services/api';
 import { DateTimePickerField } from '../components/DateTimePickerModal';
 import { parseUtcDate, formatDateTime } from '../utils/dateUtils';
 
@@ -176,15 +176,25 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
   const [nextFollowupDate, setNextFollowupDate] = useState('');
   const [savingNote, setSavingNote] = useState(false);
 
-  // New Requirement / Enquiry Modal State
+  // New Requirement / Enquiry Modal State (Clean live state, zero hardcoded values)
   const [addReqModalVisible, setAddReqModalVisible] = useState(false);
-  const [reqLookingFor, setReqLookingFor] = useState('');
   const [reqTransType, setReqTransType] = useState<'rent' | 'sale'>('rent');
+  const [reqLookingFor, setReqLookingFor] = useState('');
+  const [reqSocietyId, setReqSocietyId] = useState('');
+  const [reqSocietyName, setReqSocietyName] = useState('');
+  const [reqLocation, setReqLocation] = useState('');
   const [reqBudgetMin, setReqBudgetMin] = useState('');
   const [reqBudgetMax, setReqBudgetMax] = useState('');
+  const [reqTenantPref, setReqTenantPref] = useState('Family Only');
+  const [reqPriority, setReqPriority] = useState<'hot' | 'warm' | 'cold'>('warm');
   const [reqMoveInDate, setReqMoveInDate] = useState('');
   const [reqNotes, setReqNotes] = useState('');
   const [savingReq, setSavingReq] = useState(false);
+
+  // Societies directory for live society dropdown selector from database
+  const [societiesList, setSocietiesList] = useState<MobileSociety[]>([]);
+  const [societyModalVisible, setSocietyModalVisible] = useState(false);
+  const [societySearch, setSocietySearch] = useState('');
 
   // Edit Customer Profile Modal State
   const [editProfileVisible, setEditProfileVisible] = useState(false);
@@ -279,6 +289,10 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
 
   useEffect(() => {
     fetchDossier();
+    // Pre-load societies for society selector
+    mobileApi.getSocieties().then((res) => {
+      setSocietiesList(Array.isArray(res) ? res : ((res as any).items || []));
+    }).catch(() => {});
     // Pre-load all registered users to always resolve real human names (never generic placeholders)
     mobileApi.getUsers().then((users) => {
       const map: Record<string, string> = {};
@@ -340,9 +354,16 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
 
   const handleCreateRequirement = async () => {
     if (!reqLookingFor.trim()) {
-      Alert.alert('Requirement Required', 'Please specify what the customer is looking for (e.g. 2 BHK, 3 BHK Villa).');
+      Alert.alert('Configuration Required', 'Please select or specify unit configuration (e.g. 2 BHK, 3 BHK).');
       return;
     }
+    const bMin = reqBudgetMin.trim() ? parseFloat(reqBudgetMin) : 0;
+    const bMax = reqBudgetMax.trim() ? parseFloat(reqBudgetMax) : 0;
+    if (isNaN(bMin) || isNaN(bMax) || bMin < 0 || bMax < 0) {
+      Alert.alert('Budget Required', 'Please enter valid numbers for minimum and maximum budget.');
+      return;
+    }
+
     setSavingReq(true);
     try {
       let finalNotes = reqNotes.trim();
@@ -355,24 +376,33 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
         finalNotes = finalNotes ? `${finalNotes} | Target Move-in: ${moveInStr}` : `Target Move-in: ${moveInStr}`;
       }
 
+      const targetCustId = data?.customer?.customer_id || customerId;
+
       await mobileApi.createEnquiry({
-        customer_id: customerId,
-        customer_name: data?.customer.name,
-        customer_phone: data?.customer.primary_phone,
+        customer_id: targetCustId,
+        customer_name: data?.customer?.name,
+        customer_phone: data?.customer?.primary_phone,
         transaction_type: reqTransType,
         looking_for: reqLookingFor.trim(),
-        budget_min: reqBudgetMin ? Number(reqBudgetMin) : undefined,
-        budget_max: reqBudgetMax ? Number(reqBudgetMax) : undefined,
+        preferred_societies: reqSocietyName.trim() ? [reqSocietyName.trim()] : undefined,
+        preferred_locations: reqLocation.trim() ? [reqLocation.trim()] : undefined,
+        tenant_type: reqTenantPref,
+        priority: reqPriority || (data?.customer?.priority as any) || 'hot',
+        budget_min: bMin,
+        budget_max: bMax,
         notes: finalNotes || undefined,
         status: 'new',
       });
       setAddReqModalVisible(false);
       setReqLookingFor('');
+      setReqSocietyId('');
+      setReqSocietyName('');
+      setReqLocation('');
       setReqBudgetMin('');
       setReqBudgetMax('');
       setReqMoveInDate('');
       setReqNotes('');
-      Alert.alert('Success', 'Customer requirement added successfully.');
+      Alert.alert('Success', 'Customer requirement registered successfully in live database.');
       fetchDossier();
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to add requirement');
@@ -534,7 +564,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
           onPress={() => setAddReqModalVisible(true)}
         >
           <Ionicons name="add-circle" size={16} color="#FFFFFF" />
-          <Text style={styles.actionBtnText}>+ What They Need</Text>
+          <Text style={styles.actionBtnText} numberOfLines={1}>+ Requirement</Text>
         </TouchableOpacity>
       </View>
 
@@ -1108,18 +1138,24 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* MODAL 1: ADD REQUIREMENT / WHAT THEY NEED */}
+      {/* MODAL 1: ADD REQUIREMENT / WHAT THEY NEED (Full Real Enquiry Form) */}
       <Modal visible={addReqModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>+ Add What They Need</Text>
-              <TouchableOpacity onPress={() => setAddReqModalVisible(false)}>
+              <View>
+                <Text style={styles.modalTitle}>+ Add Customer Requirement</Text>
+                <Text style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
+                  Live enquiry registration for {data?.customer?.name || 'Customer'}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setAddReqModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <Ionicons name="close" size={22} color={themeTokens.colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ maxHeight: 460 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              {/* Transaction Type */}
               <Text style={styles.formLabel}>Transaction Type *</Text>
               <View style={styles.transRow}>
                 <TouchableOpacity
@@ -1127,7 +1163,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                   onPress={() => setReqTransType('rent')}
                 >
                   <Text style={[styles.transBtnText, reqTransType === 'rent' && styles.transBtnTextActive]}>
-                    Rent
+                    For Rent
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -1135,26 +1171,81 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                   onPress={() => setReqTransType('sale')}
                 >
                   <Text style={[styles.transBtnText, reqTransType === 'sale' && styles.transBtnTextActive]}>
-                    Sale / Buy
+                    For Sale / Buy
                   </Text>
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.formLabel}>Requirement / Looking For *</Text>
+              {/* BHK / Looking For Chips */}
+              <Text style={styles.formLabel}>Looking For (BHK) *</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  {['1 RK', '1 BHK', '2 BHK', '2 BHK + Study', '3 BHK', '3 BHK + 3T', '4 BHK', 'Villa', 'Studio', 'Commercial'].map((bhk) => (
+                    <TouchableOpacity
+                      key={bhk}
+                      style={[styles.chipOption, reqLookingFor === bhk && styles.chipOptionActive]}
+                      onPress={() => setReqLookingFor(bhk)}
+                    >
+                      <Text style={[styles.chipOptionText, reqLookingFor === bhk && styles.chipOptionTextActive]}>
+                        {bhk}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+
               <TextInput
                 style={styles.modalInput}
-                placeholder="e.g. 2 BHK, 3 BHK + Study in Sector 62"
+                placeholder="Or specify custom unit config (e.g. 3 BHK Penthouse)"
                 placeholderTextColor={themeTokens.colors.textSecondary}
                 value={reqLookingFor}
                 onChangeText={setReqLookingFor}
               />
 
+              {/* Preferred Society Selector */}
+              <Text style={styles.formLabel}>Preferred Society (From Live Database)</Text>
+              <TouchableOpacity
+                style={styles.dropdownSelectorBtn}
+                onPress={() => setSocietyModalVisible(true)}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                  <Ionicons name="business-outline" size={16} color="#1D4ED8" />
+                  <Text style={[styles.dropdownSelectorText, !reqSocietyName && { color: '#94A3B8' }]}>
+                    {reqSocietyName || 'Tap to choose preferred society...'}
+                  </Text>
+                </View>
+                {reqSocietyName ? (
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      setReqSocietyName('');
+                      setReqSocietyId('');
+                    }}
+                  >
+                    <Ionicons name="close-circle" size={16} color="#94A3B8" />
+                  </TouchableOpacity>
+                ) : (
+                  <Ionicons name="chevron-down" size={16} color="#94A3B8" />
+                )}
+              </TouchableOpacity>
+
+              {/* Preferred Sector / Area */}
+              <Text style={styles.formLabel}>Preferred Sector / Area</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Enter sector, locality, or landmark (e.g. Sector 62 Gurgaon)"
+                placeholderTextColor={themeTokens.colors.textSecondary}
+                value={reqLocation}
+                onChangeText={setReqLocation}
+              />
+
+              {/* Budget Range */}
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.formLabel}>Min Budget (₹)</Text>
+                  <Text style={styles.formLabel}>Min Budget (₹) *</Text>
                   <TextInput
                     style={styles.modalInput}
-                    placeholder="e.g. 25000"
+                    placeholder="Min amount in ₹"
                     placeholderTextColor={themeTokens.colors.textSecondary}
                     keyboardType="numeric"
                     value={reqBudgetMin}
@@ -1162,10 +1253,10 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.formLabel}>Max Budget (₹)</Text>
+                  <Text style={styles.formLabel}>Max Budget (₹) *</Text>
                   <TextInput
                     style={styles.modalInput}
-                    placeholder="e.g. 35000"
+                    placeholder="Max amount in ₹"
                     placeholderTextColor={themeTokens.colors.textSecondary}
                     keyboardType="numeric"
                     value={reqBudgetMax}
@@ -1174,6 +1265,52 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                 </View>
               </View>
 
+              {/* Tenant Preference */}
+              <Text style={styles.formLabel}>Tenant Preference</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                {['Family Only', 'Bachelor', 'Family + Bachelor', 'Corporate'].map((pref) => (
+                  <TouchableOpacity
+                    key={pref}
+                    style={[styles.chipOption, reqTenantPref === pref && styles.chipOptionActive]}
+                    onPress={() => setReqTenantPref(pref)}
+                  >
+                    <Text style={[styles.chipOptionText, reqTenantPref === pref && styles.chipOptionTextActive]}>
+                      {pref}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Lead Priority */}
+              <Text style={styles.formLabel}>Requirement Priority</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                <TouchableOpacity
+                  style={[styles.priorityPillBtn, reqPriority === 'hot' && styles.priorityPillHotActive]}
+                  onPress={() => setReqPriority('hot')}
+                >
+                  <Text style={[styles.priorityPillBtnText, reqPriority === 'hot' && styles.priorityPillHotTextActive]}>
+                    🔥 Hot Lead
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.priorityPillBtn, reqPriority === 'warm' && styles.priorityPillWarmActive]}
+                  onPress={() => setReqPriority('warm')}
+                >
+                  <Text style={[styles.priorityPillBtnText, reqPriority === 'warm' && styles.priorityPillWarmTextActive]}>
+                    ⚡ Warm
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.priorityPillBtn, reqPriority === 'cold' && styles.priorityPillColdActive]}
+                  onPress={() => setReqPriority('cold')}
+                >
+                  <Text style={[styles.priorityPillBtnText, reqPriority === 'cold' && styles.priorityPillColdTextActive]}>
+                    ❄️ Cold
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Target Move-In Date */}
               <View style={{ marginBottom: 12 }}>
                 <DateTimePickerField
                   mode="date"
@@ -1184,10 +1321,11 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                 />
               </View>
 
-              <Text style={styles.formLabel}>Special Notes / Client Preferences</Text>
+              {/* Notes */}
+              <Text style={styles.formLabel}>Client Notes & Preferences</Text>
               <TextInput
-                style={[styles.modalInput, { height: 70 }]}
-                placeholder="Client preferences, furnishing preferences, etc."
+                style={[styles.modalInput, { height: 70, textAlignVertical: 'top' }]}
+                placeholder="Enter client specifications, furnishing preferences, floor preference..."
                 placeholderTextColor={themeTokens.colors.textSecondary}
                 multiline
                 value={reqNotes}
@@ -1203,9 +1341,75 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
               {savingReq ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={styles.modalSubmitBtnText}>Save Requirement</Text>
+                <Text style={styles.modalSubmitBtnText}>Save Real Requirement to Database</Text>
               )}
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Society Selection Modal (Direct Live MongoDB Lookup) */}
+      <Modal visible={societyModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: 500 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Preferred Society</Text>
+              <TouchableOpacity onPress={() => setSocietyModalVisible(false)}>
+                <Ionicons name="close" size={22} color={themeTokens.colors.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              style={[styles.modalInput, { marginBottom: 10 }]}
+              placeholder="Search live societies..."
+              placeholderTextColor={themeTokens.colors.textSecondary}
+              value={societySearch}
+              onChangeText={setSocietySearch}
+            />
+
+            <ScrollView style={{ maxHeight: 340 }}>
+              {societiesList
+                .filter((s) => {
+                  const sName = s.name || s.society_name || '';
+                  const sLoc = s.location || '';
+                  return (
+                    !societySearch ||
+                    sName.toLowerCase().includes(societySearch.toLowerCase()) ||
+                    sLoc.toLowerCase().includes(societySearch.toLowerCase())
+                  );
+                })
+                .map((soc) => {
+                  const sName = soc.name || soc.society_name || '';
+                  const sLoc = soc.location || '';
+                  return (
+                    <TouchableOpacity
+                      key={soc.id || soc.society_id}
+                      style={{
+                        paddingVertical: 12,
+                        paddingHorizontal: 12,
+                        borderBottomWidth: 1,
+                        borderBottomColor: '#F1F5F9',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                      onPress={() => {
+                        setReqSocietyId(soc.society_id || soc.id);
+                        setReqSocietyName(sName);
+                        if (sLoc && !reqLocation) setReqLocation(sLoc);
+                        setSocietyModalVisible(false);
+                        setSocietySearch('');
+                      }}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: '#1E293B' }}>{sName}</Text>
+                        {sLoc ? <Text style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{sLoc}</Text> : null}
+                      </View>
+                      <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+                    </TouchableOpacity>
+                  );
+                })}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -2030,37 +2234,43 @@ const styles = StyleSheet.create({
   },
   actionCallBtn: {
     flex: 1,
+    minHeight: 38,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
     backgroundColor: '#16A34A',
-    paddingVertical: 9,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     borderRadius: 8,
   },
   actionWaBtn: {
     flex: 1.1,
+    minHeight: 38,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
     backgroundColor: '#25D366',
-    paddingVertical: 9,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     borderRadius: 8,
   },
   actionAddReqBtn: {
-    flex: 1.6,
+    flex: 1.4,
+    minHeight: 38,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: themeTokens.colors.primaryDark,
-    paddingVertical: 9,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     borderRadius: 8,
   },
   actionBtnText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
   },
   kpiRow: {
@@ -2967,5 +3177,79 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: themeTokens.colors.textPrimary,
+  },
+  chipOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  chipOptionActive: {
+    backgroundColor: '#1D4ED8',
+    borderColor: '#1D4ED8',
+  },
+  chipOptionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  chipOptionTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  dropdownSelectorBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
+  },
+  dropdownSelectorText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  priorityPillBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  priorityPillBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  priorityPillHotActive: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#EF4444',
+  },
+  priorityPillHotTextActive: {
+    color: '#B91C1C',
+  },
+  priorityPillWarmActive: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#F59E0B',
+  },
+  priorityPillWarmTextActive: {
+    color: '#B45309',
+  },
+  priorityPillColdActive: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#3B82F6',
+  },
+  priorityPillColdTextActive: {
+    color: '#1D4ED8',
   },
 });

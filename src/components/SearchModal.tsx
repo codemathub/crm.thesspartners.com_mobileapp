@@ -272,61 +272,65 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                 <Text style={styles.sectionSubBadge}>Live Database Records</Text>
               </View>
 
-              {results.map((item) => (
-                <TouchableOpacity
-                  key={`${item.type}-${item.id}`}
-                  style={styles.extraResultCard}
-                  onPress={() => {
-                    onSelectResult(item.type, item.id);
-                    onClose();
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <View
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 8,
-                      backgroundColor:
-                        item.type === 'property'
-                          ? '#DBEAFE'
-                          : item.type === 'customer'
-                          ? '#DCFCE7'
-                          : '#FEF3C7',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+              {results.map((item, idx) => {
+                const itemType = (item.type || (item as any).entity_type || 'property') as 'property' | 'customer' | 'enquiry';
+                const itemId = String(item.id || (item as any).entity_id || '');
+                return (
+                  <TouchableOpacity
+                    key={`${itemType}-${itemId || idx}`}
+                    style={styles.extraResultCard}
+                    onPress={() => {
+                      onSelectResult(itemType, itemId);
+                      onClose();
                     }}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons
-                      name={
-                        item.type === 'property'
-                          ? 'business'
-                          : item.type === 'customer'
-                          ? 'person'
-                          : 'document-text'
-                      }
-                      size={18}
-                      color={
-                        item.type === 'property'
-                          ? '#2563EB'
-                          : item.type === 'customer'
-                          ? '#16A34A'
-                          : '#D97706'
-                      }
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.extraResultTitle}>{item.title}</Text>
-                    <Text style={styles.extraResultSub}>{item.subtitle}</Text>
-                  </View>
-                  {item.badge && (
-                    <View style={styles.extraResultBadge}>
-                      <Text style={styles.extraResultBadgeText}>{item.badge}</Text>
+                    <View
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 8,
+                        backgroundColor:
+                          itemType === 'property'
+                            ? '#DBEAFE'
+                            : itemType === 'customer'
+                            ? '#DCFCE7'
+                            : '#FEF3C7',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons
+                        name={
+                          itemType === 'property'
+                            ? 'business'
+                            : itemType === 'customer'
+                            ? 'person'
+                            : 'document-text'
+                        }
+                        size={18}
+                        color={
+                          itemType === 'property'
+                            ? '#2563EB'
+                            : itemType === 'customer'
+                            ? '#16A34A'
+                            : '#D97706'
+                        }
+                      />
                     </View>
-                  )}
-                  <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-                </TouchableOpacity>
-              ))}
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.extraResultTitle}>{item.title}</Text>
+                      <Text style={styles.extraResultSub}>{item.subtitle}</Text>
+                    </View>
+                    {item.badge && (
+                      <View style={styles.extraResultBadge}>
+                        <Text style={styles.extraResultBadgeText}>{item.badge}</Text>
+                      </View>
+                    )}
+                    <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           ) : query.trim().length >= 1 ? (
             <View style={styles.commercialFallbackBox}>

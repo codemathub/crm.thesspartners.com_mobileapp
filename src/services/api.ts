@@ -271,6 +271,8 @@ export interface MobileSociety {
   id: string;
   society_id: string;
   name: string;
+  society_name?: string;
+  location?: string;
   is_active: boolean;
 }
 
@@ -331,11 +333,13 @@ export interface AutocompleteSuggestion {
 
 export interface MobileSearchResultItem {
   type: 'property' | 'customer' | 'enquiry';
+  entity_type?: 'property' | 'customer' | 'enquiry';
   id: string;
   title: string;
   subtitle: string;
   badge?: string;
   metadata?: Record<string, any>;
+  data?: Record<string, any>;
 }
 
 export interface MobilePropertyMatchItem {
@@ -618,6 +622,7 @@ export const mobileApi = {
     const qs = params.toString() ? `?${params.toString()}` : '';
     return request<{ items: MobileEnquiry[]; total: number }>(`/enquiries${qs}`);
   },
+  getEnquiry: (enquiryId: string) => request<MobileEnquiry>(`/enquiries/${encodeURIComponent(enquiryId)}`),
   getEnquiryTimeline: (enquiryId: string) =>
     request<{ enquiry_id: string; events: Array<{ id: string; type: string; event_type: string; actor_name: string; actor_role: string; title: string; description: string; timestamp: string }> }>(`/enquiries/${enquiryId}/timeline`),
   createEnquiry: (data: any) => request<MobileEnquiry>('/enquiries', { method: 'POST', body: JSON.stringify(data) }),
@@ -628,12 +633,22 @@ export const mobileApi = {
     }),
 
   // Global Search & Matching
-  globalSearch: (query: string, scope?: string) => {
+  globalSearch: async (query: string, scope?: string) => {
     const params = new URLSearchParams({ q: query });
     if (scope && scope !== 'all') {
       params.append('type', scope);
     }
-    return request<{ query: string; total_results: number; results: MobileSearchResultItem[] }>(`/search?${params.toString()}`);
+    const res = await request<{ query: string; total_results: number; results: any[] }>(`/search?${params.toString()}`);
+    const normalizedResults: MobileSearchResultItem[] = (res.results || []).map((item: any) => ({
+      ...item,
+      type: (item.type || item.entity_type) as 'property' | 'customer' | 'enquiry',
+      entity_type: (item.entity_type || item.type) as 'property' | 'customer' | 'enquiry',
+      id: String(item.id || item.entity_id || item._id || ''),
+    }));
+    return {
+      ...res,
+      results: normalizedResults,
+    };
   },
   getSuggestions: (query: string, entity: 'all' | 'property' | 'customer' | 'enquiry' = 'all', limit: number = 8) => {
     const params = new URLSearchParams({ q: query, entity, limit: String(limit) });

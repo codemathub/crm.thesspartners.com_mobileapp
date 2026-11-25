@@ -105,25 +105,27 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
   useEffect(() => {
     if (targetCustomerId) {
       setCustomer360Id(targetCustomerId);
-      if (onClearTargetCustomerId) onClearTargetCustomerId();
     }
   }, [targetCustomerId]);
 
   useEffect(() => {
     if (targetEnquiryId) {
-      const found = enquiries.find((e) => e.enquiry_id === targetEnquiryId);
+      const found = enquiries.find((e) => e.enquiry_id === targetEnquiryId || e.id === targetEnquiryId);
       if (found) {
         setSelectedEnquiry(found);
       } else {
-        for (const c of customers as any[]) {
-          const matched = c.enquiriesList?.find((e: any) => e.enquiry_id === targetEnquiryId);
-          if (matched) {
-            setSelectedEnquiry(matched);
-            break;
+        mobileApi.getEnquiry(targetEnquiryId).then((enq) => {
+          if (enq) setSelectedEnquiry(enq);
+        }).catch(() => {
+          for (const c of customers as any[]) {
+            const matched = c.enquiriesList?.find((e: any) => e.enquiry_id === targetEnquiryId || e.id === targetEnquiryId);
+            if (matched) {
+              setSelectedEnquiry(matched);
+              break;
+            }
           }
-        }
+        });
       }
-      if (onClearTargetEnquiryId) onClearTargetEnquiryId();
     }
   }, [targetEnquiryId, enquiries, customers]);
 
@@ -136,14 +138,14 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
   const [custPriority, setCustPriority] = useState<'hot' | 'warm' | 'cold'>('hot');
   const [leadSource, setLeadSource] = useState('Walk-in');
 
-  // Enquiry Fields
+  // Enquiry Fields (Zero hardcoded values, real live user input)
   const [transactionType, setTransactionType] = useState<'rent' | 'sale'>('rent');
-  const [lookingFor, setLookingFor] = useState('3 BHK');
+  const [lookingFor, setLookingFor] = useState('');
   const [preferredSocietyId, setPreferredSocietyId] = useState('');
   const [preferredSocietyName, setPreferredSocietyName] = useState('');
-  const [preferredLoc, setPreferredLoc] = useState('Sector 62 Gurgaon');
-  const [budgetMin, setBudgetMin] = useState('50000');
-  const [budgetMax, setBudgetMax] = useState('70000');
+  const [preferredLoc, setPreferredLoc] = useState('');
+  const [budgetMin, setBudgetMin] = useState('');
+  const [budgetMax, setBudgetMax] = useState('');
   const [tenantPreference, setTenantPreference] = useState('Family Only');
   const [expectedMoveInDate, setExpectedMoveInDate] = useState('');
   const [enqNotes, setEnqNotes] = useState('');
@@ -414,6 +416,12 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
       setCustPhone('');
       setCustAltPhone('');
       setCustWaPhone('');
+      setLookingFor('');
+      setPreferredSocietyId('');
+      setPreferredSocietyName('');
+      setPreferredLoc('');
+      setBudgetMin('');
+      setBudgetMax('');
       setExpectedMoveInDate('');
       setEnqNotes('');
       setDuplicateWarning(null);
@@ -1342,10 +1350,12 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
             customerId={customer360Id}
             onClose={() => {
               setCustomer360Id(null);
+              if (onClearTargetCustomerId) onClearTargetCustomerId();
               fetchDirectory();
             }}
             onScheduleVisit={(cust, enq) => {
               setCustomer360Id(null);
+              if (onClearTargetCustomerId) onClearTargetCustomerId();
               if (onSelectEnquiry && enq) onSelectEnquiry(enq.enquiry_id);
             }}
           />
@@ -1603,7 +1613,13 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                 </View>
               </ScrollView>
 
-              <TouchableOpacity style={[styles.modalCancelBtn, { marginTop: 6 }]} onPress={() => setSelectedEnquiry(null)}>
+              <TouchableOpacity
+                style={[styles.modalCancelBtn, { marginTop: 6 }]}
+                onPress={() => {
+                  setSelectedEnquiry(null);
+                  if (onClearTargetEnquiryId) onClearTargetEnquiryId();
+                }}
+              >
                 <Text style={styles.modalCancelBtnText}>Dismiss</Text>
               </TouchableOpacity>
             </View>
@@ -2063,20 +2079,21 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
     paddingTop: 10,
+    marginTop: 8,
   },
   actionPillBtn: {
     flex: 1,
+    minHeight: 34,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EFF6FF', // Soft lavender
+    backgroundColor: '#EFF6FF',
     paddingVertical: 7,
     paddingHorizontal: 4,
     borderRadius: 8,
-    minHeight: 32,
   },
   actionPillBtnText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
     color: themeTokens.colors.textPrimary,
   },

@@ -404,14 +404,17 @@ export default function App() {
         onClose={() => setSearchModalVisible(false)}
         onSelectResult={(type, id) => {
           setSearchModalVisible(false);
-          if (type === 'property') {
-            setTargetPropertyId(id);
+          const normType = String(type || '').toLowerCase();
+          const cleanId = String(id || '').trim();
+          if (!cleanId) return;
+          if (normType === 'property') {
+            setTargetPropertyId(cleanId);
             setActiveTab('Inventory');
-          } else if (type === 'customer') {
-            setTargetCustomerId(id);
+          } else if (normType === 'customer') {
+            setTargetCustomerId(cleanId);
             setActiveTab('Enquiries');
-          } else if (type === 'enquiry') {
-            setTargetEnquiryId(id);
+          } else if (normType === 'enquiry') {
+            setTargetEnquiryId(cleanId);
             setActiveTab('Enquiries');
           }
         }}

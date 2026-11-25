@@ -74,7 +74,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
   const [formPropertyType, setFormPropertyType] = useState('3 BHK');
   const [formSocietyId, setFormSocietyId] = useState('');
   const [formSocietyName, setFormSocietyName] = useState('');
-  const [formLocation, setFormLocation] = useState('Sector 62 Gurgaon');
+  const [formLocation, setFormLocation] = useState('');
   const [formPrice, setFormPrice] = useState('');
   const [formNegotiable, setFormNegotiable] = useState(true);
   const [formMaintenanceMode, setFormMaintenanceMode] = useState<'included' | 'extra'>('extra');
@@ -103,7 +103,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
   useEffect(() => {
     if (targetPropertyId) {
       const targetUpper = targetPropertyId.trim().toUpperCase();
-      const found = properties.find((p) => p.property_id.toUpperCase() === targetUpper);
+      const found = properties.find((p) => p.property_id.toUpperCase() === targetUpper || p.id === targetPropertyId);
       if (found) {
         setDetailProperty(found);
       } else {
@@ -113,7 +113,6 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
           console.warn('Could not load target property:', err);
         });
       }
-      if (onClearTargetPropertyId) onClearTargetPropertyId();
     }
   }, [targetPropertyId, properties]);
 
@@ -666,7 +665,10 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
           <PropertyDetailScreen
             propertyId={detailProperty.property_id}
             initialProperty={detailProperty}
-            onClose={() => setDetailProperty(null)}
+            onClose={() => {
+              setDetailProperty(null);
+              if (onClearTargetPropertyId) onClearTargetPropertyId();
+            }}
             onScheduleVisit={(propId) => {
               setDetailProperty(null);
               if (onScheduleVisitForProperty) {
