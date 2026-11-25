@@ -564,7 +564,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
           onPress={() => setAddReqModalVisible(true)}
         >
           <Ionicons name="add-circle" size={16} color="#FFFFFF" />
-          <Text style={styles.actionBtnText} numberOfLines={1}>+ Requirement</Text>
+          <Text style={styles.actionBtnText} numberOfLines={1}>Requirement</Text>
         </TouchableOpacity>
       </View>
 
@@ -1144,7 +1144,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
           <View style={[styles.modalContent, { maxHeight: '90%' }]}>
             <View style={styles.modalHeader}>
               <View>
-                <Text style={styles.modalTitle}>+ Add Customer Requirement</Text>
+                <Text style={styles.modalTitle}>Add Customer Requirement</Text>
                 <Text style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
                   Live enquiry registration for {data?.customer?.name || 'Customer'}
                 </Text>
