@@ -33,6 +33,10 @@ import { mobileApi } from './src/services/api';
 
 export type TabType = 'Home' | 'Inventory' | 'Enquiries' | 'Schedule' | 'Visits' | 'More';
 
+// Global notification deduplication cache across screen transitions
+const globalSeenNotifIds = new Set<string>();
+let globalInitialSyncDone = false;
+
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -53,8 +57,6 @@ export default function App() {
   // Live Notification Synchronization & Heads-up Pop-up
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [inAppToast, setInAppToast] = useState<{ id: string; title: string; body: string } | null>(null);
-  const seenNotifIdsRef = React.useRef<Set<string>>(new Set());
-  const isInitialSyncRef = React.useRef(true);
 
   React.useEffect(() => {
     if (!isLoggedIn) return;
@@ -68,15 +70,25 @@ export default function App() {
         const unreadItems = res.items || [];
         setUnreadNotifCount(unreadItems.length);
 
-        if (isInitialSyncRef.current) {
-          unreadItems.forEach((n) => seenNotifIdsRef.current.add(n.id));
-          isInitialSyncRef.current = false;
+        if (!globalInitialSyncDone) {
+          unreadItems.forEach((n) => {
+            const notifId = String(n.id || (n as any)._id || '');
+            if (notifId) globalSeenNotifIds.add(notifId);
+          });
+          globalInitialSyncDone = true;
           return;
         }
 
-        const newItems = unreadItems.filter((n) => !seenNotifIdsRef.current.has(n.id));
+        const newItems = unreadItems.filter((n) => {
+          const notifId = String(n.id || (n as any)._id || '');
+          return notifId && !globalSeenNotifIds.has(notifId);
+        });
+
         if (newItems.length > 0) {
-          newItems.forEach((n) => seenNotifIdsRef.current.add(n.id));
+          newItems.forEach((n) => {
+            const notifId = String(n.id || (n as any)._id || '');
+            if (notifId) globalSeenNotifIds.add(notifId);
+          });
 
           // Pop up native phone notification bar alert & vibration
           const latest = newItems[0];
@@ -247,7 +259,7 @@ export default function App() {
       {inAppToast && (
         <TouchableOpacity
           style={styles.toastBanner}
-          activeOpacity={0.9}
+          activeOpacity={0.92}
           onPress={() => {
             setInAppToast(null);
             setNotifModalVisible(true);
@@ -270,17 +282,21 @@ export default function App() {
         </TouchableOpacity>
       )}
 
-      {/* Top Header matching G² Brothers Luxury Reference */}
+      {/* Top Header matching G² Brothers Reference */}
       <View style={styles.header}>
         <View style={styles.brandRow}>
           <Image
             source={require('./assets/g2-tile.png')}
             style={styles.brandTileImg}
-            resizeMode="cover"
+            resizeMode="contain"
           />
           <View style={styles.brandDivider} />
           <View style={styles.brandTextColumn}>
-            <Text style={styles.brandTitleText}>G² BROTHERS</Text>
+            <View style={styles.brandTitleRow}>
+              <Text style={styles.brandTitleText}>G</Text>
+              <Text style={styles.brandSuperscriptText}>2</Text>
+              <Text style={styles.brandTitleText}> BROTHERS</Text>
+            </View>
             <Text style={styles.brandTaglineText}>BUILDING VALUE | CREATING LEGACY</Text>
           </View>
         </View>
@@ -289,6 +305,7 @@ export default function App() {
           <TouchableOpacity
             style={styles.headerCircleBtn}
             onPress={() => setSearchModalVisible(true)}
+            activeOpacity={0.88}
             accessibilityLabel="Search properties and customers"
             accessibilityRole="button"
           >
@@ -298,6 +315,7 @@ export default function App() {
           <TouchableOpacity
             style={styles.headerCircleBtn}
             onPress={() => setNotifModalVisible(true)}
+            activeOpacity={0.88}
             accessibilityLabel="Notifications"
             accessibilityRole="button"
           >
@@ -309,6 +327,7 @@ export default function App() {
           <TouchableOpacity
             style={styles.profileCircleBtn}
             onPress={() => setActiveTab('More')}
+            activeOpacity={0.88}
             accessibilityLabel="User profile"
             accessibilityRole="button"
           >
@@ -325,6 +344,7 @@ export default function App() {
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => setActiveTab('Home')}
+          activeOpacity={0.88}
           accessibilityRole="tab"
         >
           <View style={[styles.navIconPill, activeTab === 'Home' && styles.navIconPillActive]}>
@@ -340,6 +360,7 @@ export default function App() {
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => setActiveTab('Inventory')}
+          activeOpacity={0.88}
           accessibilityRole="tab"
         >
           <View style={[styles.navIconPill, activeTab === 'Inventory' && styles.navIconPillActive]}>
@@ -355,6 +376,7 @@ export default function App() {
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => setActiveTab('Enquiries')}
+          activeOpacity={0.88}
           accessibilityRole="tab"
         >
           <View style={[styles.navIconPill, activeTab === 'Enquiries' && styles.navIconPillActive]}>
@@ -370,6 +392,7 @@ export default function App() {
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => setActiveTab('Schedule')}
+          activeOpacity={0.88}
           accessibilityRole="tab"
         >
           <View style={[styles.navIconPill, (activeTab === 'Schedule' || activeTab === 'Visits') && styles.navIconPillActive]}>
@@ -385,6 +408,7 @@ export default function App() {
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => setActiveTab('More')}
+          activeOpacity={0.88}
           accessibilityRole="tab"
         >
           <View style={[styles.navIconPill, activeTab === 'More' && styles.navIconPillActive]}>
@@ -453,50 +477,60 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    paddingTop: STATUSBAR_HEIGHT,
+    paddingTop: Platform.OS === 'android' ? 0 : 0,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingTop: 10,
     paddingBottom: 10,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: '#E2E8F0',
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   brandTileImg: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: '#020912',
+    width: 40,
+    height: 40,
+    borderRadius: 8,
   },
   brandDivider: {
     width: 1.5,
-    height: 26,
+    height: 28,
     backgroundColor: '#CBD5E1',
-    marginHorizontal: 9,
+    marginHorizontal: 10,
   },
   brandTextColumn: {
     justifyContent: 'center',
   },
+  brandTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
   brandTitleText: {
-    fontSize: 15.5,
+    fontSize: 16,
     fontWeight: '900',
-    color: '#0F172A',
-    letterSpacing: 0.6,
-    lineHeight: 18,
+    color: '#0A192F',
+    letterSpacing: 0.8,
+    lineHeight: 19,
+  },
+  brandSuperscriptText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#0A192F',
+    lineHeight: 14,
+    marginTop: -1,
   },
   brandTaglineText: {
-    fontSize: 7.2,
+    fontSize: 7.8,
     fontWeight: '800',
-    color: '#D97706',
-    letterSpacing: 0.7,
+    color: '#D49B28',
+    letterSpacing: 0.8,
     marginTop: 2,
   },
   headerActions: {

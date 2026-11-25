@@ -58,6 +58,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [followups, setFollowups] = useState<MobileFollowUp[]>([]);
   const [overdueFollowupsCount, setOverdueFollowupsCount] = useState(0);
   const [customer360Id, setCustomer360Id] = useState<string | null>(null);
+  const hasScheduledInitialRemindersRef = React.useRef(false);
 
   const fetchDashboardData = async () => {
     try {
@@ -90,13 +91,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       setFollowups(activeFollowups);
       setOverdueFollowupsCount(activeFollowups.filter((f) => new Date(f.scheduled_at) < new Date()).length);
 
-      // Schedule local notification reminders for pending visits & follow-ups
-      activeVisits.forEach((v) => {
-        scheduleActivityReminder('visit', v.visit_id, v.customer_name, v.scheduled_at, v.property_society);
-      });
-      activeFollowups.forEach((f) => {
-        scheduleActivityReminder('followup', f.followup_id, f.customer_name, f.scheduled_at, f.customer_phone);
-      });
+      // Schedule local notification reminders once per session (deduplicated by notifications.ts)
+      if (!hasScheduledInitialRemindersRef.current) {
+        hasScheduledInitialRemindersRef.current = true;
+        activeVisits.forEach((v) => {
+          scheduleActivityReminder('visit', v.visit_id, v.customer_name, v.scheduled_at, v.property_society);
+        });
+        activeFollowups.forEach((f) => {
+          scheduleActivityReminder('followup', f.followup_id, f.customer_name, f.scheduled_at, f.customer_phone);
+        });
+      }
     } catch {
       // offline fallback
     } finally {
@@ -143,7 +147,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <TouchableOpacity
             style={styles.quickActionPill}
             onPress={() => onOpenQuickAction('ADD_PROPERTY')}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
             <Ionicons name="home-outline" size={16} color={themeTokens.colors.primaryDark} />
             <Text style={styles.quickActionPillText} numberOfLines={1}>+ Property</Text>
@@ -152,7 +156,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <TouchableOpacity
             style={styles.quickActionPill}
             onPress={() => onOpenQuickAction('ADD_ENQUIRY')}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
             <Ionicons name="person-add-outline" size={16} color={themeTokens.colors.primaryDark} />
             <Text style={styles.quickActionPillText} numberOfLines={1}>+ Enquiry</Text>
@@ -161,7 +165,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <TouchableOpacity
             style={styles.quickActionPill}
             onPress={() => onOpenQuickAction('SCHEDULE_VISIT')}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
             <Ionicons name="calendar-outline" size={16} color={themeTokens.colors.primaryDark} />
             <Text style={styles.quickActionPillText} numberOfLines={1}>+ Visit</Text>
@@ -170,7 +174,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <TouchableOpacity
             style={styles.quickActionPill}
             onPress={() => onNavigateTab('Schedule', 'followups')}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
             <Ionicons name="call-outline" size={16} color={themeTokens.colors.primaryDark} />
             <Text style={styles.quickActionPillText} numberOfLines={1}>Callbacks</Text>
@@ -183,7 +187,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <TouchableOpacity
             style={styles.kpiTile}
             onPress={() => onNavigateTab('Inventory')}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
             <View style={styles.kpiTileHeader}>
               <Text style={styles.kpiTileLabel}>Available Units</Text>
@@ -202,7 +206,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <TouchableOpacity
             style={styles.kpiTile}
             onPress={() => onNavigateTab('Enquiries')}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
             <View style={styles.kpiTileHeader}>
               <Text style={styles.kpiTileLabel}>Active Enquiries</Text>
@@ -222,7 +226,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <TouchableOpacity
             style={styles.kpiTile}
             onPress={() => onNavigateTab('Schedule')}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
             <View style={styles.kpiTileHeader}>
               <Text style={styles.kpiTileLabel}>Pending Visits</Text>
@@ -245,7 +249,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <TouchableOpacity
             style={styles.kpiTile}
             onPress={() => onNavigateTab('Schedule', 'followups')}
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
             <View style={styles.kpiTileHeader}>
               <Text style={styles.kpiTileLabel}>Pending Callbacks</Text>

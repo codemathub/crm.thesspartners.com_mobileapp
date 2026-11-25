@@ -297,7 +297,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
       <View style={styles.identityCard}>
         <View style={styles.avatarContainer}>
           <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>{initials}</Text>
+            <Ionicons name="person" size={24} color="#1D4ED8" />
           </View>
           <View style={styles.onlineBadge} />
         </View>
@@ -912,7 +912,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
                 {activeModal === 'ID_CARD' && (
                   <View style={{ gap: 10, alignItems: 'center', paddingVertical: 10 }}>
                     <View style={[styles.avatarCircle, { width: 60, height: 60, borderRadius: 30 }]}>
-                      <Text style={[styles.avatarText, { fontSize: 22 }]}>{initials}</Text>
+                      <Ionicons name="person" size={32} color="#1D4ED8" />
                     </View>
                     <Text style={{ fontSize: 16, fontWeight: '800', color: themeTokens.colors.textPrimary }}>
                       {userName}

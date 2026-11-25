@@ -6,6 +6,16 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#FFFFFF",
+      "translucent": false
+    },
+    "androidNavigationBar": {
+      "visible": "always",
+      "backgroundColor": "#FFFFFF",
+      "barStyle": "dark-content"
+    },
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",

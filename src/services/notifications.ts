@@ -71,8 +71,15 @@ export async function displayLocalNotification(
 }
 
 /**
+ * In-memory deduplication cache for scheduled reminders.
+ * Prevents re-scheduling the same reminder multiple times during app lifecycle.
+ */
+const scheduledRemindersCache = new Set<string>();
+
+/**
  * Schedule local reminder notification for an upcoming visit or callback.
  * Fires 15 minutes before and at the exact showing/call time.
+ * Fully deduplicated: will NEVER fire past visits or re-trigger on screen transitions.
  */
 export async function scheduleActivityReminder(
   type: 'visit' | 'followup',
@@ -82,16 +89,40 @@ export async function scheduleActivityReminder(
   details?: string
 ) {
   try {
-    await ensureNotificationChannelAsync();
+    if (!id || !scheduledAt) return;
+
     const schedDate = parseUtcDate(scheduledAt);
     const now = new Date();
 
+    // Guard: Never schedule reminders for past appointments or appointments starting in < 60 seconds
+    if (schedDate.getTime() <= now.getTime() + 60 * 1000) {
+      return;
+    }
+
+    const reminderKey = `${type}_${id}_${schedDate.getTime()}`;
+    if (scheduledRemindersCache.has(reminderKey)) {
+      return;
+    }
+
+    await ensureNotificationChannelAsync();
+
+    // Check existing scheduled notifications in OS to avoid duplicates
+    let existingIds = new Set<string>();
+    try {
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      existingIds = new Set(scheduled.map((n) => n.identifier));
+    } catch {
+      // fallback to in-memory check
+    }
+
     // 15 minutes before the appointment
     const reminderTime = new Date(schedDate.getTime() - 15 * 60 * 1000);
+    const reminderId = `${type}_reminder_${id}`;
 
-    if (reminderTime.getTime() > now.getTime()) {
+    // Only schedule 15-min reminder if the reminder time is at least 2 minutes in the future
+    if (reminderTime.getTime() > now.getTime() + 120 * 1000 && !existingIds.has(reminderId)) {
       await Notifications.scheduleNotificationAsync({
-        identifier: `${type}_reminder_${id}`,
+        identifier: reminderId,
         content: {
           title: type === 'visit' ? `⏰ Upcoming Site Visit: ${clientName}` : `📞 Upcoming Callback: ${clientName}`,
           body: type === 'visit'
@@ -109,10 +140,11 @@ export async function scheduleActivityReminder(
       });
     }
 
-    // Exact time alert
-    if (schedDate.getTime() > now.getTime()) {
+    // Exact time alert (at least 60s in future)
+    const exactId = `${type}_exact_${id}`;
+    if (schedDate.getTime() > now.getTime() + 60 * 1000 && !existingIds.has(exactId)) {
       await Notifications.scheduleNotificationAsync({
-        identifier: `${type}_exact_${id}`,
+        identifier: exactId,
         content: {
           title: type === 'visit' ? `🚨 Site Visit Now: ${clientName}` : `🚨 Callback Due Now: ${clientName}`,
           body: type === 'visit'
@@ -129,6 +161,8 @@ export async function scheduleActivityReminder(
         },
       });
     }
+
+    scheduledRemindersCache.add(reminderKey);
   } catch (err) {
     console.warn(`Could not schedule ${type} reminder:`, err);
   }
@@ -141,6 +175,12 @@ export async function cancelActivityReminder(type: 'visit' | 'followup', id: str
   try {
     await Notifications.cancelScheduledNotificationAsync(`${type}_reminder_${id}`);
     await Notifications.cancelScheduledNotificationAsync(`${type}_exact_${id}`);
+    // Clear any matching cached reminder keys
+    for (const key of scheduledRemindersCache) {
+      if (key.startsWith(`${type}_${id}_`)) {
+        scheduledRemindersCache.delete(key);
+      }
+    }
   } catch (err) {
     // ignore
   }
