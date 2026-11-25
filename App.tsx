@@ -33,6 +33,7 @@ import {
   ensureNotificationChannelAsync,
   displayLocalNotification,
   setNotificationResponseHandler,
+  cleanUpLegacyRemindersAsync,
 } from './src/services/notifications';
 import { mobileApi } from './src/services/api';
 
@@ -218,6 +219,7 @@ export default function App() {
 
   // Native notification response listener (when tapping OS status bar / lockscreen banners)
   React.useEffect(() => {
+    cleanUpLegacyRemindersAsync().catch(() => {});
     setNotificationResponseHandler((payload) => {
       navigateToNotificationTarget(payload);
     });

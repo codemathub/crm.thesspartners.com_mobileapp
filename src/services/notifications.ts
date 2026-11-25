@@ -96,9 +96,32 @@ export async function displayLocalNotification(
 const scheduledRemindersCache = new Set<string>();
 
 /**
- * Schedule local reminder notification for an upcoming visit or callback.
- * Fires 15 minutes before and at the exact showing/call time.
- * Fully deduplicated: will NEVER fire past visits or re-trigger on screen transitions.
+ * Clean up any legacy or stale scheduled reminders from the device.
+ */
+export async function cleanUpLegacyRemindersAsync() {
+  try {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    for (const item of scheduled) {
+      if (item.identifier && item.identifier.includes('_reminder_')) {
+        await Notifications.cancelScheduledNotificationAsync(item.identifier);
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
+// Immediately clean up legacy 15-minute reminders on module load
+cleanUpLegacyRemindersAsync().catch(() => {});
+
+/**
+ * Schedule local reminder notifications for an upcoming visit or callback:
+ * 1) Reminder 1: 12 Hours Before appointment
+ * 2) Reminder 2: 30 Minutes Before appointment
+ * 3) Exact Time: At the appointment start time
+ * 
+ * Strictly respects future triggers: will NEVER fire immediately if the reminder
+ * window has already passed, completely eliminating continuous or duplicate alerts.
  */
 export async function scheduleActivityReminder(
   type: 'visit' | 'followup',
@@ -114,7 +137,8 @@ export async function scheduleActivityReminder(
     const now = new Date();
 
     // Guard: Never schedule reminders for past appointments or appointments starting in < 60 seconds
-    if (schedDate.getTime() <= now.getTime() + 60 * 1000) {
+    const secondsUntilEvent = Math.floor((schedDate.getTime() - now.getTime()) / 1000);
+    if (secondsUntilEvent <= 60) {
       return;
     }
 
@@ -125,28 +149,25 @@ export async function scheduleActivityReminder(
 
     await ensureNotificationChannelAsync();
 
-    // Check existing scheduled notifications in OS to avoid duplicates
-    let existingIds = new Set<string>();
-    try {
-      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-      existingIds = new Set(scheduled.map((n) => n.identifier));
-    } catch {
-      // fallback to in-memory check
-    }
+    // Cancel any previous reminder for this exact ID to guarantee clean state
+    await cancelActivityReminder(type, id);
 
-    // 15 minutes before the appointment
-    const reminderTime = new Date(schedDate.getTime() - 15 * 60 * 1000);
-    const reminderId = `${type}_reminder_${id}`;
+    // 1. REMINDER 1: 12 HOURS BEFORE (must be at least 2 minutes in the future)
+    const seconds12h = secondsUntilEvent - 12 * 3600;
+    if (seconds12h >= 120) {
+      const trigger = Platform.OS === 'android'
+        ? { channelId: 'default', seconds: seconds12h }
+        : { date: new Date(schedDate.getTime() - 12 * 3600 * 1000) };
 
-    // Only schedule 15-min reminder if the reminder time is at least 2 minutes in the future
-    if (reminderTime.getTime() > now.getTime() + 120 * 1000 && !existingIds.has(reminderId)) {
       await Notifications.scheduleNotificationAsync({
-        identifier: reminderId,
+        identifier: `${type}_12h_${id}`,
         content: {
-          title: type === 'visit' ? `⏰ Upcoming Site Visit: ${clientName}` : `📞 Upcoming Callback: ${clientName}`,
+          title: type === 'visit'
+            ? `⏰ Upcoming Site Visit in 12h: ${clientName}`
+            : `📞 Upcoming Client Callback in 12h: ${clientName}`,
           body: type === 'visit'
-            ? `Site showing in 15 mins at ${details || 'property'}. Tap to review details.`
-            : `Client callback due in 15 mins. Tap to prepare and call ${clientName}.`,
+            ? `Site showing scheduled in 12 hours for ${clientName} at ${details || 'property'}. Tap to review.`
+            : `Client callback due in 12 hours for ${clientName}. Tap to review details.`,
           sound: 'default',
           priority: Notifications.AndroidNotificationPriority.MAX,
           vibrate: [0, 250, 250, 250],
@@ -158,20 +179,53 @@ export async function scheduleActivityReminder(
             phone: details,
           },
         },
-        trigger: {
-          date: reminderTime,
-          channelId: 'default',
-        },
+        trigger: trigger as any,
       });
     }
 
-    // Exact time alert (at least 60s in future)
-    const exactId = `${type}_exact_${id}`;
-    if (schedDate.getTime() > now.getTime() + 60 * 1000 && !existingIds.has(exactId)) {
+    // 2. REMINDER 2: 30 MINUTES BEFORE (must be at least 60 seconds in the future)
+    const seconds30m = secondsUntilEvent - 30 * 60;
+    if (seconds30m >= 60) {
+      const trigger = Platform.OS === 'android'
+        ? { channelId: 'default', seconds: seconds30m }
+        : { date: new Date(schedDate.getTime() - 30 * 60 * 1000) };
+
       await Notifications.scheduleNotificationAsync({
-        identifier: exactId,
+        identifier: `${type}_30m_${id}`,
         content: {
-          title: type === 'visit' ? `🚨 Site Visit Now: ${clientName}` : `🚨 Callback Due Now: ${clientName}`,
+          title: type === 'visit'
+            ? `⏰ Upcoming Site Visit in 30 mins: ${clientName}`
+            : `📞 Upcoming Callback in 30 mins: ${clientName}`,
+          body: type === 'visit'
+            ? `Site showing in 30 mins at ${details || 'property'}. Tap to review and navigate.`
+            : `Client callback due in 30 mins for ${clientName}. Tap to prepare call.`,
+          sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          vibrate: [0, 250, 250, 250],
+          data: {
+            type,
+            id,
+            entity_type: type === 'visit' ? 'visit' : 'followup',
+            entity_id: id,
+            phone: details,
+          },
+        },
+        trigger: trigger as any,
+      });
+    }
+
+    // 3. EXACT TIME ALERT (At appointment time)
+    if (secondsUntilEvent >= 60) {
+      const trigger = Platform.OS === 'android'
+        ? { channelId: 'default', seconds: secondsUntilEvent }
+        : { date: schedDate };
+
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${type}_exact_${id}`,
+        content: {
+          title: type === 'visit'
+            ? `🚨 Site Visit Starting Now: ${clientName}`
+            : `🚨 Callback Due Now: ${clientName}`,
           body: type === 'visit'
             ? `Showing starting now for ${clientName} at ${details || 'property'}.`
             : `Time to call ${clientName} (${details || 'follow-up'}).`,
@@ -186,10 +240,7 @@ export async function scheduleActivityReminder(
             phone: details,
           },
         },
-        trigger: {
-          date: schedDate,
-          channelId: 'default',
-        },
+        trigger: trigger as any,
       });
     }
 
@@ -200,10 +251,12 @@ export async function scheduleActivityReminder(
 }
 
 /**
- * Cancel scheduled reminders when a visit or callback is completed or cancelled.
+ * Cancel scheduled reminders when a visit or callback is completed, rescheduled, or cancelled.
  */
 export async function cancelActivityReminder(type: 'visit' | 'followup', id: string) {
   try {
+    await Notifications.cancelScheduledNotificationAsync(`${type}_12h_${id}`);
+    await Notifications.cancelScheduledNotificationAsync(`${type}_30m_${id}`);
     await Notifications.cancelScheduledNotificationAsync(`${type}_reminder_${id}`);
     await Notifications.cancelScheduledNotificationAsync(`${type}_exact_${id}`);
     // Clear any matching cached reminder keys
