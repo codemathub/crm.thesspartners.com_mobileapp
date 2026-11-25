@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,15 @@ import {
   SafeAreaView,
   StatusBar as RNStatusBar,
   Image,
+  Animated,
+  Easing,
+  Dimensions,
 } from 'react-native';
 
 const STATUSBAR_HEIGHT = Platform.OS === 'android' ? Math.max(RNStatusBar.currentHeight || 0, 38) : 0;
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const LOGO_CENTER_Y = Math.max(180, Math.round(SCREEN_HEIGHT * 0.30));
+
 import { Ionicons } from '@expo/vector-icons';
 import { themeTokens } from '../theme/tokens';
 import { mobileApi, setMobileAuthToken } from '../services/api';
@@ -31,14 +37,25 @@ import {
 
 interface LoginScreenProps {
   onLoginSuccess: (user: any) => void;
+  initialSplash?: boolean;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, initialSplash = true }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // 2-Second Luxury Splash Screen & Navigation Animation State
+  const [splashActive, setSplashActive] = useState(initialSplash);
+  const logoTranslateY = useRef(new Animated.Value(initialSplash ? LOGO_CENTER_Y : 0)).current;
+  const logoScale = useRef(new Animated.Value(initialSplash ? 1.15 : 1)).current;
+  const logoOpacity = useRef(new Animated.Value(initialSplash ? 0 : 1)).current;
+  const splashTextOpacity = useRef(new Animated.Value(initialSplash ? 0 : 0)).current;
+  const splashBgOpacity = useRef(new Animated.Value(initialSplash ? 1 : 0)).current;
+  const formOpacity = useRef(new Animated.Value(initialSplash ? 0 : 1)).current;
+  const formTranslateY = useRef(new Animated.Value(initialSplash ? 50 : 0)).current;
 
   // Biometric Fast Unlock State
   const [biometrics, setBiometrics] = useState<BiometricCapabilities>({
@@ -62,6 +79,83 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
   useEffect(() => {
     initBiometrics();
+
+    if (!initialSplash) {
+      setSplashActive(false);
+      logoTranslateY.setValue(0);
+      logoScale.setValue(1);
+      logoOpacity.setValue(1);
+      formOpacity.setValue(1);
+      formTranslateY.setValue(0);
+      splashBgOpacity.setValue(0);
+      return;
+    }
+
+    // Step 1: Smoothly reveal centered logo & splash brand during first 400ms
+    Animated.parallel([
+      Animated.timing(logoOpacity, {
+        toValue: 1,
+        duration: 450,
+        useNativeDriver: true,
+      }),
+      Animated.timing(splashTextOpacity, {
+        toValue: 1,
+        duration: 550,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Step 2: Exactly after 2 seconds (2000ms), animate logo UP and smoothly open login
+    const splashTimer = setTimeout(() => {
+      Animated.parallel([
+        // Logo smoothly glides UP to top position
+        Animated.timing(logoTranslateY, {
+          toValue: 0,
+          duration: 850,
+          easing: Easing.bezier(0.22, 1, 0.36, 1),
+          useNativeDriver: true,
+        }),
+        // Logo smoothly scales from 1.15 to standard 1.0
+        Animated.timing(logoScale, {
+          toValue: 1,
+          duration: 850,
+          easing: Easing.bezier(0.22, 1, 0.36, 1),
+          useNativeDriver: true,
+        }),
+        // Splash subtitle gently fades out
+        Animated.timing(splashTextOpacity, {
+          toValue: 0,
+          duration: 320,
+          useNativeDriver: true,
+        }),
+        // Dark splash background cross-fades to clean theme background
+        Animated.timing(splashBgOpacity, {
+          toValue: 0,
+          duration: 800,
+          easing: Easing.bezier(0.22, 1, 0.36, 1),
+          useNativeDriver: true,
+        }),
+        // Login form glides UP and fades in
+        Animated.timing(formOpacity, {
+          toValue: 1,
+          duration: 750,
+          delay: 180,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(formTranslateY, {
+          toValue: 0,
+          duration: 750,
+          delay: 180,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setSplashActive(false);
+      });
+    }, 2000);
+
+    return () => clearTimeout(splashTimer);
   }, []);
 
   const initBiometrics = async () => {
@@ -206,25 +300,92 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const userRole = (savedSession?.user?.role || 'executive').replace('_', ' ').toUpperCase();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          {/* Official G² Brothers Luxury Real Logo Header */}
-          <View style={styles.topBrandContainer}>
-            <View style={styles.brandLogoCard}>
-              <Image
-                source={require('../../assets/logo.png')}
-                style={styles.brandLogoImg}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
+    <View style={styles.rootBackground}>
+      <RNStatusBar
+        barStyle={splashActive ? 'light-content' : 'dark-content'}
+        animated
+      />
+      {/* Luxury Dark Background during Splash, smooth cross-fade to Light Theme */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: '#020912',
+            opacity: splashBgOpacity,
+            zIndex: 0,
+          },
+        ]}
+      />
 
-          {/* When a valid biometric session is present and not dismissed */}
-          {savedSession && !showPasswordFallback ? (
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            scrollEnabled={!splashActive}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Navigating Logo Header: Centers on splash for 2s, then glides UP smoothly */}
+            <Animated.View
+              style={[
+                styles.topBrandContainer,
+                {
+                  transform: [
+                    { translateY: logoTranslateY },
+                    { scale: logoScale },
+                  ],
+                  opacity: logoOpacity,
+                  zIndex: 2,
+                },
+              ]}
+            >
+              <View style={styles.brandLogoCard}>
+                <Image
+                  source={require('../../assets/logo.png')}
+                  style={styles.brandLogoImg}
+                  resizeMode="contain"
+                />
+              </View>
+
+              {/* Splash Tagline & Brand Details during 2-Second Splash */}
+              {splashActive && (
+                <Animated.View
+                  style={[
+                    styles.splashBrandColumn,
+                    { opacity: splashTextOpacity },
+                  ]}
+                >
+                  <View style={styles.splashBrandTitleRow}>
+                    <Text style={styles.splashBrandTitle}>G</Text>
+                    <Text style={styles.splashBrandSuperscript}>2</Text>
+                    <Text style={styles.splashBrandTitle}> BROTHERS</Text>
+                  </View>
+                  <Text style={styles.splashTagline}>BUILDING VALUE  |  CREATING LEGACY</Text>
+                  <View style={styles.splashBadge}>
+                    <View style={styles.splashBadgeDot} />
+                    <Text style={styles.splashBadgeText}>ENTERPRISE REALTY CRM</Text>
+                  </View>
+                </Animated.View>
+              )}
+            </Animated.View>
+
+            {/* Login Card Container: Smoothly glides UP and opens as splash finishes */}
+            <Animated.View
+              style={[
+                styles.formContainer,
+                {
+                  opacity: formOpacity,
+                  transform: [{ translateY: formTranslateY }],
+                },
+              ]}
+              pointerEvents={splashActive ? 'none' : 'auto'}
+            >
+              {/* When a valid biometric session is present and not dismissed */}
+              {savedSession && !showPasswordFallback ? (
             <View style={styles.card}>
               <View style={styles.cardHeaderRow}>
                 <View>
@@ -426,6 +587,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               </TouchableOpacity>
             </View>
           )}
+        </Animated.View>
 
           {/* Account Recovery / Password Reset Modal */}
           <RNModal
@@ -550,18 +712,23 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+  </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  rootBackground: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'transparent',
     paddingTop: STATUSBAR_HEIGHT,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: 'transparent',
   },
   scrollContent: {
     padding: 20,
@@ -570,9 +737,65 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: '100%',
   },
+  formContainer: {
+    width: '100%',
+    maxWidth: 400,
+    alignItems: 'center',
+  },
   topBrandContainer: {
     alignItems: 'center',
     marginBottom: 24,
+  },
+  splashBrandColumn: {
+    alignItems: 'center',
+    marginTop: 18,
+  },
+  splashBrandTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  splashBrandTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#F8FAFC',
+    letterSpacing: 2.2,
+  },
+  splashBrandSuperscript: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#D4AF37',
+    lineHeight: 18,
+  },
+  splashTagline: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#94A3B8',
+    letterSpacing: 1.8,
+    marginTop: 6,
+  },
+  splashBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.25)',
+    marginTop: 14,
+  },
+  splashBadgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#D4AF37',
+    marginRight: 6,
+  },
+  splashBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#E2E8F0',
+    letterSpacing: 1.2,
   },
   brandLogoCard: {
     width: 250,

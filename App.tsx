@@ -347,8 +347,18 @@ export default function App() {
     }
   };
 
+  const [isInitialLaunch, setIsInitialLaunch] = useState(true);
+
   if (!isLoggedIn) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <LoginScreen
+        initialSplash={isInitialLaunch}
+        onLoginSuccess={(user) => {
+          setIsInitialLaunch(false);
+          handleLoginSuccess(user);
+        }}
+      />
+    );
   }
 
   const renderActiveScreen = () => {
