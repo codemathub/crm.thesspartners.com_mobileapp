@@ -137,14 +137,15 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
   const [customerType, setCustomerType] = useState<'tenant' | 'buyer' | 'agent' | 'owner'>('tenant');
   const [custPriority, setCustPriority] = useState<'hot' | 'warm' | 'cold'>('hot');
   const [leadSource, setLeadSource] = useState('Walk-in');
+  const [referralSource, setReferralSource] = useState('');
 
   // Enquiry Fields (Zero hardcoded values, real live user input)
   const [transactionType, setTransactionType] = useState<'rent' | 'sale'>('rent');
   const [lookingFor, setLookingFor] = useState('');
-  const [preferredSocietyId, setPreferredSocietyId] = useState('');
-  const [preferredSocietyName, setPreferredSocietyName] = useState('');
+  const [preferredSocietyId, setPreferredSocietyId] = useState('OTHER');
+  const [preferredSocietyName, setPreferredSocietyName] = useState('Other');
   const [preferredLoc, setPreferredLoc] = useState('');
-  const [budgetMin, setBudgetMin] = useState('');
+  const [budgetMin, setBudgetMin] = useState('5000');
   const [budgetMax, setBudgetMax] = useState('');
   const [tenantPreference, setTenantPreference] = useState('Family Only');
   const [expectedMoveInDate, setExpectedMoveInDate] = useState('');
@@ -216,10 +217,6 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
       setEnquiries(enqRes.items || []);
       setCustomers(custRes.items || []);
       setSocieties(socRes);
-      if (socRes.length > 0 && !preferredSocietyId) {
-        setPreferredSocietyId(socRes[0].society_id || socRes[0].id);
-        setPreferredSocietyName(socRes[0].name);
-      }
     } catch {
       // offline fallback
     } finally {
@@ -367,6 +364,10 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
     try {
       let targetCustomerId: string;
 
+      const finalLeadSource = leadSource === 'Referral' && referralSource.trim()
+        ? `Referral (${referralSource.trim()})`
+        : leadSource;
+
       // If linking to existing customer from duplicate match
       if (duplicateWarning && !forceSeparateProfile) {
         targetCustomerId = duplicateWarning.customer_id;
@@ -378,7 +379,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
           whatsapp_phone: custWaPhone.trim() || undefined,
           customer_type: customerType,
           priority: custPriority,
-          lead_source: leadSource,
+          lead_source: finalLeadSource,
           notes: enqNotes.trim() || undefined,
           shared_phone_reason: forceSeparateProfile && duplicateWarning ? sharedReason.trim() : undefined,
         };
@@ -407,6 +408,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
         preferred_societies: preferredSocietyName ? [preferredSocietyName] : undefined,
         tenant_type: tenantPreference,
         priority: custPriority,
+        lead_source: finalLeadSource,
         notes: finalEnqNotes || undefined,
       });
 
@@ -417,13 +419,15 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
       setCustAltPhone('');
       setCustWaPhone('');
       setLookingFor('');
-      setPreferredSocietyId('');
-      setPreferredSocietyName('');
+      setPreferredSocietyId('OTHER');
+      setPreferredSocietyName('Other');
       setPreferredLoc('');
-      setBudgetMin('');
+      setBudgetMin('5000');
       setBudgetMax('');
       setExpectedMoveInDate('');
       setEnqNotes('');
+      setLeadSource('Walk-in');
+      setReferralSource('');
       setDuplicateWarning(null);
       setSharedReason('');
       setForceSeparateProfile(false);
@@ -969,7 +973,12 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                     <TouchableOpacity
                       key={src}
                       style={[styles.chipOption, leadSource === src && styles.chipOptionActive]}
-                      onPress={() => setLeadSource(src)}
+                      onPress={() => {
+                        setLeadSource(src);
+                        if (src !== 'Referral') {
+                          setReferralSource('');
+                        }
+                      }}
                     >
                       <Text style={[styles.chipOptionText, leadSource === src && styles.chipOptionTextActive]}>
                         {src}
@@ -977,6 +986,19 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                     </TouchableOpacity>
                   ))}
                 </View>
+
+                {leadSource === 'Referral' && (
+                  <View style={{ marginBottom: 12 }}>
+                    <Text style={styles.formLabel}>Referred By / Referral Source Details *</Text>
+                    <TextInput
+                      style={styles.formInput}
+                      placeholder="e.g. Existing Client Rohit, Agent Amit, Sharmaji"
+                      value={referralSource}
+                      onChangeText={setReferralSource}
+                      placeholderTextColor="#9CA3AF"
+                    />
+                  </View>
+                )}
 
                 {/* SECTION 2: Enquiry Specifications & Budget */}
                 <Text style={[styles.sectionHeadingText, { marginTop: 12 }]}>2. Requirement & Budget</Text>
@@ -1028,7 +1050,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
                     <Ionicons name="business-outline" size={16} color="#1D4ED8" />
                     <Text style={styles.dropdownSelectorText}>
-                      {preferredSocietyName || 'Select Preferred Society'}
+                      {preferredSocietyName || 'Other'}
                     </Text>
                   </View>
                   <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
@@ -1050,7 +1072,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                     <Text style={styles.formLabel}>Min Budget (₹) *</Text>
                     <TextInput
                       style={styles.formInput}
-                      placeholder="50000"
+                      placeholder="5000"
                       value={budgetMin}
                       onChangeText={setBudgetMin}
                       keyboardType="numeric"
@@ -1149,29 +1171,57 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                 </TouchableOpacity>
               </View>
               <ScrollView style={{ marginTop: 8 }}>
-                {societies.length === 0 ? (
-                  <Text style={{ padding: 16, color: '#9CA3AF', textAlign: 'center' }}>
-                    No active societies found. Add societies in Super Admin Master Data.
-                  </Text>
-                ) : (
-                  societies.map((soc) => (
-                    <TouchableOpacity
-                      key={soc.id || soc.society_id}
-                      style={styles.societyListItem}
-                      onPress={() => {
-                        setPreferredSocietyId(soc.society_id || soc.id);
-                        setPreferredSocietyName(soc.name);
-                        setSocietyModalVisible(false);
-                      }}
-                    >
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.societyItemTitle}>{soc.name}</Text>
-                        <Text style={styles.societyItemSub}>#{soc.society_id}</Text>
-                      </View>
+                {/* Default Other Society Option */}
+                <TouchableOpacity
+                  style={[
+                    styles.societyListItem,
+                    preferredSocietyId === 'OTHER' && { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' },
+                  ]}
+                  onPress={() => {
+                    setPreferredSocietyId('OTHER');
+                    setPreferredSocietyName('Other');
+                    setSocietyModalVisible(false);
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.societyItemTitle, preferredSocietyId === 'OTHER' && { color: '#1D4ED8', fontWeight: '800' }]}>
+                      Other
+                    </Text>
+                    <Text style={styles.societyItemSub}>Outside Society / Custom Society</Text>
+                  </View>
+                  {preferredSocietyId === 'OTHER' ? (
+                    <Ionicons name="checkmark-circle" size={18} color="#1D4ED8" />
+                  ) : (
+                    <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                  )}
+                </TouchableOpacity>
+
+                {societies.map((soc) => (
+                  <TouchableOpacity
+                    key={soc.id || soc.society_id}
+                    style={[
+                      styles.societyListItem,
+                      preferredSocietyId === (soc.society_id || soc.id) && { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' },
+                    ]}
+                    onPress={() => {
+                      setPreferredSocietyId(soc.society_id || soc.id);
+                      setPreferredSocietyName(soc.name);
+                      setSocietyModalVisible(false);
+                    }}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.societyItemTitle, preferredSocietyId === (soc.society_id || soc.id) && { color: '#1D4ED8', fontWeight: '800' }]}>
+                        {soc.name}
+                      </Text>
+                      <Text style={styles.societyItemSub}>#{soc.society_id}</Text>
+                    </View>
+                    {preferredSocietyId === (soc.society_id || soc.id) ? (
+                      <Ionicons name="checkmark-circle" size={18} color="#1D4ED8" />
+                    ) : (
                       <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-                    </TouchableOpacity>
-                  ))
-                )}
+                    )}
+                  </TouchableOpacity>
+                ))}
               </ScrollView>
             </View>
           </View>

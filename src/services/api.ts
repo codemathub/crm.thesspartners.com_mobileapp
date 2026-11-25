@@ -292,6 +292,7 @@ export interface MobileCustomer {
   alternate_phone?: string;
   whatsapp_phone?: string;
   customer_type: string;
+  lead_source?: string;
   priority: string;
   enquiries_count: number;
   notes?: string;

@@ -180,10 +180,10 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
   const [addReqModalVisible, setAddReqModalVisible] = useState(false);
   const [reqTransType, setReqTransType] = useState<'rent' | 'sale'>('rent');
   const [reqLookingFor, setReqLookingFor] = useState('');
-  const [reqSocietyId, setReqSocietyId] = useState('');
-  const [reqSocietyName, setReqSocietyName] = useState('');
+  const [reqSocietyId, setReqSocietyId] = useState('OTHER');
+  const [reqSocietyName, setReqSocietyName] = useState('Other');
   const [reqLocation, setReqLocation] = useState('');
-  const [reqBudgetMin, setReqBudgetMin] = useState('');
+  const [reqBudgetMin, setReqBudgetMin] = useState('5000');
   const [reqBudgetMax, setReqBudgetMax] = useState('');
   const [reqTenantPref, setReqTenantPref] = useState('Family Only');
   const [reqPriority, setReqPriority] = useState<'hot' | 'warm' | 'cold'>('warm');
@@ -395,10 +395,10 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
       });
       setAddReqModalVisible(false);
       setReqLookingFor('');
-      setReqSocietyId('');
-      setReqSocietyName('');
+      setReqSocietyId('OTHER');
+      setReqSocietyName('Other');
       setReqLocation('');
-      setReqBudgetMin('');
+      setReqBudgetMin('5000');
       setReqBudgetMax('');
       setReqMoveInDate('');
       setReqNotes('');
@@ -538,6 +538,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
           </View>
           <Text style={styles.headerSubtitle}>
             ID: #{customer.customer_id} • {(customer.customer_type || 'Tenant').toUpperCase()}
+            {customer.lead_source ? ` • Source: ${customer.lead_source}` : ''}
           </Text>
         </View>
 
@@ -804,6 +805,14 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                 <View style={styles.infoRow}>
                   <Text style={styles.infoKey}>WhatsApp Line:</Text>
                   <Text style={styles.infoVal}>{customer.whatsapp_phone}</Text>
+                </View>
+              )}
+              {customer.lead_source && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoKey}>Lead Source / Referral:</Text>
+                  <Text style={[styles.infoVal, { fontWeight: '700', color: themeTokens.colors.primaryDark }]}>
+                    {customer.lead_source}
+                  </Text>
                 </View>
               )}
               {customer.notes && (
@@ -1245,7 +1254,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                   <Text style={styles.formLabel}>Min Budget (₹) *</Text>
                   <TextInput
                     style={styles.modalInput}
-                    placeholder="Min amount in ₹"
+                    placeholder="5000"
                     placeholderTextColor={themeTokens.colors.textSecondary}
                     keyboardType="numeric"
                     value={reqBudgetMin}
@@ -1372,6 +1381,37 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
             />
 
             <ScrollView style={{ maxHeight: 340 }}>
+              {/* Default Other Society Option */}
+              <TouchableOpacity
+                style={{
+                  paddingVertical: 12,
+                  paddingHorizontal: 12,
+                  borderBottomWidth: 1,
+                  borderBottomColor: '#F1F5F9',
+                  backgroundColor: reqSocietyId === 'OTHER' ? '#EFF6FF' : 'transparent',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+                onPress={() => {
+                  setReqSocietyId('OTHER');
+                  setReqSocietyName('Other');
+                  setSocietyModalVisible(false);
+                  setSocietySearch('');
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: reqSocietyId === 'OTHER' ? '#1D4ED8' : '#1E293B' }}>
+                    Other
+                  </Text>
+                  <Text style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Outside Society / Custom Society</Text>
+                </View>
+                {reqSocietyId === 'OTHER' ? (
+                  <Ionicons name="checkmark-circle" size={18} color="#1D4ED8" />
+                ) : (
+                  <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+                )}
+              </TouchableOpacity>
               {societiesList
                 .filter((s) => {
                   const sName = s.name || s.society_name || '';
