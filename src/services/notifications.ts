@@ -82,7 +82,7 @@ export async function displayLocalNotification(
         vibrate: [0, 250, 250, 250],
         data: data || {},
       },
-      trigger: { channelId: 'default' },
+      trigger: null,
     });
   } catch (err) {
     console.warn('Could not display local notification:', err);
@@ -96,32 +96,27 @@ export async function displayLocalNotification(
 const scheduledRemindersCache = new Set<string>();
 
 /**
- * Clean up any legacy or stale scheduled reminders from the device.
+ * Clean up any legacy or stale scheduled reminders and dismiss existing tray alerts.
  */
 export async function cleanUpLegacyRemindersAsync() {
   try {
-    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-    for (const item of scheduled) {
-      if (item.identifier && item.identifier.includes('_reminder_')) {
-        await Notifications.cancelScheduledNotificationAsync(item.identifier);
-      }
-    }
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    await Notifications.dismissAllNotificationsAsync();
+    scheduledRemindersCache.clear();
   } catch {
     // ignore
   }
 }
 
-// Immediately clean up legacy 15-minute reminders on module load
+// Immediately clean up legacy reminders on module load
 cleanUpLegacyRemindersAsync().catch(() => {});
 
 /**
  * Schedule local reminder notifications for an upcoming visit or callback:
- * 1) Reminder 1: 12 Hours Before appointment
- * 2) Reminder 2: 30 Minutes Before appointment
- * 3) Exact Time: At the appointment start time
+ * 1) Reminder 1: 12 Hours Before appointment (fires ONLY if >= 2 mins in the future)
+ * 2) Reminder 2: 30 Minutes Before appointment (fires ONLY if >= 60 secs in the future)
  * 
- * Strictly respects future triggers: will NEVER fire immediately if the reminder
- * window has already passed, completely eliminating continuous or duplicate alerts.
+ * Strictly respects future date triggers: will NEVER fire immediately.
  */
 export async function scheduleActivityReminder(
   type: 'visit' | 'followup',
@@ -155,10 +150,7 @@ export async function scheduleActivityReminder(
     // 1. REMINDER 1: 12 HOURS BEFORE (must be at least 2 minutes in the future)
     const seconds12h = secondsUntilEvent - 12 * 3600;
     if (seconds12h >= 120) {
-      const trigger = Platform.OS === 'android'
-        ? { channelId: 'default', seconds: seconds12h }
-        : { date: new Date(schedDate.getTime() - 12 * 3600 * 1000) };
-
+      const date12h = new Date(schedDate.getTime() - 12 * 3600 * 1000);
       await Notifications.scheduleNotificationAsync({
         identifier: `${type}_12h_${id}`,
         content: {
@@ -179,17 +171,18 @@ export async function scheduleActivityReminder(
             phone: details,
           },
         },
-        trigger: trigger as any,
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: date12h,
+          channelId: 'default',
+        },
       });
     }
 
     // 2. REMINDER 2: 30 MINUTES BEFORE (must be at least 60 seconds in the future)
     const seconds30m = secondsUntilEvent - 30 * 60;
     if (seconds30m >= 60) {
-      const trigger = Platform.OS === 'android'
-        ? { channelId: 'default', seconds: seconds30m }
-        : { date: new Date(schedDate.getTime() - 30 * 60 * 1000) };
-
+      const date30m = new Date(schedDate.getTime() - 30 * 60 * 1000);
       await Notifications.scheduleNotificationAsync({
         identifier: `${type}_30m_${id}`,
         content: {
@@ -210,37 +203,11 @@ export async function scheduleActivityReminder(
             phone: details,
           },
         },
-        trigger: trigger as any,
-      });
-    }
-
-    // 3. EXACT TIME ALERT (At appointment time)
-    if (secondsUntilEvent >= 60) {
-      const trigger = Platform.OS === 'android'
-        ? { channelId: 'default', seconds: secondsUntilEvent }
-        : { date: schedDate };
-
-      await Notifications.scheduleNotificationAsync({
-        identifier: `${type}_exact_${id}`,
-        content: {
-          title: type === 'visit'
-            ? `🚨 Site Visit Starting Now: ${clientName}`
-            : `🚨 Callback Due Now: ${clientName}`,
-          body: type === 'visit'
-            ? `Showing starting now for ${clientName} at ${details || 'property'}.`
-            : `Time to call ${clientName} (${details || 'follow-up'}).`,
-          sound: 'default',
-          priority: Notifications.AndroidNotificationPriority.MAX,
-          vibrate: [0, 300, 200, 300],
-          data: {
-            type,
-            id,
-            entity_type: type === 'visit' ? 'visit' : 'followup',
-            entity_id: id,
-            phone: details,
-          },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: date30m,
+          channelId: 'default',
         },
-        trigger: trigger as any,
       });
     }
 
