@@ -456,10 +456,10 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Text style={styles.menuTitle}>Assigned Tasks & Notices</Text>
               <View style={styles.newPill}>
-                <Text style={styles.newPillText}>Live Directives</Text>
+                <Text style={styles.newPillText}>Action Items</Text>
               </View>
             </View>
-            <Text style={styles.menuSubtitle}>Branch alerts, desk notes & custody rosters</Text>
+            <Text style={styles.menuSubtitle}>Office announcements, tasks & team notices</Text>
           </View>
           <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
         </TouchableOpacity>
@@ -478,7 +478,7 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.menuTitle}>Notification Center</Text>
-            <Text style={styles.menuSubtitle}>Lead assignment pings, SLA breached alerts</Text>
+            <Text style={styles.menuSubtitle}>Lead assignments, client visits & urgent reminders</Text>
           </View>
           <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
         </TouchableOpacity>
@@ -853,26 +853,26 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({
                     {loadingDirectives ? (
                       <View style={{ padding: 24, alignItems: 'center' }}>
                         <ActivityIndicator size="small" color="#1D4ED8" />
-                        <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 8 }}>Fetching directives from MongoDB Atlas...</Text>
+                        <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 8 }}>Loading latest tasks and notices...</Text>
                       </View>
                     ) : liveTasks.length === 0 && liveNotices.length === 0 ? (
                       <View style={styles.taskDirectiveCard}>
                         <Text style={styles.taskKicker}>ALL CLEAR • Today</Text>
                         <Text style={styles.taskHeadline}>No Pending Tasks</Text>
-                        <Text style={styles.taskBody}>All operational directives and lead assignment SLAs are up to date.</Text>
+                        <Text style={styles.taskBody}>All assigned tasks and lead follow-ups are up to date.</Text>
                       </View>
                     ) : (
                       <>
                         {liveNotices.map((n: any) => (
                           <View key={n.id || n._id} style={styles.taskDirectiveCard}>
-                            <Text style={styles.taskKicker}>BRANCH NOTICE • {n.priority ? n.priority.toUpperCase() : 'NORMAL'}</Text>
+                            <Text style={styles.taskKicker}>OFFICE ANNOUNCEMENT • {n.priority ? n.priority.toUpperCase() : 'NORMAL'}</Text>
                             <Text style={styles.taskHeadline}>{n.title}</Text>
                             <Text style={styles.taskBody}>{n.body}</Text>
                           </View>
                         ))}
                         {liveTasks.map((t: any) => (
                           <View key={t.task_id} style={styles.taskDirectiveCard}>
-                            <Text style={styles.taskKicker}>TASK DIRECTIVE • {t.status ? t.status.toUpperCase() : 'PENDING'}</Text>
+                            <Text style={styles.taskKicker}>ASSIGNED TASK • {t.status ? t.status.toUpperCase() : 'PENDING'}</Text>
                             <Text style={styles.taskHeadline}>{t.title}</Text>
                             <Text style={styles.taskBody}>{t.instructions || 'Direct task instructions recorded in system.'}</Text>
                           </View>

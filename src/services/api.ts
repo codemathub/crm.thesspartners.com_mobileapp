@@ -779,6 +779,8 @@ export const mobileApi = {
   },
   markNotificationRead: (id: string) =>
     request<{ detail: string }>(`/notifications/${id}/read`, { method: 'POST' }),
+  markAllNotificationsRead: () =>
+    request<{ message: string; detail: string }>('/notifications/read-all', { method: 'POST' }),
   registerPushToken: (pushToken: string) =>
     request<{ detail: string }>('/notifications/push-token', {
       method: 'POST',

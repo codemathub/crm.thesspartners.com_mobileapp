@@ -210,7 +210,7 @@ export const DuplicateCheckModal: React.FC<DuplicateCheckModalProps> = ({
           <View style={styles.policyCard}>
             <Text style={styles.policyTitle}>G² Brothers CRM Anti-Duplicate Policy (PRD 5.8)</Text>
             <Text style={styles.policyText}>
-              • Single Client Panoramas: Each client should maintain one unified customer profile with multiple linked requirements.
+              • Unified Client Profiles: Each client maintains one single contact profile with all their property searches linked together.
             </Text>
             <Text style={styles.policyText}>
               • Shared Phones: If family members or brokers share a phone number, select &apos;Create Separate Profile&apos; and record the explicit shared phone reason.

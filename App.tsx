@@ -450,13 +450,24 @@ export default function App() {
       <NotificationModal
         visible={notifModalVisible}
         onClose={() => setNotifModalVisible(false)}
+        onUpdateUnreadCount={(count) => setUnreadNotifCount(count)}
         onOpenTasksScreen={() => {
           setNotifModalVisible(false);
           setTasksModalVisible(true);
         }}
-        onOpenEnquiries={() => {
+        onOpenEnquiries={(enqId) => {
           setNotifModalVisible(false);
+          if (enqId) setTargetEnquiryId(enqId);
           setActiveTab('Enquiries');
+        }}
+        onOpenProperty={(propId) => {
+          setNotifModalVisible(false);
+          if (propId) setTargetPropertyId(propId);
+          setActiveTab('Inventory');
+        }}
+        onOpenSchedule={(subTab) => {
+          setNotifModalVisible(false);
+          handleNavigateTab('Schedule', subTab);
         }}
       />
 

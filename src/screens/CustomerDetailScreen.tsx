@@ -146,12 +146,12 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
       await mobileApi.abortEnquiry(selectedEnquiry.enquiry_id, {
         reason: abortReason.trim(),
       });
-      Alert.alert('Enquiry Aborted', `Enquiry ${selectedEnquiry.enquiry_id} has been dropped.`);
+      Alert.alert('Lead Dropped', `Enquiry ${selectedEnquiry.enquiry_id} has been dropped.`);
       setAbortVisible(false);
       setSelectedEnquiry(null);
       fetchDossier();
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Could not abort enquiry');
+      Alert.alert('Error', err.message || 'Could not drop enquiry');
     } finally {
       setSavingAbort(false);
     }
@@ -1721,7 +1721,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
 
                 {/* Requirement Specifications */}
                 <View style={{ backgroundColor: '#FFFFFF', padding: 12, borderRadius: 8, borderColor: '#E2E8F0', borderWidth: 1, gap: 6 }}>
-                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 }}>REQUIREMENT SPECS</Text>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#64748B', letterSpacing: 0.5 }}>CLIENT PREFERENCES & BUDGET</Text>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={{ fontSize: 12, color: '#64748B' }}>Looking For:</Text>
                     <Text style={{ fontSize: 12, fontWeight: '700', color: '#0F172A' }}>
@@ -1886,7 +1886,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                         setAbortVisible(true);
                       }}
                     >
-                      <Text style={styles.modalSubmitBtnText}>❌ Drop / Abort</Text>
+                      <Text style={styles.modalSubmitBtnText}>❌ Drop Lead</Text>
                     </TouchableOpacity>
                   </View>
 
@@ -2128,16 +2128,16 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, { maxHeight: 300 }]}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Drop / Abort Enquiry</Text>
+                <Text style={styles.modalTitle}>Drop Lead / Close Enquiry</Text>
                 <TouchableOpacity onPress={() => setAbortVisible(false)}>
                   <Ionicons name="close" size={20} color={themeTokens.colors.textPrimary} />
                 </TouchableOpacity>
               </View>
               <View style={{ gap: 8, paddingVertical: 10 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: '#334155' }}>Mandatory Abort Reason *</Text>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#334155' }}>Reason for Dropping *</Text>
                 <TextInput
                   style={styles.modalInput}
-                  placeholder="Client found elsewhere / Budget mismatch / Not reachable"
+                  placeholder="Client bought elsewhere / Budget mismatch / Not reachable"
                   value={abortReason}
                   onChangeText={setAbortReason}
                 />
@@ -2148,7 +2148,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                   onPress={handleConfirmAbort}
                   disabled={savingAbort}
                 >
-                  <Text style={styles.modalSubmitBtnText}>{savingAbort ? 'Dropping...' : 'Confirm Abort'}</Text>
+                  <Text style={styles.modalSubmitBtnText}>{savingAbort ? 'Dropping...' : 'Confirm Drop'}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setAbortVisible(false)}>
                   <Text style={styles.modalCancelBtnText}>Cancel</Text>

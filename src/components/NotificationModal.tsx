@@ -26,16 +26,22 @@ export interface NotificationModalProps {
   visible: boolean;
   onClose: () => void;
   onOpenTasksScreen?: () => void;
-  onOpenEnquiries?: () => void;
+  onOpenEnquiries?: (enquiryId?: string) => void;
+  onOpenProperty?: (propertyId: string) => void;
+  onOpenSchedule?: (subTab?: string) => void;
+  onUpdateUnreadCount?: (newCount: number) => void;
 }
 
-type FilterTab = 'ALL' | 'SLAS' | 'VISITS' | 'ANNOUNCEMENTS';
+type FilterTab = 'ALL' | 'TASKS' | 'VISITS' | 'ANNOUNCEMENTS';
 
 export const NotificationModal: React.FC<NotificationModalProps> = ({
   visible,
   onClose,
   onOpenTasksScreen,
   onOpenEnquiries,
+  onOpenProperty,
+  onOpenSchedule,
+  onUpdateUnreadCount,
 }) => {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('ALL');
   const [notifications, setNotifications] = useState<MobileNotification[]>([]);
@@ -52,15 +58,19 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     try {
       const todayStr = new Date().toISOString().split('T')[0];
       const [notifsRes, tasksRes, noticesRes, visitsRes] = await Promise.all([
-        mobileApi.getNotifications().catch(() => ({ items: [] })),
+        mobileApi.getNotifications().catch(() => ({ items: [], total: 0, unread_count: 0 })),
         mobileApi.getTasks().catch(() => ({ items: [] })),
         mobileApi.getAnnouncements().catch(() => []),
         mobileApi.getVisits({ date: todayStr }).catch(() => ({ items: [] })),
       ]);
-      setNotifications(notifsRes.items || []);
+      const notifItems = notifsRes.items || [];
+      setNotifications(notifItems);
       setTasks(tasksRes.items || []);
       setAnnouncements(noticesRes || []);
       setTodayVisits(visitsRes.items || []);
+
+      const unreadCount = notifItems.filter((n) => !n.is_read).length;
+      onUpdateUnreadCount?.(unreadCount);
     } catch {
       // offline fallback
     } finally {
@@ -85,7 +95,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     try {
       await mobileApi.acknowledgeTask(taskId);
       setAcknowledgedTaskIds((prev) => [...prev, taskId]);
-      Alert.alert('SLA Recorded', `Task #${taskId} locked to your profile. Immediate response SLA satisfied!`);
+      Alert.alert('Task Acknowledged', `Task #${taskId} locked to your profile. Great work!`);
     } catch (err: any) {
       Alert.alert('Notice', err.message || 'Task acknowledged.');
     }
@@ -111,25 +121,51 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     });
   };
 
-  const handleMarkNotifRead = async (id: string) => {
+  const handleMarkNotifRead = async (item: MobileNotification) => {
     try {
-      await mobileApi.markNotificationRead(id);
+      // 1. Optimistic update
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+        prev.map((n) => (n.id === item.id ? { ...n, is_read: true } : n))
       );
+      const remainingUnread = notifications.filter((n) => !n.is_read && n.id !== item.id).length;
+      onUpdateUnreadCount?.(remainingUnread);
+
+      // 2. Persist to MongoDB backend
+      await mobileApi.markNotificationRead(item.id);
+
+      // 3. Navigation to target item like a real enterprise app
+      if (item.entity_type === 'enquiry' && item.entity_id) {
+        onClose();
+        onOpenEnquiries?.(item.entity_id);
+      } else if (item.entity_type === 'property' && item.entity_id) {
+        onClose();
+        onOpenProperty?.(item.entity_id);
+      } else if (item.entity_type === 'visit') {
+        onClose();
+        onOpenSchedule?.('today');
+      } else if (item.entity_type === 'task') {
+        onClose();
+        onOpenTasksScreen?.();
+      }
     } catch {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-      );
+      // offline fallback
     }
   };
 
-  const handleClearAll = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    Alert.alert('Alerts Cleared', 'All pending notifications marked as reviewed.');
+  const handleClearAll = async () => {
+    try {
+      // 1. Optimistically mark all read in UI
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      // 2. Immediately clear the red dot badge in App.tsx
+      onUpdateUnreadCount?.(0);
+      // 3. Persist to backend database
+      await mobileApi.markAllNotificationsRead();
+    } catch (err) {
+      console.warn('Could not mark all notifications read:', err);
+    }
   };
 
-  // Count active items
+  // Count active unread items
   const unreadNotifsCount = notifications.filter((n) => !n.is_read).length;
   const pendingTasksCount = tasks.filter((t) => t.status === 'pending' && !acknowledgedTaskIds.includes(t.task_id)).length;
   const activeAlertsCount = unreadNotifsCount + pendingTasksCount + todayVisits.filter((v) => v.status === 'scheduled').length;
@@ -155,23 +191,23 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
               <View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={styles.headerTitle}>Notifications</Text>
-                  {activeAlertsCount > 0 && (
+                  {unreadNotifsCount > 0 && (
                     <View style={styles.countBadge}>
-                      <Text style={styles.countBadgeText}>{activeAlertsCount} New</Text>
+                      <Text style={styles.countBadgeText}>{unreadNotifsCount} New</Text>
                     </View>
                   )}
                 </View>
-                <Text style={styles.headerSubtitle}>Real-time CRM lead SLAs & activity alerts</Text>
+                <Text style={styles.headerSubtitle}>Updates on leads, client visits & assigned tasks</Text>
               </View>
             </View>
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              {activeAlertsCount > 0 && (
-                <TouchableOpacity onPress={handleClearAll} style={styles.clearBtn}>
-                  <Text style={styles.clearBtnText}>Mark read</Text>
+              {unreadNotifsCount > 0 && (
+                <TouchableOpacity onPress={handleClearAll} style={styles.clearBtn} activeOpacity={0.88}>
+                  <Text style={styles.clearBtnText}>Mark all read</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.88}>
                 <Ionicons name="close" size={20} color="#1F2937" />
               </TouchableOpacity>
             </View>
@@ -189,16 +225,16 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.filterPill, activeFilter === 'SLAS' && styles.filterPillActive]}
-              onPress={() => setActiveFilter('SLAS')}
+              style={[styles.filterPill, activeFilter === 'TASKS' && styles.filterPillActive]}
+              onPress={() => setActiveFilter('TASKS')}
             >
               <Ionicons
-                name="flash"
-                size={12}
-                color={activeFilter === 'SLAS' ? '#1D4ED8' : '#6B7280'}
+                name="checkmark-circle-outline"
+                size={13}
+                color={activeFilter === 'TASKS' ? '#1D4ED8' : '#6B7280'}
               />
-              <Text style={[styles.filterPillText, activeFilter === 'SLAS' && styles.filterPillTextActive]}>
-                Lead SLAs
+              <Text style={[styles.filterPillText, activeFilter === 'TASKS' && styles.filterPillTextActive]}>
+                Tasks
               </Text>
             </TouchableOpacity>
 
@@ -245,47 +281,48 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
               </View>
             ) : (
               <>
-                {/* 1. REAL SERVER TASKS & SLAS */}
+                {/* 1. REAL SERVER TASKS */}
                 {tasks
-                  .filter((t) => activeFilter === 'ALL' || activeFilter === 'SLAS')
+                  .filter((t) => activeFilter === 'ALL' || activeFilter === 'TASKS')
                   .map((t) => {
                     const isAck = t.status === 'acknowledged' || acknowledgedTaskIds.includes(t.task_id);
                     return (
                       <View key={t.task_id} style={[styles.alertCard, !isAck && styles.alertCardPriority]}>
                         <View style={styles.cardHeader}>
                           <View style={[styles.cardTypeIcon, { backgroundColor: isAck ? '#DCFCE7' : '#FEE2E2' }]}>
-                            <Ionicons name={isAck ? 'checkmark' : 'flash'} size={14} color={isAck ? '#16A34A' : '#DC2626'} />
+                            <Ionicons name={isAck ? 'checkmark' : 'alert-circle'} size={14} color={isAck ? '#16A34A' : '#DC2626'} />
                           </View>
                           <View style={{ flex: 1 }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <Text style={styles.cardCategory}>TASK DIRECTIVE</Text>
+                              <Text style={styles.cardCategory}>ASSIGNED TASK</Text>
                               <Text style={styles.cardDot}>•</Text>
                               <Text style={styles.cardTime}>
                                 {t.due_at
-                                  ? `Deadline ${new Date(t.due_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                                  : 'Active SLA'}
+                                  ? `Due ${new Date(t.due_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                                  : 'Priority Task'}
                               </Text>
                             </View>
                             <Text style={styles.cardTitle}>{t.title}</Text>
                           </View>
                         </View>
 
-                        <Text style={styles.cardBody}>{t.instructions || 'Direct operational task assigned.'}</Text>
+                        <Text style={styles.cardBody}>{t.instructions || 'Action item assigned.'}</Text>
 
                         {!isAck ? (
                           <View style={styles.actionsRow}>
                             <TouchableOpacity
                               style={styles.primaryActionBtn}
                               onPress={() => handleAcknowledgeTask(t.task_id)}
+                              activeOpacity={0.88}
                             >
                               <Ionicons name="checkmark-circle" size={14} color="#FFFFFF" />
-                              <Text style={styles.primaryActionBtnText}>Acknowledge SLA</Text>
+                              <Text style={styles.primaryActionBtnText}>Acknowledge Task</Text>
                             </TouchableOpacity>
                           </View>
                         ) : (
                           <View style={styles.acknowledgedNoticeBox}>
                             <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
-                            <Text style={styles.acknowledgedNoticeText}>SLA Acknowledged</Text>
+                            <Text style={styles.acknowledgedNoticeText}>Task Acknowledged</Text>
                           </View>
                         )}
                       </View>
@@ -302,7 +339,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                         </View>
                         <View style={{ flex: 1 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <Text style={styles.cardCategory}>VISIT SHOWING</Text>
+                            <Text style={styles.cardCategory}>SITE VISIT</Text>
                             <Text style={styles.cardDot}>•</Text>
                             <Text style={styles.cardTime}>
                               {v.scheduled_at
@@ -310,7 +347,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                                 : 'Scheduled'}
                             </Text>
                           </View>
-                          <Text style={styles.cardTitle}>Showing #{v.visit_id}: {v.property_society}</Text>
+                          <Text style={styles.cardTitle}>Visit #{v.visit_id}: {v.property_society}</Text>
                         </View>
                       </View>
                       <Text style={styles.cardBody}>
@@ -320,6 +357,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                         <TouchableOpacity
                           style={styles.callActionBtn}
                           onPress={() => handleCallClient(v.customer_phone)}
+                          activeOpacity={0.88}
                         >
                           <Ionicons name="call" size={14} color="#059669" />
                           <Text style={styles.callActionBtnText}>Call {v.customer_name.split(' ')[0]}</Text>
@@ -327,6 +365,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                         <TouchableOpacity
                           style={styles.secondaryActionBtn}
                           onPress={() => handleNavigate(`${v.property_society} ${v.property_location}`)}
+                          activeOpacity={0.88}
                         >
                           <Ionicons name="navigate-outline" size={14} color="#1D4ED8" />
                           <Text style={styles.secondaryActionBtnText}>Navigate</Text>
@@ -345,7 +384,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                         </View>
                         <View style={{ flex: 1 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <Text style={styles.cardCategory}>BRANCH MEMO</Text>
+                            <Text style={styles.cardCategory}>OFFICE ANNOUNCEMENT</Text>
                             <Text style={styles.cardDot}>•</Text>
                             <Text style={styles.cardTime}>
                               {a.created_at ? new Date(a.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Recent'}
@@ -362,7 +401,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                 {notifications
                   .filter((n) => {
                     if (activeFilter === 'ALL') return true;
-                    if (activeFilter === 'SLAS' && n.notification_type?.includes('task')) return true;
+                    if (activeFilter === 'TASKS' && n.notification_type?.includes('task')) return true;
                     if (activeFilter === 'VISITS' && n.notification_type?.includes('visit')) return true;
                     if (activeFilter === 'ANNOUNCEMENTS' && n.notification_type?.includes('announcement')) return true;
                     return false;
@@ -371,7 +410,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                     <TouchableOpacity
                       key={item.id}
                       style={[styles.alertCard, !item.is_read && styles.alertCardUnread]}
-                      onPress={() => handleMarkNotifRead(item.id)}
+                      onPress={() => handleMarkNotifRead(item)}
+                      activeOpacity={0.88}
                     >
                       <View style={styles.cardHeader}>
                         <View style={[styles.cardTypeIcon, { backgroundColor: '#EFF6FF' }]}>
@@ -395,12 +435,12 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                   ))}
 
                 {/* EMPTY STATE */}
-                {activeAlertsCount === 0 && notifications.length === 0 && tasks.length === 0 && (
+                {unreadNotifsCount === 0 && tasks.length === 0 && (
                   <View style={styles.emptyContainer}>
                     <Ionicons name="checkmark-done-circle-outline" size={48} color="#9CA3AF" />
                     <Text style={styles.emptyTitle}>You're all caught up!</Text>
                     <Text style={styles.emptySubtitle}>
-                      No pending lead SLAs or unread notifications at this time.
+                      No unread notifications or pending action items.
                     </Text>
                   </View>
                 )}

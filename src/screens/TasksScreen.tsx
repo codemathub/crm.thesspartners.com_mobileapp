@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -122,7 +122,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
           <TouchableOpacity onPress={onClose} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={20} color={themeTokens.colors.primaryDark} />
           </TouchableOpacity>
-          <Text style={styles.topBarTitle}>Directives & Notifications</Text>
+          <Text style={styles.topBarTitle}>Tasks & Notifications</Text>
           <View style={{ width: 32 }} />
         </View>
       )}
@@ -205,20 +205,20 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
         {/* TAB CONTENT: TASKS */}
         {activeTab === 'TASKS' && (
           <View style={{ gap: 14 }}>
-            {/* Section Header matching Stitch Image 8 */}
+            {/* Section Header */}
             <View style={styles.sectionHeaderRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={styles.sectionTitle}>OPERATIONAL DIRECTIVES</Text>
+                <Text style={styles.sectionTitle}>ASSIGNED TASKS</Text>
                 <View style={styles.liveDot} />
               </View>
-              <Text style={styles.slaWatchText}>Active SLA Watch</Text>
+              <Text style={styles.slaWatchText}>Priority Tasks</Text>
             </View>
 
             {tasks.length === 0 ? (
               <View style={styles.emptyCard}>
                 <Ionicons name="checkbox-outline" size={32} color="#9CA3AF" />
                 <Text style={styles.emptyTitle}>No Operational Tasks Assigned</Text>
-                <Text style={styles.emptySubtitle}>You are all caught up with your SLA directives.</Text>
+                <Text style={styles.emptySubtitle}>You are all caught up with your assigned tasks.</Text>
               </View>
             ) : (
               tasks.map((task) => {
@@ -426,7 +426,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
           <View style={styles.modalOverlay}>
             <View style={styles.modalBox}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalHeaderTitle}>Complete Directive #{completingTask.task_id}</Text>
+                <Text style={styles.modalHeaderTitle}>Complete Task #{completingTask.task_id}</Text>
                 <TouchableOpacity onPress={() => setCompletingTask(null)}>
                   <Ionicons name="close" size={20} color={themeTokens.colors.textPrimary} />
                 </TouchableOpacity>
@@ -475,7 +475,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
           <View style={styles.modalOverlay}>
             <View style={styles.modalBox}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalHeaderTitle}>Directive Details #{viewingTask.task_id}</Text>
+                <Text style={styles.modalHeaderTitle}>Task Details #{viewingTask.task_id}</Text>
                 <TouchableOpacity onPress={() => setViewingTask(null)}>
                   <Ionicons name="close" size={20} color={themeTokens.colors.textPrimary} />
                 </TouchableOpacity>
@@ -489,7 +489,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
                   <Text style={styles.detailVal}>{viewingTask.task_type}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailKey}>SLA Window:</Text>
+                  <Text style={styles.detailKey}>Target Response Time:</Text>
                   <Text style={styles.detailVal}>{viewingTask.sla_minutes} Minutes</Text>
                 </View>
                 <View style={styles.detailRow}>
