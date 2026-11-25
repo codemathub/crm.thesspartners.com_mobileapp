@@ -15,7 +15,7 @@ import {
   Image,
 } from 'react-native';
 
-const STATUSBAR_HEIGHT = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0;
+const STATUSBAR_HEIGHT = Platform.OS === 'android' ? Math.max(RNStatusBar.currentHeight || 0, 38) : 0;
 import { Ionicons } from '@expo/vector-icons';
 import { themeTokens } from '../theme/tokens';
 import { mobileApi, setMobileAuthToken } from '../services/api';

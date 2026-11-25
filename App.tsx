@@ -11,8 +11,11 @@ import {
   StatusBar as RNStatusBar,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import Constants from 'expo-constants';
 
-const STATUSBAR_HEIGHT = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0;
+const ANDROID_STATUSBAR_HEIGHT = Platform.OS === 'android'
+  ? Math.max(RNStatusBar.currentHeight || 0, (Constants as any)?.statusBarHeight || 0, 38)
+  : 0;
 import { Ionicons } from '@expo/vector-icons';
 import { themeTokens } from './src/theme/tokens';
 import { LoginScreen } from './src/screens/LoginScreen';
@@ -477,7 +480,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    paddingTop: Platform.OS === 'android' ? 0 : 0,
+    paddingTop: ANDROID_STATUSBAR_HEIGHT,
   },
   header: {
     flexDirection: 'row',
@@ -606,7 +609,7 @@ const styles = StyleSheet.create({
   },
   toastBanner: {
     position: 'absolute',
-    top: STATUSBAR_HEIGHT + 55,
+    top: ANDROID_STATUSBAR_HEIGHT + 55,
     left: 12,
     right: 12,
     backgroundColor: '#0F172A',

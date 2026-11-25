@@ -1,4 +1,4 @@
-﻿import * as Notifications from 'expo-notifications';
+import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform, Linking } from 'react-native';
 import Constants from 'expo-constants';
