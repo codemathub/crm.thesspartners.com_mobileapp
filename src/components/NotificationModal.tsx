@@ -360,7 +360,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                           activeOpacity={0.88}
                         >
                           <Ionicons name="call" size={14} color="#059669" />
-                          <Text style={styles.callActionBtnText}>Call {v.customer_name.split(' ')[0]}</Text>
+                          <Text style={styles.callActionBtnText} numberOfLines={1}>Call {v.customer_name.split(' ')[0]}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={styles.secondaryActionBtn}
@@ -368,7 +368,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                           activeOpacity={0.88}
                         >
                           <Ionicons name="navigate-outline" size={14} color="#1D4ED8" />
-                          <Text style={styles.secondaryActionBtnText}>Navigate</Text>
+                          <Text style={styles.secondaryActionBtnText} numberOfLines={1}>Navigate</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -464,19 +464,21 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.32)',
     justifyContent: 'flex-end',
   },
   modalSheetContainer: {
-    backgroundColor: '#F8FAFC',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: '#E2E8F0',
     maxHeight: '92%',
     minHeight: '65%',
     shadowColor: 'transparent',
     shadowOpacity: 0,
-    shadowOffset: { width: 0, height: -4 },
-    shadowRadius: 0,
     elevation: 0,
   },
   dragHandleBar: {

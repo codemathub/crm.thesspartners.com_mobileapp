@@ -1144,9 +1144,9 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
           <View style={[styles.modalContent, { maxHeight: '90%' }]}>
             <View style={styles.modalHeader}>
               <View>
-                <Text style={styles.modalTitle}>Add Customer Requirement</Text>
+                <Text style={styles.modalTitle}>Add Requirement</Text>
                 <Text style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
-                  Live enquiry registration for {data?.customer?.name || 'Customer'}
+                  Live enquiry registration for {data?.customer?.name || 'Client'}
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setAddReqModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -1337,11 +1337,15 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
               style={[styles.modalSubmitBtn, savingReq && { opacity: 0.7 }]}
               onPress={handleCreateRequirement}
               disabled={savingReq}
+              activeOpacity={0.88}
             >
               {savingReq ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={styles.modalSubmitBtnText}>Save Real Requirement to Database</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <Ionicons name="checkmark-circle-outline" size={16} color="#FFFFFF" />
+                  <Text style={styles.modalSubmitBtnText} numberOfLines={1}>Save Requirement</Text>
+                </View>
               )}
             </TouchableOpacity>
           </View>
@@ -1419,7 +1423,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Customer Details</Text>
+              <Text style={styles.modalTitle}>Edit Client Details</Text>
               <TouchableOpacity onPress={() => setEditProfileVisible(false)}>
                 <Ionicons name="close" size={22} color={themeTokens.colors.textPrimary} />
               </TouchableOpacity>
@@ -1429,7 +1433,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
               <Text style={styles.formLabel}>Full Name *</Text>
               <TextInput
                 style={styles.modalInput}
-                placeholder="Customer Name"
+                placeholder="Full Name"
                 placeholderTextColor={themeTokens.colors.textSecondary}
                 value={editName}
                 onChangeText={setEditName}
@@ -1470,7 +1474,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                 ))}
               </View>
 
-              <Text style={styles.formLabel}>Customer Type</Text>
+              <Text style={styles.formLabel}>Client Type</Text>
               <View style={styles.transRow}>
                 {(['tenant', 'buyer', 'owner', 'agent'] as const).map((ct) => (
                   <TouchableOpacity
@@ -1494,7 +1498,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
               {savingProfile ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={styles.modalSubmitBtnText}>Update Customer Details</Text>
+                <Text style={styles.modalSubmitBtnText} numberOfLines={1}>Save Client Details</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -2105,16 +2109,16 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                   onChangeText={setDealRemarks}
                 />
               </View>
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' }}>
+                <TouchableOpacity style={[styles.modalCancelBtn, { flex: 1 }]} onPress={() => setCloseDealVisible(false)}>
+                  <Text style={styles.modalCancelBtnText} numberOfLines={1}>Cancel</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalSubmitBtn, { backgroundColor: '#059669', flex: 1 }]}
+                  style={[styles.modalSubmitBtn, { backgroundColor: '#059669', flex: 1.5, marginTop: 0 }]}
                   onPress={handleConfirmCloseDeal}
                   disabled={savingDeal}
                 >
-                  <Text style={styles.modalSubmitBtnText}>{savingDeal ? 'Saving...' : 'Confirm Deal Closed'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setCloseDealVisible(false)}>
-                  <Text style={styles.modalCancelBtnText}>Cancel</Text>
+                  <Text style={styles.modalSubmitBtnText} numberOfLines={1}>{savingDeal ? 'Saving...' : 'Confirm Deal'}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -2142,16 +2146,16 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                   onChangeText={setAbortReason}
                 />
               </View>
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' }}>
+                <TouchableOpacity style={[styles.modalCancelBtn, { flex: 1 }]} onPress={() => setAbortVisible(false)}>
+                  <Text style={styles.modalCancelBtnText} numberOfLines={1}>Cancel</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalSubmitBtn, { backgroundColor: '#DC2626', flex: 1 }]}
+                  style={[styles.modalSubmitBtn, { backgroundColor: '#DC2626', flex: 1.5, marginTop: 0 }]}
                   onPress={handleConfirmAbort}
                   disabled={savingAbort}
                 >
-                  <Text style={styles.modalSubmitBtnText}>{savingAbort ? 'Dropping...' : 'Confirm Drop'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setAbortVisible(false)}>
-                  <Text style={styles.modalCancelBtnText}>Cancel</Text>
+                  <Text style={styles.modalSubmitBtnText} numberOfLines={1}>{savingAbort ? 'Dropping...' : 'Confirm Drop'}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -2916,16 +2920,23 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.32)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
   modalContent: {
     width: '100%',
+    maxWidth: 480,
+    maxHeight: '90%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     padding: 18,
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -2982,9 +2993,11 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   modalSubmitBtn: {
+    minHeight: 44,
     backgroundColor: themeTokens.colors.primaryDark,
     borderRadius: 8,
     paddingVertical: 12,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 14,
@@ -3123,7 +3136,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   modalCancelBtn: {
-    paddingVertical: 11,
+    minHeight: 44,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E2E8F0',

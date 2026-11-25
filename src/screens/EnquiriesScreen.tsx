@@ -812,20 +812,20 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
       {addModalVisible && (
         <Modal visible={addModalVisible} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+            <View style={[styles.modalContent, { maxHeight: '90%' }]}>
               <View style={styles.modalHeader}>
                 <View>
-                  <Text style={styles.modalTitle}>Add Customer & Enquiry</Text>
+                  <Text style={styles.modalTitle}>Register Enquiry</Text>
                   <Text style={{ fontSize: 11, color: themeTokens.colors.textSecondary }}>
                     Direct lead entry & pipeline assignment
                   </Text>
                 </View>
-                <TouchableOpacity onPress={() => setAddModalVisible(false)}>
+                <TouchableOpacity onPress={() => setAddModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   <Ionicons name="close" size={20} color={themeTokens.colors.textPrimary} />
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={{ maxHeight: 460 }} showsVerticalScrollIndicator={false}>
+              <ScrollView style={{ flexGrow: 1, flexShrink: 1 }} showsVerticalScrollIndicator={false}>
                 {/* Stitch Image 6 Duplicate Warning Banner */}
                 {duplicateWarning && (
                   <View style={styles.duplicateBanner}>
@@ -843,7 +843,7 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                         onPress={() => setForceSeparateProfile(false)}
                       >
                         <Text style={[styles.duplicateActionText, !forceSeparateProfile && styles.duplicateActionTextActive]}>
-                          ✓ Add New Enquiry to Existing Customer ({duplicateWarning.customer_id})
+                          ✓ Add New Enquiry to Existing Profile ({duplicateWarning.customer_id})
                         </Text>
                       </TouchableOpacity>
 
@@ -869,13 +869,13 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                   </View>
                 )}
 
-                {/* SECTION 1: Customer Identification */}
-                <Text style={styles.sectionHeadingText}>1. Customer Identification & Contact</Text>
+                {/* SECTION 1: Client Identification */}
+                <Text style={styles.sectionHeadingText}>1. Contact & Identification</Text>
 
-                <Text style={styles.formLabel}>Customer Full Name *</Text>
+                <Text style={styles.formLabel}>Full Name *</Text>
                 <TextInput
                   style={styles.formInput}
-                  placeholder="Enter customer full name"
+                  placeholder="Enter full name"
                   value={custName}
                   onChangeText={setCustName}
                   placeholderTextColor="#9CA3AF"
@@ -917,8 +917,8 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                   </View>
                 </View>
 
-                {/* Customer Type Chips */}
-                <Text style={styles.formLabel}>Customer Type</Text>
+                {/* Client Type Chips */}
+                <Text style={styles.formLabel}>Client Type</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                   {(['tenant', 'buyer', 'agent', 'owner'] as const).map((t) => (
                     <TouchableOpacity
@@ -1125,9 +1125,9 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                   {savingEnq ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                       <Ionicons name="checkmark-circle-outline" size={16} color="#FFFFFF" />
-                      <Text style={styles.modalSubmitBtnText}>Register Customer Enquiry</Text>
+                      <Text style={styles.modalSubmitBtnText} numberOfLines={1}>Register Enquiry</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -1662,16 +1662,16 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                   onChangeText={setDealRemarks}
                 />
               </View>
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' }}>
+                <TouchableOpacity style={[styles.modalCancelBtn, { flex: 1 }]} onPress={() => setCloseDealVisible(false)}>
+                  <Text style={styles.modalCancelBtnText} numberOfLines={1}>Cancel</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalSubmitBtn, { backgroundColor: '#059669', flex: 1 }]}
+                  style={[styles.modalSubmitBtn, { backgroundColor: '#059669', flex: 1.5 }]}
                   onPress={handleConfirmCloseDeal}
                   disabled={savingDeal}
                 >
-                  <Text style={styles.modalSubmitBtnText}>{savingDeal ? 'Saving...' : 'Confirm Deal Closed'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setCloseDealVisible(false)}>
-                  <Text style={styles.modalCancelBtnText}>Cancel</Text>
+                  <Text style={styles.modalSubmitBtnText} numberOfLines={1}>{savingDeal ? 'Saving...' : 'Confirm Deal'}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1699,16 +1699,16 @@ export const EnquiriesScreen: React.FC<EnquiriesScreenProps> = ({
                   onChangeText={setAbortReason}
                 />
               </View>
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' }}>
+                <TouchableOpacity style={[styles.modalCancelBtn, { flex: 1 }]} onPress={() => setAbortVisible(false)}>
+                  <Text style={styles.modalCancelBtnText} numberOfLines={1}>Cancel</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalSubmitBtn, { backgroundColor: '#DC2626', flex: 1 }]}
+                  style={[styles.modalSubmitBtn, { backgroundColor: '#DC2626', flex: 1.5 }]}
                   onPress={handleConfirmAbort}
                   disabled={savingAbort}
                 >
-                  <Text style={styles.modalSubmitBtnText}>{savingAbort ? 'Dropping...' : 'Confirm Drop'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setAbortVisible(false)}>
-                  <Text style={styles.modalCancelBtnText}>Cancel</Text>
+                  <Text style={styles.modalSubmitBtnText} numberOfLines={1}>{savingAbort ? 'Dropping...' : 'Confirm Drop'}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -2128,15 +2128,22 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.32)',
     justifyContent: 'center',
-    padding: 20,
+    alignItems: 'center',
+    padding: 16,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 18,
+    width: '100%',
+    maxWidth: 480,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     elevation: 0,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -2306,34 +2313,39 @@ const styles = StyleSheet.create({
   },
   modalFooter: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
     marginTop: 14,
+    alignItems: 'center',
   },
   modalCancelBtn: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modalCancelBtnText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     color: themeTokens.colors.textSecondary,
   },
   modalSubmitBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#1D4ED8',
+    flex: 1.8,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    backgroundColor: themeTokens.colors.primaryDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalSubmitBtnText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: '#FFFFFF',
+    textAlign: 'center',
   },
   matchCandidateCard: {
     backgroundColor: '#F9FAFB',

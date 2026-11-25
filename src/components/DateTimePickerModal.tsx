@@ -591,7 +591,7 @@ export const DateTimePickerField: React.FC<DateTimePickerFieldProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    backgroundColor: 'rgba(15, 23, 42, 0.32)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
@@ -599,12 +599,15 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     maxWidth: 380,
+    maxHeight: '90%',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     padding: 18,
     shadowColor: 'transparent',
     shadowOpacity: 0,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 0 },
     shadowRadius: 0,
     elevation: 0,
   },

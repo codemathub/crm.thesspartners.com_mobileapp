@@ -529,7 +529,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                     style={styles.modalCancelBtn}
                     onPress={() => setResetModalOpen(false)}
                   >
-                    <Text style={styles.modalCancelText}>Cancel</Text>
+                    <Text style={styles.modalCancelText} numberOfLines={1}>Cancel</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -540,7 +540,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                     {submittingReset ? (
                       <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
-                      <Text style={styles.modalSubmitText}>Submit Request</Text>
+                      <Text style={styles.modalSubmitText} numberOfLines={1}>Submit Request</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -817,7 +817,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.32)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -875,15 +875,17 @@ const styles = StyleSheet.create({
   },
   modalFooter: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
     marginTop: 18,
+    alignItems: 'center',
   },
   modalCancelBtn: {
     flex: 1,
-    height: 40,
+    minHeight: 44,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -893,8 +895,8 @@ const styles = StyleSheet.create({
     color: '#4B5563',
   },
   modalSubmitBtn: {
-    flex: 1,
-    height: 40,
+    flex: 1.5,
+    minHeight: 44,
     borderRadius: 8,
     backgroundColor: '#1D4ED8',
     alignItems: 'center',

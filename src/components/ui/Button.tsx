@@ -106,7 +106,13 @@ export const Button: React.FC<ButtonProps> = ({
       ) : (
         <>
           {icon ? <>{icon}</> : null}
-          <Text style={[styles.baseText, getTextStyle(), textStyle]}>{label}</Text>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[styles.baseText, getTextStyle(), textStyle]}
+          >
+            {label}
+          </Text>
         </>
       )}
     </TouchableOpacity>

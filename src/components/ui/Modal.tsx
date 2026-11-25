@@ -57,7 +57,7 @@ export const Modal: React.FC<ModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(15, 23, 42, 0.32)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -65,13 +65,16 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 400,
+    maxHeight: '90%',
     backgroundColor: themeTokens.colors.surface,
     borderRadius: themeTokens.borderRadius.lg,
     padding: 20,
     borderWidth: 1,
     borderColor: themeTokens.colors.border,
     elevation: 0,
+    shadowColor: 'transparent',
     shadowOpacity: 0,
+    shadowRadius: 0,
   },
   header: {
     flexDirection: 'row',

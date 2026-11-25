@@ -1005,9 +1005,9 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
                   {savingProperty ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                       <Ionicons name="checkmark-circle-outline" size={16} color="#FFFFFF" />
-                      <Text style={styles.modalSubmitBtnText}>Add Property Unit</Text>
+                      <Text style={styles.modalSubmitBtnText} numberOfLines={1}>Add Property Unit</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -1109,18 +1109,18 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
                 </TouchableOpacity>
               </View>
 
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' }}>
                 <TouchableOpacity
                   style={styles.modalCancelBtn}
                   onPress={() => setShowAddChargeModal(false)}
                 >
-                  <Text style={styles.modalCancelBtnText}>Cancel</Text>
+                  <Text style={styles.modalCancelBtnText} numberOfLines={1}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.modalSubmitBtn}
                   onPress={handleAddChargeItem}
                 >
-                  <Text style={styles.modalSubmitBtnText}>Add Charge</Text>
+                  <Text style={styles.modalSubmitBtnText} numberOfLines={1}>Add Charge</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1235,7 +1235,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
                     setFilterModalVisible(false);
                   }}
                 >
-                  <Text style={styles.modalCancelBtnText}>Reset All</Text>
+                  <Text style={styles.modalCancelBtnText} numberOfLines={1}>Reset All</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.modalSubmitBtn, { flex: 1.5 }]}
@@ -1244,7 +1244,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
                     fetchProperties();
                   }}
                 >
-                  <Text style={styles.modalSubmitBtnText}>Apply Filters</Text>
+                  <Text style={styles.modalSubmitBtnText} numberOfLines={1}>Apply Filters</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1546,15 +1546,23 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.32)',
     justifyContent: 'center',
-    padding: 20,
+    alignItems: 'center',
+    padding: 16,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 18,
+    width: '100%',
+    maxWidth: 480,
+    maxHeight: '90%',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     elevation: 0,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1656,16 +1664,20 @@ const styles = StyleSheet.create({
   },
   modalFooter: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
     marginTop: 14,
+    alignItems: 'center',
   },
   modalCancelBtn: {
     flex: 1,
-    paddingVertical: 10,
+    minHeight: 44,
+    paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    backgroundColor: '#F8FAFC',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modalCancelBtnText: {
     fontSize: 12,
@@ -1673,16 +1685,20 @@ const styles = StyleSheet.create({
     color: themeTokens.colors.textSecondary,
   },
   modalSubmitBtn: {
-    flex: 1,
-    paddingVertical: 10,
+    flex: 1.6,
+    minHeight: 44,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderRadius: 8,
     backgroundColor: '#1D4ED8',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modalSubmitBtnText: {
     fontSize: 12,
     fontWeight: '700',
     color: '#FFFFFF',
+    textAlign: 'center',
   },
   sectionHeadingText: {
     fontSize: 12,

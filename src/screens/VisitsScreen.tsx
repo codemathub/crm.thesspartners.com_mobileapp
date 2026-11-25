@@ -2627,15 +2627,23 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.32)',
     justifyContent: 'center',
-    padding: 20,
+    alignItems: 'center',
+    padding: 16,
   },
   modalContent: {
     backgroundColor: themeTokens.colors.surface,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 20,
+    width: '100%',
+    maxWidth: 480,
+    maxHeight: '90%',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     elevation: 0,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -2670,6 +2678,7 @@ const styles = StyleSheet.create({
   },
   modalFooter: {
     flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 16,
   },
   overdueBadge: {

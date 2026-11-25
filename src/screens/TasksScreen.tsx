@@ -449,7 +449,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
                   style={styles.modalCancelBtn}
                   onPress={() => setCompletingTask(null)}
                 >
-                  <Text style={styles.modalCancelText}>Cancel</Text>
+                  <Text style={styles.modalCancelText} numberOfLines={1}>Cancel</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -460,7 +460,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onClose, onNavigateTab
                   {submittingComplete ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <Text style={styles.modalSubmitText}>Confirm Completed</Text>
+                    <Text style={styles.modalSubmitText} numberOfLines={1}>Confirm Completed</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -958,16 +958,24 @@ const styles = StyleSheet.create({
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.32)',
     justifyContent: 'center',
-    padding: 20,
+    alignItems: 'center',
+    padding: 16,
   },
   modalBox: {
+    width: '100%',
+    maxWidth: 480,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     padding: 20,
-    maxHeight: '80%',
+    maxHeight: '88%',
     gap: 12,
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -999,23 +1007,32 @@ const styles = StyleSheet.create({
   },
   modalFooter: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     gap: 10,
-    marginTop: 8,
+    marginTop: 14,
+    alignItems: 'center',
   },
   modalCancelBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    flex: 1,
+    minHeight: 44,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalCancelText: {
     fontSize: 13,
-    color: '#6B7280',
+    color: '#64748B',
     fontWeight: '600',
   },
   modalSubmitBtn: {
+    flex: 1.6,
+    minHeight: 44,
     backgroundColor: '#1D4ED8',
-    paddingVertical: 10,
-    paddingHorizontal: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1023,7 +1040,8 @@ const styles = StyleSheet.create({
   modalSubmitText: {
     color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
+    textAlign: 'center',
   },
   detailRow: {
     flexDirection: 'row',

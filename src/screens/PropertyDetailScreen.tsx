@@ -686,7 +686,7 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
                   style={styles.modalCancelBtn}
                   onPress={() => setOwnerNoteModalVisible(false)}
                 >
-                  <Text style={styles.modalCancelBtnText}>Cancel</Text>
+                  <Text style={styles.modalCancelBtnText} numberOfLines={1}>Cancel</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -697,9 +697,9 @@ export const PropertyDetailScreen: React.FC<PropertyDetailScreenProps> = ({
                   {savingOwnerNote ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                       <Ionicons name="checkmark-circle-outline" size={16} color="#FFFFFF" />
-                      <Text style={styles.modalSubmitBtnText}>Save Owner Note</Text>
+                      <Text style={styles.modalSubmitBtnText} numberOfLines={1}>Save Owner Note</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -1295,17 +1295,23 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.32)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
   },
   modalContent: {
     width: '100%',
+    maxWidth: 480,
+    maxHeight: '90%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     padding: 18,
     elevation: 0,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1424,10 +1430,12 @@ const styles = StyleSheet.create({
   },
   modalCancelBtn: {
     flex: 1,
-    paddingVertical: 10,
+    minHeight: 44,
+    paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1438,7 +1446,9 @@ const styles = StyleSheet.create({
   },
   modalSubmitBtn: {
     flex: 2,
-    paddingVertical: 10,
+    minHeight: 44,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderRadius: 8,
     backgroundColor: '#1D4ED8',
     alignItems: 'center',
